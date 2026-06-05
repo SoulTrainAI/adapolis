@@ -1,0 +1,162 @@
+/**
+ * DRep Sync Job
+ * Fetches DRep data from Koios and writes to Supabase
+ */
+
+import {
+  fetchAllDReps,
+  fetchDRepInfoBatched,
+  type KoiosDRep,
+} from '@/lib/koios';
+import { supabaseAdmin } from './supabase-admin';
+
+export interface SyncResult {
+  synced: number;
+  errors: number;
+  duration_ms: number;
+}
+
+/**
+ * Syncs all DReps from Koios to Supabase
+ * 1. Fetches list of all active DReps
+ * 2. Batch fetches detailed info (delegation amounts, metadata)
+ * 3. Upserts into dreps table
+ * 4. Updates sync_state tracking
+ * @returns Sync result with counts and duration
+ */
+export async function syncDReps(): Promise<SyncResult> {
+  const startTime = Date.now();
+  let synced = 0;
+  let errors = 0;
+
+  try {
+    console.log(JSON.stringify({ event: 'sync_dreps_start', timestamp: new Date().toISOString() }));
+
+    // Step 1: Fetch all active DReps from Koios
+    console.log(JSON.stringify({ event: 'fetching_drep_list', timestamp: new Date().toISOString() }));
+    const drepList = await fetchAllDReps();
+    console.log(
+      JSON.stringify({
+        event: 'drep_list_fetched',
+        count: drepList.length,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    if (drepList.length === 0) {
+      console.log(JSON.stringify({ event: 'no_dreps_found', timestamp: new Date().toISOString() }));
+      return { synced: 0, errors: 0, duration_ms: Date.now() - startTime };
+    }
+
+    // Step 2: Batch fetch detailed DRep info
+    const drepIds = drepList.map((d) => d.drep_id);
+    console.log(
+      JSON.stringify({
+        event: 'fetching_drep_info',
+        count: drepIds.length,
+        timestamp: new Date().toISOString(),
+      })
+    );
+    const drepInfoList = await fetchDRepInfoBatched(drepIds);
+
+    // Step 3: Build map of detailed info for lookup
+    const infoMap = new Map(drepInfoList.map((info) => [info.drep_id, info]));
+
+    // Step 4: Prepare upsert data with field mappings
+    const drepRecords = drepList.map((drep: KoiosDRep) => {
+      const info = infoMap.get(drep.drep_id);
+      return {
+        drep_id: drep.drep_id,
+        hex_id: drep.hex,
+        is_script: drep.has_script,
+        is_registered: drep.registered,
+        deposit_lovelace: BigInt(drep.deposit),
+        active_epoch: null, // Not available in list response, only in info
+        expires_epoch: drep.expires_epoch_no,
+        amount_lovelace: info ? BigInt(info.amount) : BigInt(0),
+        delegator_count: null, // Not directly available, will be calculated from delegations
+        voting_anchor_url: info?.url ?? null,
+        voting_anchor_hash: info?.hash ?? null,
+        metadata: info?.json ?? null,
+        updated_at: new Date().toISOString(),
+      };
+    });
+
+    // Step 5: Upsert into dreps table (conflict on drep_id)
+    console.log(
+      JSON.stringify({
+        event: 'upserting_dreps',
+        count: drepRecords.length,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    const { error: upsertError } = await supabaseAdmin
+      .from('dreps')
+      .upsert(drepRecords, { onConflict: 'drep_id' });
+
+    if (upsertError) {
+      console.error(JSON.stringify({ event: 'drep_upsert_error', error: upsertError.message }));
+      errors += drepRecords.length;
+    } else {
+      synced = drepRecords.length;
+      console.log(
+        JSON.stringify({
+          event: 'dreps_upserted',
+          count: synced,
+          timestamp: new Date().toISOString(),
+        })
+      );
+    }
+
+    // Step 6: Update sync_state
+    const { error: syncStateError } = await supabaseAdmin
+      .from('sync_state')
+      .upsert(
+        {
+          entity: 'dreps',
+          last_synced_at: new Date().toISOString(),
+        },
+        { onConflict: 'entity' }
+      );
+
+    if (syncStateError) {
+      console.error(
+        JSON.stringify({ event: 'sync_state_update_error', error: syncStateError.message })
+      );
+    } else {
+      console.log(
+        JSON.stringify({
+          event: 'sync_state_updated',
+          entity: 'dreps',
+          timestamp: new Date().toISOString(),
+        })
+      );
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(
+      JSON.stringify({
+        event: 'sync_dreps_complete',
+        synced,
+        errors,
+        duration_ms: duration,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    return { synced, errors, duration_ms: duration };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(
+      JSON.stringify({
+        event: 'sync_dreps_error',
+        error: errorMessage,
+        duration_ms: duration,
+        timestamp: new Date().toISOString(),
+      })
+    );
+    throw error;
+  }
+}
