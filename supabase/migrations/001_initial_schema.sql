@@ -215,7 +215,7 @@ CREATE INDEX idx_delegations_active ON delegations(revoked_at) WHERE revoked_at 
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS drep_scores (
-  score_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  score_id UUID DEFAULT uuid_generate_v4(),
 
   drep_id TEXT NOT NULL REFERENCES dreps(drep_id),
   epoch INTEGER NOT NULL,
