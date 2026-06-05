@@ -7,15 +7,28 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 
 interface DRepScoring {
   drep_id: string;
+  amount_lovelace: bigint;
   votes_eligible: number;
   votes_cast: number;
   participation_rate: number;
   raw_govscore: number;
+  adjusted_govscore: number;
 }
 
 interface ComputeResult {
   dreps_scored: number;
   avg_participation: number;
+}
+
+/**
+ * Calculates the quadratic ADA-power dampener
+ * Formula: dampener = 1 / (1 + log10(ada_m + 1) / 4)
+ * Where ada_m is ADA amount in millions
+ */
+function calculateDampener(amountLovelace: bigint): number {
+  const ada = Number(amountLovelace) / 1_000_000_000_000; // Convert lovelace to millions of ADA
+  const dampener = 1 / (1 + Math.log10(ada + 1) / 4);
+  return dampener;
 }
 
 /**
@@ -36,10 +49,10 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
   );
 
   try {
-    // Step 1: Get all registered DReps
+    // Step 1: Get all registered DReps with their delegation amounts
     const { data: dreps, error: drepsError } = await supabaseAdmin
       .from('dreps')
-      .select('drep_id, is_registered, expires_epoch')
+      .select('drep_id, is_registered, expires_epoch, amount_lovelace')
       .eq('is_registered', true);
 
     if (drepsError || !dreps) {
@@ -130,19 +143,26 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       // Compute participation rate (null if 0 eligible proposals)
       let participationRate: number | null = null;
       let rawGovscore: number | null = null;
+      let adjustedGovscore: number | null = null;
 
       if (votesEligible > 0) {
         participationRate = votesCast / votesEligible;
         rawGovscore = participationRate * 100;
+
+        // Apply quadratic ADA-power dampening
+        const dampener = calculateDampener(drep.amount_lovelace || BigInt(0));
+        adjustedGovscore = rawGovscore * dampener;
       }
       // If votesEligible is 0, both remain null (per ROADMAP spec)
 
       scoringResults.push({
         drep_id: drep.drep_id,
+        amount_lovelace: drep.amount_lovelace || BigInt(0),
         votes_eligible: votesEligible,
         votes_cast: votesCast,
         participation_rate: participationRate || 0,
         raw_govscore: rawGovscore || 0,
+        adjusted_govscore: adjustedGovscore || 0,
       });
 
       if (participationRate !== null) {
@@ -165,7 +185,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       drep_id: result.drep_id,
       epoch,
       raw_govscore: result.raw_govscore !== 0 ? result.raw_govscore : null,
-      adjusted_govscore: null, // Will be populated in Task 1.6
+      adjusted_govscore: result.adjusted_govscore !== 0 ? result.adjusted_govscore : null,
       participation_rate: result.participation_rate !== 0 ? result.participation_rate : null,
       updated_at: new Date().toISOString(),
     }));
