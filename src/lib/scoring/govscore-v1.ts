@@ -187,7 +187,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       raw_govscore: result.raw_govscore !== 0 ? result.raw_govscore : null,
       adjusted_govscore: result.adjusted_govscore !== 0 ? result.adjusted_govscore : null,
       participation_rate: result.participation_rate !== 0 ? result.participation_rate : null,
-      updated_at: new Date().toISOString(),
+      computed_at: new Date().toISOString(),
     }));
 
     console.log(
