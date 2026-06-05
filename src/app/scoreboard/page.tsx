@@ -3,7 +3,6 @@
  * Server-rendered page showing all DReps ranked by adjusted_govscore
  */
 
-import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { DRepCard } from '@/components/scoreboard/DRepCard';
 
 interface DRepScore {
@@ -18,76 +17,137 @@ interface DRepScore {
   epoch: number;
 }
 
-async function getDRepScoresForCurrentEpoch(): Promise<{
-  dreps: DRepScore[];
-  currentEpoch: number;
-  lastSyncedAt: string | null;
-}> {
-  // Get the latest epoch from drep_scores
-  const { data: latestEpochData } = await supabaseAdmin
-    .from('drep_scores')
-    .select('epoch')
-    .order('epoch', { ascending: false })
-    .limit(1);
+interface ErrorState {
+  dreps: null;
+  currentEpoch: null;
+  lastSyncedAt: null;
+  error: string;
+}
 
-  const currentEpoch = latestEpochData?.[0]?.epoch || 0;
+async function initializeSupabase() {
+  try {
+    // Dynamically import to catch missing env vars
+    const supabaseModule = await import('@/lib/sync/supabase-admin');
+    return supabaseModule.supabaseAdmin;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('Failed to initialize Supabase admin client:', message);
+    return null;
+  }
+}
 
-  // Get latest sync time
-  const { data: syncState } = await supabaseAdmin
-    .from('sync_state')
-    .select('last_synced_at')
-    .eq('entity', 'scores')
-    .single();
+async function getDRepScoresForCurrentEpoch(): Promise<
+  { dreps: DRepScore[]; currentEpoch: number; lastSyncedAt: string | null; error?: never } | ErrorState
+> {
+  const supabaseAdmin = await initializeSupabase();
 
-  // Fetch all DReps with their latest scores for current epoch
-  const { data: scores, error } = await supabaseAdmin
-    .from('drep_scores')
-    .select(
-      `
-      epoch,
-      drep_id,
-      raw_govscore,
-      adjusted_govscore,
-      participation_rate,
-      dreps(
-        hex_id,
-        is_registered,
-        amount_lovelace,
-        delegator_count
-      )
-    `
-    )
-    .eq('epoch', currentEpoch)
-    .order('adjusted_govscore', { ascending: false });
-
-  if (error) {
-    console.error('Failed to fetch scores:', error);
-    return { dreps: [], currentEpoch, lastSyncedAt: syncState?.last_synced_at || null };
+  if (!supabaseAdmin) {
+    return {
+      dreps: null,
+      currentEpoch: null,
+      lastSyncedAt: null,
+      error: 'Database service unavailable. Supabase credentials missing or invalid.',
+    };
   }
 
-  // Map results to DRepScore type
-  const dreps: DRepScore[] = (scores || []).map((row) => {
-    const drepData = row.dreps as {
-      hex_id?: string | null;
-      is_registered?: boolean;
-      amount_lovelace?: bigint | null;
-      delegator_count?: number | null;
-    } | null;
+  try {
+    // Query 1: Get the latest epoch from drep_scores
+    const { data: latestEpochData, error: epochError } = await supabaseAdmin
+      .from('drep_scores')
+      .select('epoch')
+      .order('epoch', { ascending: false })
+      .limit(1);
 
+    if (epochError) {
+      throw new Error(`Failed to fetch latest epoch: ${epochError.message}`);
+    }
+
+    const currentEpoch = latestEpochData?.[0]?.epoch || 0;
+
+    // Query 2: Get latest sync time
+    const { data: syncState, error: syncError } = await supabaseAdmin
+      .from('sync_state')
+      .select('last_synced_at')
+      .eq('entity', 'scores')
+      .single();
+
+    if (syncError && syncError.code !== 'PGRST116') {
+      // PGRST116 is "no rows" which is fine for first time
+      console.warn('Failed to fetch sync state:', syncError.message);
+    }
+
+    // Query 3: Fetch all scores for current epoch (WITHOUT nested join)
+    const { data: scores, error: scoresError } = await supabaseAdmin
+      .from('drep_scores')
+      .select('epoch, drep_id, raw_govscore, adjusted_govscore, participation_rate')
+      .eq('epoch', currentEpoch)
+      .order('adjusted_govscore', { ascending: false });
+
+    if (scoresError) {
+      throw new Error(`Failed to fetch scores: ${scoresError.message}`);
+    }
+
+    if (!scores || scores.length === 0) {
+      return { dreps: [], currentEpoch, lastSyncedAt: syncState?.last_synced_at || null };
+    }
+
+    // Query 4: Fetch DRep details by IDs (separate query to avoid PGRST125)
+    const drepIds = scores.map((s) => s.drep_id);
+    const { data: drepsData, error: drepsError } = await supabaseAdmin
+      .from('dreps')
+      .select('drep_id, hex_id, is_registered, amount_lovelace, delegator_count')
+      .in('drep_id', drepIds);
+
+    if (drepsError) {
+      throw new Error(`Failed to fetch DRep details: ${drepsError.message}`);
+    }
+
+    // Create lookup map for DRep data
+    const drepMap = new Map(
+      (drepsData || []).map((d) => [
+        d.drep_id,
+        {
+          hex_id: d.hex_id,
+          is_registered: d.is_registered,
+          amount_lovelace: d.amount_lovelace,
+          delegator_count: d.delegator_count,
+        },
+      ])
+    );
+
+    // Merge scores with DRep data (preserving score order)
+    const dreps: DRepScore[] = scores.map((score) => {
+      const drepData = drepMap.get(score.drep_id) || {
+        hex_id: null,
+        is_registered: false,
+        amount_lovelace: null,
+        delegator_count: null,
+      };
+
+      return {
+        drep_id: score.drep_id,
+        hex_id: drepData.hex_id,
+        is_registered: drepData.is_registered,
+        amount_lovelace: drepData.amount_lovelace,
+        delegator_count: drepData.delegator_count,
+        raw_govscore: score.raw_govscore,
+        adjusted_govscore: score.adjusted_govscore,
+        participation_rate: score.participation_rate,
+        epoch: score.epoch,
+      };
+    });
+
+    return { dreps, currentEpoch, lastSyncedAt: syncState?.last_synced_at || null };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('Error fetching DRep scores:', message);
     return {
-      drep_id: row.drep_id,
-      hex_id: drepData?.hex_id || null,
-      is_registered: drepData?.is_registered || false,
-      amount_lovelace: drepData?.amount_lovelace || null,
-      delegator_count: drepData?.delegator_count || null,
-      raw_govscore: row.raw_govscore,
-      adjusted_govscore: row.adjusted_govscore,
-      participation_rate: row.participation_rate,
-      epoch: row.epoch,
+      dreps: null,
+      currentEpoch: null,
+      lastSyncedAt: null,
+      error: `Failed to load scoreboard: ${message}`,
     };
-  });
-
-  return { dreps, currentEpoch, lastSyncedAt: syncState?.last_synced_at || null };
+  }
 }
 
 function formatADA(lovelace: bigint | null): string {
@@ -121,9 +181,33 @@ function formatTime(isoString: string | null): string {
 }
 
 export default async function ScoreboardPage() {
-  const { dreps, currentEpoch, lastSyncedAt } = await getDRepScoresForCurrentEpoch();
+  const result = await getDRepScoresForCurrentEpoch();
 
   const truncateDRepId = (id: string) => id.substring(0, 16) + '...';
+
+  // Handle error state
+  if ('error' in result && result.error) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="rounded-lg border border-yellow-700/50 bg-yellow-900/20 p-6 text-center">
+            <h2 className="text-2xl font-bold text-yellow-300 mb-2">Maintenance Mode</h2>
+            <p className="text-yellow-200 mb-4">{result.error}</p>
+            <p className="text-sm text-yellow-200/70">
+              Please check back shortly. Our infrastructure team has been notified.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // TypeScript: result is guaranteed to have dreps, currentEpoch, lastSyncedAt after error check
+  const { dreps, currentEpoch, lastSyncedAt } = result as {
+    dreps: DRepScore[];
+    currentEpoch: number;
+    lastSyncedAt: string | null;
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white py-8 px-4 sm:px-6 lg:px-8">
