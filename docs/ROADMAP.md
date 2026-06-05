@@ -119,11 +119,11 @@ PHASE 0 — Foundation
 [ ] 0.8  Set up CONCEPT.md + ROADMAP.md in repo
 
 PHASE 1 — Scoreboard MVP  (locked after Phase 0 complete)
-[ ] 1.1  Koios API client + types
-[ ] 1.2  Supabase schema for DRep cache
-[ ] 1.3  ETL job: fetch & store DRep list
-[ ] 1.4  ETL job: fetch & store vote history
-[ ] 1.5  GovScore v1 (participation rate only)
+[x] 1.1  Koios API client + types
+[x] 1.2  Supabase schema for DRep cache
+[x] 1.3  ETL job: fetch & store DRep list
+[x] 1.4  ETL job: fetch & store vote history
+[x] 1.5  GovScore v1 (participation rate only)
 [ ] 1.6  Quadratic ADA dampening
 [ ] 1.7  Scoreboard list page (server-rendered)
 [ ] 1.8  Flip-card component (front)
