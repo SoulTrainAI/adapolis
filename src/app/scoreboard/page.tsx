@@ -4,7 +4,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
-import { Award } from 'lucide-react';
+import { DRepCard } from '@/components/scoreboard/DRepCard';
 
 interface DRepScore {
   drep_id: string;
@@ -104,18 +104,6 @@ function formatADA(lovelace: bigint | null): string {
   return `${ada.toFixed(1)} ADA`;
 }
 
-function formatScore(score: number | null): string {
-  if (score === null || score === undefined) return '-';
-  return score.toFixed(1);
-}
-
-function getMetalBadge(rank: number): { bg: string; label: string } {
-  if (rank === 1) return { bg: 'bg-yellow-600/20 border-yellow-500/50', label: 'Gold' };
-  if (rank === 2) return { bg: 'bg-gray-400/20 border-gray-300/50', label: 'Silver' };
-  if (rank === 3) return { bg: 'bg-orange-700/20 border-orange-600/50', label: 'Bronze' };
-  return { bg: '', label: '' };
-}
-
 function formatTime(isoString: string | null): string {
   if (!isoString) return 'Never';
 
@@ -165,88 +153,27 @@ export default async function ScoreboardPage() {
           </div>
         )}
 
-        {/* Scoreboard grid */}
+        {/* Scoreboard grid with flip-cards */}
         {dreps.length > 0 && (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-max">
             {dreps.map((drep, index) => {
               const rank = index + 1;
-              const metalBadge = getMetalBadge(rank);
-              const isTopTen = rank <= 10;
-              const isTopThree = rank <= 3;
-
               return (
-                <div
+                <DRepCard
                   key={drep.drep_id}
-                  className={`
-                    rounded-lg border transition-all duration-200
-                    ${isTopThree ? metalBadge.bg : isTopTen ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-900/50 border-slate-800/50'}
-                    hover:border-slate-600/50 hover:bg-slate-800/50
-                    p-4 cursor-pointer group
-                  `}
-                >
-                  {/* Rank badge */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-3xl font-bold text-slate-300 w-12 text-center">#{rank}</span>
-                      {isTopThree && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded text-xs font-semibold">
-                          <Award size={12} className={isTopThree ? 'text-yellow-400' : ''} />
-                          {metalBadge.label}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* DRep ID / Name */}
-                  <p className="text-sm text-slate-400 font-mono mb-3">
-                    {truncateDRepId(drep.drep_id)}
-                  </p>
-
-                  {/* Scores */}
-                  <div className="mb-4">
-                    <div className="mb-2">
-                      <p className="text-xs text-slate-500 uppercase tracking-wider">Adjusted Score</p>
-                      <p className="text-4xl font-bold text-white">
-                        {formatScore(drep.adjusted_govscore)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wider">Raw Score</p>
-                      <p className="text-lg text-slate-300">{formatScore(drep.raw_govscore)}</p>
-                    </div>
-                  </div>
-
-                  {/* Metrics */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="bg-slate-800/30 rounded p-2">
-                      <p className="text-xs text-slate-500">Participation</p>
-                      <p className="font-semibold">
-                        {drep.participation_rate !== null ? `${(drep.participation_rate * 100).toFixed(1)}%` : '-'}
-                      </p>
-                    </div>
-                    <div className="bg-slate-800/30 rounded p-2">
-                      <p className="text-xs text-slate-500">Delegated</p>
-                      <p className="font-semibold">{formatADA(drep.amount_lovelace)}</p>
-                    </div>
-                    <div className="bg-slate-800/30 rounded p-2 col-span-2">
-                      <p className="text-xs text-slate-500">Delegators</p>
-                      <p className="font-semibold">{drep.delegator_count || '—'}</p>
-                    </div>
-                  </div>
-
-                  {/* Status badge */}
-                  <div className="mt-3">
-                    <span
-                      className={`inline-block text-xs px-2 py-1 rounded ${
-                        drep.is_registered
-                          ? 'bg-green-900/30 text-green-300'
-                          : 'bg-red-900/30 text-red-300'
-                      }`}
-                    >
-                      {drep.is_registered ? 'Registered' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
+                  props={{
+                    rank,
+                    drepId: drep.drep_id,
+                    displayName: drep.hex_id ? drep.hex_id : truncateDRepId(drep.drep_id),
+                    adjustedScore: drep.adjusted_govscore,
+                    rawScore: drep.raw_govscore,
+                    participationRate: drep.participation_rate,
+                    adaAmount: formatADA(drep.amount_lovelace),
+                    delegatorCount: drep.delegator_count,
+                    isRegistered: drep.is_registered,
+                    votingStreak: 0,
+                  }}
+                />
               );
             })}
           </div>
