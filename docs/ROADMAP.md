@@ -125,7 +125,7 @@ PHASE 1 — Scoreboard MVP  (locked after Phase 0 complete)
 [x] 1.4  ETL job: fetch & store vote history
 [x] 1.5  GovScore v1 (participation rate only)
 [x] 1.6  Quadratic ADA dampening
-[ ] 1.7  Scoreboard list page (server-rendered)
+[x] 1.7  Scoreboard list page (server-rendered)
 [ ] 1.8  Flip-card component (front)
 [ ] 1.9  Flip-card component (back)
 [ ] 1.10 Voting streak calculation
