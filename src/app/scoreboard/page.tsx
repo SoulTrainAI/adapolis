@@ -3,6 +3,7 @@
  * Server-rendered page showing all DReps ranked by adjusted_govscore
  */
 
+import { createClient } from '@supabase/supabase-js';
 import { DRepCard } from '@/components/scoreboard/DRepCard';
 
 interface DRepScore {
@@ -24,31 +25,24 @@ interface ErrorState {
   error: string;
 }
 
-async function initializeSupabase() {
-  try {
-    // Dynamically import to catch missing env vars
-    const supabaseModule = await import('@/lib/sync/supabase-admin');
-    return supabaseModule.supabaseAdmin;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('Failed to initialize Supabase admin client:', message);
-    return null;
-  }
-}
-
 async function getDRepScoresForCurrentEpoch(): Promise<
   { dreps: DRepScore[]; currentEpoch: number; lastSyncedAt: string | null; error?: never } | ErrorState
 > {
-  const supabaseAdmin = await initializeSupabase();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseAdmin) {
+  if (!supabaseUrl || !serviceRoleKey) {
     return {
       dreps: null,
       currentEpoch: null,
       lastSyncedAt: null,
-      error: 'Database service unavailable. Supabase credentials missing or invalid.',
+      error: 'Database credentials missing',
     };
   }
+
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
 
   try {
     // Query 1: Get the latest epoch from drep_scores
