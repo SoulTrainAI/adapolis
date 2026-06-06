@@ -18,6 +18,8 @@ export async function syncProposals(): Promise<SyncResult> {
   const startTime = Date.now();
   let synced = 0;
   let errors = 0;
+  let upsertError: { message?: string; code?: string; details?: unknown } | null = null;
+  let firstRecord: unknown = null;
 
   try {
     console.log(
@@ -77,21 +79,23 @@ export async function syncProposals(): Promise<SyncResult> {
     }));
 
     // Step 3: Upsert into proposals table (conflict on proposal_id)
+    firstRecord = proposalRecords[0];
     console.log(
       JSON.stringify({
         event: 'upserting_proposals',
         count: proposalRecords.length,
-        firstRecord: proposalRecords[0],
+        firstRecord,
         timestamp: new Date().toISOString(),
       })
     );
 
-    const { error: upsertError } = await supabaseAdmin
+    const { error: err } = await supabaseAdmin
       .from('proposals')
       .upsert(proposalRecords, { onConflict: 'proposal_id' });
 
-    if (upsertError) {
-      console.error(JSON.stringify({ event: 'proposal_upsert_error', error: upsertError.message, code: upsertError.code, details: upsertError.details }));
+    if (err) {
+      upsertError = err;
+      console.error(JSON.stringify({ event: 'proposal_upsert_error', error: err.message, code: err.code, details: err.details }));
       errors += proposalRecords.length;
     } else {
       synced = proposalRecords.length;
@@ -140,7 +144,16 @@ export async function syncProposals(): Promise<SyncResult> {
       })
     );
 
-    return { synced, errors, duration_ms: duration };
+    const result: SyncResult = { synced, errors, duration_ms: duration };
+    if (upsertError) {
+      result.error = {
+        message: upsertError.message || 'Unknown error',
+        code: upsertError.code,
+        details: upsertError.details,
+        firstRecord,
+      };
+    }
+    return result;
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : String(error);

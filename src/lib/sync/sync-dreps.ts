@@ -10,6 +10,12 @@ export interface SyncResult {
   synced: number;
   errors: number;
   duration_ms: number;
+  error?: {
+    message: string;
+    code?: string;
+    details?: unknown;
+    firstRecord?: unknown;
+  };
 }
 
 /**
