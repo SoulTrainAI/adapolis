@@ -81,6 +81,7 @@ export async function syncProposals(): Promise<SyncResult> {
       JSON.stringify({
         event: 'upserting_proposals',
         count: proposalRecords.length,
+        firstRecord: proposalRecords[0],
         timestamp: new Date().toISOString(),
       })
     );
@@ -90,7 +91,7 @@ export async function syncProposals(): Promise<SyncResult> {
       .upsert(proposalRecords, { onConflict: 'proposal_id' });
 
     if (upsertError) {
-      console.error(JSON.stringify({ event: 'proposal_upsert_error', error: upsertError.message }));
+      console.error(JSON.stringify({ event: 'proposal_upsert_error', error: upsertError.message, code: upsertError.code, details: upsertError.details }));
       errors += proposalRecords.length;
     } else {
       synced = proposalRecords.length;
