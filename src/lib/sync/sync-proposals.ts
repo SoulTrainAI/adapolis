@@ -37,7 +37,7 @@ export async function syncProposals(): Promise<SyncResult> {
 
     const { koiosFetch } = await import('@/lib/koios/client');
     const proposalsList = await koiosFetch<KoiosProposal[]>('/proposal_list', {
-      method: 'POST',
+      method: 'GET',
     });
     console.log(
       JSON.stringify({
@@ -68,7 +68,7 @@ export async function syncProposals(): Promise<SyncResult> {
       submission_block_time: new Date(p.block_time * 1000).toISOString(),
       voting_starts_epoch: null,
       voting_ends_epoch: null,
-      expires_at: new Date(p.expiration * 1000 * 432000).toISOString(),
+      expires_at: null,
       status: determineProposalStatus(p),
       ratified_epoch: p.ratified_epoch,
       enacted_epoch: p.enacted_epoch,

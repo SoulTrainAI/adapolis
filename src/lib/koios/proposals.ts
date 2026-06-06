@@ -22,8 +22,7 @@ import {
  */
 export async function fetchActiveProposals(): Promise<KoiosProposal[]> {
   const response = await koiosFetch<unknown[]>('/proposal_list', {
-    method: 'POST',
-    body: {},
+    method: 'GET',
   });
 
   const allProposals = validateKoiosListResponse(

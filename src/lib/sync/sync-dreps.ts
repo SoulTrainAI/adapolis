@@ -40,7 +40,7 @@ export async function syncDReps(): Promise<SyncResult> {
     while (hasMore) {
       const response = await koiosFetch<KoiosDRep[]>(
         `/drep_list?offset=${offset}&limit=${limit}`,
-        { method: 'POST' }
+        { method: 'GET' }
       );
 
       const dreps = response || [];
