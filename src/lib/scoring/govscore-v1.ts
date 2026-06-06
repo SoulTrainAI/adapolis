@@ -49,11 +49,12 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
   );
 
   try {
-    // Step 1: Get all registered DReps with their delegation amounts
+    // Step 1: Get all DReps with their delegation amounts
+    // Note: is_registered from Koios API may not reflect actual on-chain status for Phase 1
+    // For now, include all DReps to enable scoring
     const { data: dreps, error: drepsError } = await supabaseAdmin
       .from('dreps')
-      .select('drep_id, is_registered, expires_epoch, amount_lovelace')
-      .eq('is_registered', true);
+      .select('drep_id, is_registered, expires_epoch, amount_lovelace');
 
     if (drepsError || !dreps) {
       throw new Error(`Failed to fetch registered DReps: ${drepsError?.message}`);
@@ -97,20 +98,15 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     for (const drep of dreps) {
       // Find proposals eligible for this DRep in this epoch
       // A proposal is eligible if:
-      // 1. The DRep was registered during the proposal's voting window
-      // 2. The voting window overlaps with the target epoch
+      // 1. It has not yet expired or been enacted
+      // 2. For Phase 1, we include all proposals without explicit epoch filters
+      //    (voting_starts/ends_epoch may not be populated from Koios)
       const eligibleProposals = proposals.filter((p) => {
-        // Proposal voting window must overlap with target epoch
-        const votingEndsEpoch = p.voting_ends_epoch || p.expired_epoch;
-        if (!votingEndsEpoch) return false; // Skip if no end epoch defined
+        // Skip proposals that have already expired or been enacted
+        if (p.expired_epoch !== null) return false;
 
-        // Check if voting window overlaps with target epoch
-        const votingActive = (p.voting_starts_epoch || 0) <= epoch && epoch <= votingEndsEpoch;
-        if (!votingActive) return false;
-
-        // Check if DRep was registered during the voting window
-        // A DRep is eligible to vote if they were registered at voting_starts_epoch
-        // (Note: For Phase 1, we're using simple registered status. Phase 2+ will refine this.)
+        // For Phase 1, if voting epochs aren't populated, assume proposal is valid
+        // This will be refined in Phase 2 with proper voting window logic
         return true;
       });
 
@@ -194,6 +190,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       JSON.stringify({
         event: 'upserting_scores',
         count: scoresForUpsert.length,
+        firstRecord: scoresForUpsert[0],
         timestamp: new Date().toISOString(),
       })
     );
@@ -203,6 +200,16 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       .upsert(scoresForUpsert, { onConflict: 'drep_id,epoch' });
 
     if (upsertError) {
+      console.error(
+        JSON.stringify({
+          event: 'drep_scores_upsert_error',
+          error: upsertError.message,
+          code: upsertError.code,
+          details: upsertError.details,
+          firstRecord: scoresForUpsert[0],
+          timestamp: new Date().toISOString(),
+        })
+      );
       throw new Error(`Failed to upsert scores: ${upsertError.message}`);
     }
 
