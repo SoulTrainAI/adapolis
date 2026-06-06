@@ -70,9 +70,9 @@ export async function syncDReps(): Promise<SyncResult> {
         hex_id: drep.hex,
         is_script: drep.has_script,
         is_registered: drep.registered,
-        deposit_lovelace: BigInt(drep.deposit),
+        deposit_lovelace: drep.deposit ? BigInt(drep.deposit) : BigInt(0), // Optional in drep_list
         active_epoch: null, // Not available in list response, only in info
-        expires_epoch: drep.expires_epoch_no,
+        expires_epoch: drep.expires_epoch_no ?? null, // Optional in drep_list
         amount_lovelace: info ? BigInt(info.amount) : BigInt(0),
         delegator_count: null, // Not directly available, will be calculated from delegations
         voting_anchor_url: info?.url ?? null,

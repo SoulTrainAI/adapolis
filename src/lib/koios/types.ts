@@ -18,9 +18,9 @@ export const KoiosDRepSchema = z.object({
   hex: z.string(),
   has_script: z.boolean(),
   registered: z.boolean(),
-  deposit: z.string(), // lovelace as string (large number)
-  active: z.boolean(),
-  expires_epoch_no: z.number().nullable(),
+  deposit: z.string().optional(), // lovelace as string (not in drep_list)
+  active: z.boolean().optional(), // not in drep_list
+  expires_epoch_no: z.number().nullable().optional(), // not in drep_list
 });
 
 export type KoiosDRep = z.infer<typeof KoiosDRepSchema>;
@@ -72,22 +72,31 @@ export type KoiosDRepVote = z.infer<typeof KoiosDRepVoteSchema>;
  */
 export const KoiosProposalSchema = z.object({
   proposal_id: z.string(),
-  tx_hash: z.string(),
-  cert_index: z.number(),
+  proposal_tx_hash: z.string(), // not tx_hash
+  proposal_index: z.number(), // not cert_index
   block_time: z.number(), // Unix timestamp
-  action_type: z.string(), // e.g., 'InfoAction', 'TreasuryWithdrawal', 'ParameterChange'
+  proposal_type: z.string(), // not action_type; e.g., 'InfoAction', 'TreasuryWithdrawal', 'ParameterChange'
   proposed_epoch: z.number(),
-  url: z.string().nullable(),
-  hash: z.string().nullable(),
-  json: z.record(z.string(), z.unknown()).nullable(), // Governance metadata (parsed JSON)
-  voting_start_epoch: z.number(),
-  voting_end_epoch: z.number(),
-  expires_epoch: z.number(),
-  is_active: z.boolean(),
-  ratified_epoch: z.number().nullable(),
-  enacted_epoch: z.number().nullable(),
-  expired_epoch: z.number().nullable(),
-  dropped_epoch: z.number().nullable(),
+  meta_url: z.string().nullable(), // not url
+  meta_hash: z.string().nullable(), // not hash
+  meta_json: z.record(z.string(), z.unknown()).nullable(), // not json; Governance metadata (parsed JSON)
+  meta_comment: z.string().nullable().optional(), // additional field
+  meta_language: z.string().optional(), // additional field
+  meta_is_valid: z.boolean().optional(), // additional field
+  expiration: z.number(), // new field (expires_epoch is different)
+  expires_epoch: z.number().optional(), // may not be in all responses
+  is_active: z.boolean().optional(), // may not be in list response
+  ratified_epoch: z.number().nullable().optional(),
+  enacted_epoch: z.number().nullable().optional(),
+  expired_epoch: z.number().nullable().optional(),
+  dropped_epoch: z.number().nullable().optional(),
+  deposit: z.string().optional(), // additional field
+  return_address: z.string().optional(), // additional field
+  proposal_description: z.unknown().optional(), // additional field
+  withdrawal: z.array(z.unknown()).optional(), // additional field
+  param_proposal: z.record(z.string(), z.unknown()).optional(), // additional field
+  voting_start_epoch: z.number().optional(), // may not be in list response
+  voting_end_epoch: z.number().optional(), // may not be in list response
 });
 
 export type KoiosProposal = z.infer<typeof KoiosProposalSchema>;

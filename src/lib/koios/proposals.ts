@@ -33,7 +33,10 @@ export async function fetchActiveProposals(): Promise<KoiosProposal[]> {
   );
 
   // Filter to active proposals only (currently in voting window)
-  const activeProposals = allProposals.filter((p) => p.is_active === true);
+  // Note: is_active may not be in list response, so filter on other criteria
+  const activeProposals = allProposals.filter(
+    (p) => p.meta_is_valid === true && p.dropped_epoch === null && p.expired_epoch === null
+  );
 
   console.log(
     JSON.stringify({
@@ -111,14 +114,14 @@ export async function fetchProposalVotesBatch(
  * Filters proposals by action type
  * Useful for domain-specific filtering
  * @param proposals - Array of proposals to filter
- * @param actionType - Action type to filter by (e.g., 'TreasuryWithdrawal', 'InfoAction')
+ * @param proposalType - Proposal type to filter by (e.g., 'TreasuryWithdrawal', 'InfoAction')
  * @returns Filtered proposals
  */
 export function filterProposalsByType(
   proposals: KoiosProposal[],
-  actionType: string
+  proposalType: string
 ): KoiosProposal[] {
-  return proposals.filter((p) => p.action_type === actionType);
+  return proposals.filter((p) => p.proposal_type === proposalType);
 }
 
 /**
