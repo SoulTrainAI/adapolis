@@ -46,9 +46,22 @@ export async function syncDReps(): Promise<SyncResult> {
     let hasMore = true;
 
     while (hasMore) {
+      console.log(JSON.stringify({ event: 'drep_fetch_iteration', offset, limit }));
+
       const response = await koiosFetch<{ value: unknown[]; Count: number }>(
         `/drep_list?offset=${offset}&limit=${limit}`,
         { method: 'POST' }
+      );
+
+      console.log(
+        JSON.stringify({
+          event: 'drep_response_received',
+          hasValue: !!response.value,
+          valueType: typeof response.value,
+          valueIsArray: Array.isArray(response.value),
+          valueLength: (response.value as unknown[])?.length || 0,
+          count: response.Count,
+        })
       );
 
       const dreps = ((response.value as unknown[]) || []).map((d: unknown) => {
@@ -60,6 +73,8 @@ export async function syncDReps(): Promise<SyncResult> {
           registered: dObj.registered as boolean,
         };
       });
+
+      console.log(JSON.stringify({ event: 'drep_mapped', count: dreps.length }));
 
       allDReps.push(...dreps);
 
@@ -104,13 +119,29 @@ export async function syncDReps(): Promise<SyncResult> {
     );
     const drepInfoList = await fetchDRepInfoBatched(drepIds);
 
+    console.log(
+      JSON.stringify({
+        event: 'drep_info_fetched',
+        count: drepInfoList.length,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
     // Step 3: Build map of detailed info for lookup
     const infoMap = new Map(drepInfoList.map((info) => [info.drep_id, info]));
+    console.log(
+      JSON.stringify({
+        event: 'drep_info_map_built',
+        mapSize: infoMap.size,
+      })
+    );
 
     // Step 4: Prepare upsert data with field mappings
-    const drepRecords = drepList.map((drep: KoiosDRep) => {
+    console.log(JSON.stringify({ event: 'preparing_drep_records', count: drepList.length }));
+
+    const drepRecords = drepList.map((drep: KoiosDRep, index: number) => {
       const info = infoMap.get(drep.drep_id);
-      return {
+      const record = {
         drep_id: drep.drep_id,
         hex_id: drep.hex,
         is_script: drep.has_script,
@@ -125,7 +156,20 @@ export async function syncDReps(): Promise<SyncResult> {
         metadata: info?.json ?? null,
         updated_at: new Date().toISOString(),
       };
+
+      if (index === 0) {
+        console.log(JSON.stringify({ event: 'sample_drep_record', record: JSON.stringify(record) }));
+      }
+
+      return record;
     });
+
+    console.log(
+      JSON.stringify({
+        event: 'drep_records_prepared',
+        count: drepRecords.length,
+      })
+    );
 
     // Step 5: Upsert into dreps table (conflict on drep_id)
     console.log(
