@@ -31,30 +31,30 @@ export const KoiosDRepInfoSchema = z.object({
   drep_id: z.string(),
   hex: z.string(),
   has_script: z.boolean(),
-  registered: z.boolean(),
-  deposit: z.string(), // lovelace as string
-  amount: z.string(), // total ADA delegated (lovelace as string)
-  active_until: z.number(),
-  url: z.string().nullable(),
-  hash: z.string().nullable(),
-  json: z.record(z.string(), z.unknown()).nullable(), // CIP-119 metadata (parsed JSON)
+  drep_status: z.string(),
+  deposit: z.string().nullable(),
+  amount: z.string(),
+  active: z.boolean(),
+  expires_epoch_no: z.number().nullable(),
+  meta_url: z.string().nullable(),
+  meta_hash: z.string().nullable(),
 });
 
 export type KoiosDRepInfo = z.infer<typeof KoiosDRepInfoSchema>;
 
 /**
- * Vote cast by a DRep from /voter_proposal_list endpoint
- * @see https://api.koios.rest/#/Governance/voter_proposal_list
+ * Vote cast by a DRep from /drep_votes endpoint
+ * @see https://api.koios.rest/#/Governance/drep_votes
  */
 export const KoiosDRepVoteSchema = z.object({
   proposal_id: z.string(),
+  proposal_tx_hash: z.string(),
   proposal_index: z.number(),
-  tx_index: z.number().nullable(),
-  block_time: z.number(), // Unix timestamp
+  vote_tx_hash: z.string(),
+  block_time: z.number(),
   vote: z.enum(['Yes', 'No', 'Abstain']),
-  voter_role: z.enum(['ConstitutionalCommittee', 'DRep', 'SPO']),
-  rationale_url: z.string().nullable(),
-  rationale_hash: z.string().nullable(),
+  meta_url: z.string().nullable(),
+  meta_hash: z.string().nullable(),
 });
 
 export type KoiosDRepVote = z.infer<typeof KoiosDRepVoteSchema>;
@@ -99,15 +99,14 @@ export type KoiosProposal = z.infer<typeof KoiosProposalSchema>;
  * @see https://api.koios.rest/#/Governance/proposal_votes
  */
 export const KoiosProposalVoteSchema = z.object({
-  proposal_id: z.string(),
-  proposal_index: z.number(),
+  block_time: z.number(),
   voter_role: z.enum(['ConstitutionalCommittee', 'DRep', 'SPO']),
-  voter: z.string(), // DRep ID, CC member address, or SPO ID
+  voter_id: z.string(),
+  voter_hex: z.string(),
+  voter_has_script: z.boolean(),
   vote: z.enum(['Yes', 'No', 'Abstain']),
-  tx_index: z.number().nullable(),
-  block_time: z.number(), // Unix timestamp
-  rationale_url: z.string().nullable(),
-  rationale_hash: z.string().nullable(),
+  meta_url: z.string().nullable(),
+  meta_hash: z.string().nullable(),
 });
 
 export type KoiosProposalVote = z.infer<typeof KoiosProposalVoteSchema>;

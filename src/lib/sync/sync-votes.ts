@@ -83,12 +83,12 @@ export async function syncVotes(drepIds?: string[]): Promise<SyncResult> {
         voteRecords.push({
           drep_id: drepId,
           proposal_id: vote.proposal_id,
-          vote: vote.vote.toLowerCase(), // 'Yes' -> 'yes', etc
-          rationale_url: vote.rationale_url,
-          rationale_hash: vote.rationale_hash,
-          rationale: null, // Will be fetched in Phase 2+
+          vote: vote.vote.toLowerCase(),
+          rationale_url: null,
+          rationale_hash: null,
+          rationale: null,
           block_time: new Date(vote.block_time * 1000).toISOString(),
-          tx_hash: null, // Not available from Koios voter_proposal_list
+          tx_hash: vote.vote_tx_hash,
         });
         totalVotes++;
       }

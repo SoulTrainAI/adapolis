@@ -73,11 +73,8 @@ export async function fetchAllProposals(): Promise<KoiosProposal[]> {
  * @throws Error if API request fails or proposal ID is invalid
  */
 export async function fetchProposalVotes(proposalId: string): Promise<KoiosProposalVote[]> {
-  const response = await koiosFetch<unknown[]>('/proposal_votes', {
-    method: 'POST',
-    body: {
-      _proposal_id: proposalId,
-    },
+  const response = await koiosFetch<unknown[]>(`/proposal_votes?_proposal_id=${proposalId}`, {
+    method: 'GET',
   });
 
   return validateKoiosListResponse(response, KoiosProposalVoteSchema, '/proposal_votes');

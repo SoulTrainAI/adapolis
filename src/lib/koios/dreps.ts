@@ -123,15 +123,11 @@ export async function fetchDRepInfoBatched(drepIds: string[]): Promise<KoiosDRep
  * @throws Error if API request fails or DRep ID is invalid
  */
 export async function fetchDRepVotes(drepId: string): Promise<KoiosDRepVote[]> {
-  const response = await koiosFetch<unknown[]>('/voter_proposal_list', {
-    method: 'POST',
-    body: {
-      _voter_id: drepId,
-      _voter_role: 'DRep',
-    },
+  const response = await koiosFetch<unknown[]>(`/drep_votes?_drep_id=${drepId}`, {
+    method: 'GET',
   });
 
-  return validateKoiosListResponse(response, KoiosDRepVoteSchema, '/voter_proposal_list');
+  return validateKoiosListResponse(response, KoiosDRepVoteSchema, '/drep_votes');
 }
 
 /**
