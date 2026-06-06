@@ -126,12 +126,29 @@ export async function syncVotes(
       return { synced: 0, errors: 0, duration_ms: Date.now() - startTime };
     }
 
-    // Step 4: Upsert into votes table (conflict on drep_id + proposal_id)
-    firstRecord = voteRecords[0];
+    // Step 4: Deduplicate votes by (drep_id, proposal_id) — keep most recent (last occurrence)
+    const seen = new Map<string, (typeof voteRecords)[0]>();
+    for (const record of voteRecords) {
+      const key = `${record.drep_id}:${record.proposal_id}`;
+      seen.set(key, record);
+    }
+    const dedupedRecords = Array.from(seen.values());
+
+    console.log(
+      JSON.stringify({
+        event: 'votes_deduplicated',
+        original: voteRecords.length,
+        deduped: dedupedRecords.length,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    // Step 5: Upsert into votes table (conflict on drep_id + proposal_id)
+    firstRecord = dedupedRecords[0];
     console.log(
       JSON.stringify({
         event: 'upserting_votes',
-        count: voteRecords.length,
+        count: dedupedRecords.length,
         firstRecord,
         timestamp: new Date().toISOString(),
       })
@@ -139,14 +156,14 @@ export async function syncVotes(
 
     const { error: err } = await supabaseAdmin
       .from('votes')
-      .upsert(voteRecords, { onConflict: 'drep_id,proposal_id' });
+      .upsert(dedupedRecords, { onConflict: 'drep_id,proposal_id' });
 
     if (err) {
       upsertError = err;
       console.error(JSON.stringify({ event: 'vote_upsert_error', error: err.message, code: err.code, details: err.details }));
-      errors += voteRecords.length;
+      errors += dedupedRecords.length;
     } else {
-      synced = voteRecords.length;
+      synced = dedupedRecords.length;
       console.log(
         JSON.stringify({
           event: 'votes_upserted',
