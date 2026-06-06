@@ -30,6 +30,8 @@ export async function syncVotes(
   const startTime = Date.now();
   let synced = 0;
   let errors = 0;
+  let upsertError: { message?: string; code?: string; details?: unknown } | null = null;
+  let firstRecord: unknown = null;
   const limit = options?.limit ?? 50;
   const offset = options?.offset ?? 0;
 
@@ -125,20 +127,23 @@ export async function syncVotes(
     }
 
     // Step 4: Upsert into votes table (conflict on drep_id + proposal_id)
+    firstRecord = voteRecords[0];
     console.log(
       JSON.stringify({
         event: 'upserting_votes',
         count: voteRecords.length,
+        firstRecord,
         timestamp: new Date().toISOString(),
       })
     );
 
-    const { error: upsertError } = await supabaseAdmin
+    const { error: err } = await supabaseAdmin
       .from('votes')
       .upsert(voteRecords, { onConflict: 'drep_id,proposal_id' });
 
-    if (upsertError) {
-      console.error(JSON.stringify({ event: 'vote_upsert_error', error: upsertError.message }));
+    if (err) {
+      upsertError = err;
+      console.error(JSON.stringify({ event: 'vote_upsert_error', error: err.message, code: err.code, details: err.details }));
       errors += voteRecords.length;
     } else {
       synced = voteRecords.length;
@@ -187,7 +192,16 @@ export async function syncVotes(
       })
     );
 
-    return { synced, errors, duration_ms: duration };
+    const result: SyncResult = { synced, errors, duration_ms: duration };
+    if (upsertError) {
+      result.error = {
+        message: upsertError.message || 'Unknown error',
+        code: upsertError.code,
+        details: upsertError.details,
+        firstRecord,
+      };
+    }
+    return result;
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : String(error);
