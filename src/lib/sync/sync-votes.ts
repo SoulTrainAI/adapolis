@@ -42,7 +42,8 @@ export async function syncVotes(drepIds?: string[]): Promise<SyncResult> {
       );
       const { data: dreps, error: fetchError } = await supabaseAdmin
         .from('dreps')
-        .select('drep_id');
+        .select('drep_id')
+        .not('drep_id', 'like', 'drep_test%');
 
       if (fetchError || !dreps) {
         throw new Error(`Failed to fetch DRep IDs from database: ${fetchError?.message}`);
