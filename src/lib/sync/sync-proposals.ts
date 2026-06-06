@@ -36,14 +36,9 @@ export async function syncProposals(): Promise<SyncResult> {
     );
 
     const { koiosFetch } = await import('@/lib/koios/client');
-    const response = await koiosFetch<Record<string, unknown> | unknown[]>('/proposal_list', {
+    const proposalsList = await koiosFetch<KoiosProposal[]>('/proposal_list', {
       method: 'POST',
     });
-
-    // Handle wrapped response format (value + Count) or direct array
-    const proposalsList: unknown[] = Array.isArray(response)
-      ? response
-      : ((response as Record<string, unknown>).value as unknown[]) || [];
     console.log(
       JSON.stringify({
         event: 'proposals_fetched',
@@ -58,22 +53,22 @@ export async function syncProposals(): Promise<SyncResult> {
     }
 
     // Step 2: Prepare upsert data with field mappings
-    const proposalRecords = (proposalsList as KoiosProposal[]).map((p: KoiosProposal) => ({
+    const proposalRecords = (proposalsList || []).map((p: KoiosProposal) => ({
       proposal_id: p.proposal_id,
       tx_hash: p.proposal_tx_hash,
       cert_index: p.proposal_index,
       proposal_type: mapProposalType(p.proposal_type),
       action_type: p.proposal_type,
-      title: extractTitleFromMetadata(p.meta_json),
-      abstract: extractAbstractFromMetadata(p.meta_json),
+      title: extractTitleFromMetadata(p.meta_json as Record<string, unknown> | null),
+      abstract: extractAbstractFromMetadata(p.meta_json as Record<string, unknown> | null),
       metadata_url: p.meta_url,
       metadata_hash: p.meta_hash,
       metadata: p.meta_json,
       proposed_epoch: p.proposed_epoch,
       submission_block_time: new Date(p.block_time * 1000).toISOString(),
-      voting_starts_epoch: p.voting_start_epoch,
-      voting_ends_epoch: p.voting_end_epoch,
-      expires_at: new Date(p.expiration * 1000 * 432000).toISOString(), // expiration is epoch number
+      voting_starts_epoch: null,
+      voting_ends_epoch: null,
+      expires_at: new Date(p.expiration * 1000 * 432000).toISOString(),
       status: determineProposalStatus(p),
       ratified_epoch: p.ratified_epoch,
       enacted_epoch: p.enacted_epoch,

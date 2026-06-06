@@ -29,53 +29,21 @@ export async function syncDReps(): Promise<SyncResult> {
     console.log(JSON.stringify({ event: 'sync_dreps_start', timestamp: new Date().toISOString() }));
 
     // Step 1: Fetch all active DReps from Koios
-    // NOTE: Using raw Koios client instead of wrapper because of response format
     console.log(JSON.stringify({ event: 'fetching_drep_list', timestamp: new Date().toISOString() }));
     const { koiosFetch } = await import('@/lib/koios/client');
 
-    interface DRepFromApi {
-      drep_id: string;
-      hex: string;
-      has_script: boolean;
-      registered: boolean;
-    }
-
-    const allDReps: DRepFromApi[] = [];
+    const allDReps: KoiosDRep[] = [];
     let offset = 0;
     const limit = 100;
     let hasMore = true;
 
     while (hasMore) {
-      console.log(JSON.stringify({ event: 'drep_fetch_iteration', offset, limit }));
-
-      const response = await koiosFetch<{ value: unknown[]; Count: number }>(
+      const response = await koiosFetch<KoiosDRep[]>(
         `/drep_list?offset=${offset}&limit=${limit}`,
         { method: 'POST' }
       );
 
-      console.log(
-        JSON.stringify({
-          event: 'drep_response_received',
-          hasValue: !!response.value,
-          valueType: typeof response.value,
-          valueIsArray: Array.isArray(response.value),
-          valueLength: (response.value as unknown[])?.length || 0,
-          count: response.Count,
-        })
-      );
-
-      const dreps = ((response.value as unknown[]) || []).map((d: unknown) => {
-        const dObj = d as Record<string, unknown>;
-        return {
-          drep_id: dObj.drep_id as string,
-          hex: dObj.hex as string,
-          has_script: dObj.has_script as boolean,
-          registered: dObj.registered as boolean,
-        };
-      });
-
-      console.log(JSON.stringify({ event: 'drep_mapped', count: dreps.length }));
-
+      const dreps = response || [];
       allDReps.push(...dreps);
 
       if (dreps.length < limit) {
@@ -119,57 +87,25 @@ export async function syncDReps(): Promise<SyncResult> {
     );
     const drepInfoList = await fetchDRepInfoBatched(drepIds);
 
-    console.log(
-      JSON.stringify({
-        event: 'drep_info_fetched',
-        count: drepInfoList.length,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
     // Step 3: Build map of detailed info for lookup
     const infoMap = new Map(drepInfoList.map((info) => [info.drep_id, info]));
-    console.log(
-      JSON.stringify({
-        event: 'drep_info_map_built',
-        mapSize: infoMap.size,
-      })
-    );
 
     // Step 4: Prepare upsert data with field mappings
-    console.log(JSON.stringify({ event: 'preparing_drep_records', count: drepList.length }));
-
-    const drepRecords = drepList.map((drep: KoiosDRep, index: number) => {
-      const info = infoMap.get(drep.drep_id);
-      const record = {
-        drep_id: drep.drep_id,
-        hex_id: drep.hex,
-        is_script: drep.has_script,
-        is_registered: drep.registered,
-        deposit_lovelace: drep.deposit ? BigInt(drep.deposit) : BigInt(0), // Optional in drep_list
-        active_epoch: null, // Not available in list response, only in info
-        expires_epoch: drep.expires_epoch_no ?? null, // Optional in drep_list
-        amount_lovelace: info ? BigInt(info.amount) : BigInt(0),
-        delegator_count: null, // Not directly available, will be calculated from delegations
-        voting_anchor_url: info?.url ?? null,
-        voting_anchor_hash: info?.hash ?? null,
-        metadata: info?.json ?? null,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (index === 0) {
-        console.log(JSON.stringify({ event: 'sample_drep_record', record: JSON.stringify(record) }));
-      }
-
-      return record;
-    });
-
-    console.log(
-      JSON.stringify({
-        event: 'drep_records_prepared',
-        count: drepRecords.length,
-      })
-    );
+    const drepRecords = drepList.map((drep: KoiosDRep) => ({
+      drep_id: drep.drep_id,
+      hex_id: drep.hex,
+      is_script: drep.has_script,
+      is_registered: drep.registered,
+      deposit_lovelace: BigInt(0),
+      active_epoch: null,
+      expires_epoch: null,
+      amount_lovelace: infoMap.get(drep.drep_id) ? BigInt(infoMap.get(drep.drep_id)!.amount) : BigInt(0),
+      delegator_count: null,
+      voting_anchor_url: infoMap.get(drep.drep_id)?.url ?? null,
+      voting_anchor_hash: infoMap.get(drep.drep_id)?.hash ?? null,
+      metadata: infoMap.get(drep.drep_id)?.json ?? null,
+      updated_at: new Date().toISOString(),
+    }));
 
     // Step 5: Upsert into dreps table (conflict on drep_id)
     console.log(
