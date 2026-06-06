@@ -174,15 +174,15 @@ export async function syncProposals(): Promise<SyncResult> {
  */
 function mapProposalType(actionType: string): string {
   const typeMap: Record<string, string> = {
-    TreasuryWithdrawal: 'treasury_withdrawal',
+    TreasuryWithdrawals: 'treasury_withdrawal',
     ParameterChange: 'parameter_change',
     HardForkInitiation: 'hard_fork',
     NoConfidence: 'no_confidence',
-    CommitteeUpdate: 'committee_update',
-    ConstitutionalAmendment: 'constitution',
+    UpdateCommittee: 'committee_update',
+    NewConstitution: 'constitution',
     InfoAction: 'info',
   };
-  return typeMap[actionType] || actionType.toLowerCase();
+  return typeMap[actionType] || 'info';
 }
 
 /**
