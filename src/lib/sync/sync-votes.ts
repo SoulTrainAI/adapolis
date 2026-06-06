@@ -7,26 +7,38 @@ import { fetchDRepVotesBatch } from '@/lib/koios';
 import { supabaseAdmin } from './supabase-admin';
 import type { SyncResult } from './sync-dreps';
 
+interface SyncVotesOptions {
+  limit?: number;
+  offset?: number;
+}
+
 /**
  * Syncs votes from Koios to Supabase
- * Can sync votes for specific DReps or all DReps in the database
- * 1. Gets list of DRep IDs (provided or fetched from DB)
+ * Can sync votes for specific DReps or paginated batches from the database
+ * 1. Gets list of DRep IDs (provided or fetched from DB with pagination)
  * 2. Batch fetches votes for all DReps
  * 3. Upserts into votes table
  * 4. Updates sync_state tracking
- * @param drepIds - Optional array of DRep IDs to sync. If not provided, syncs all DReps in DB
+ * @param drepIds - Optional array of DRep IDs to sync. If not provided, syncs paginated DReps
+ * @param options - Pagination options { limit: number (default 50), offset: number (default 0) }
  * @returns Sync result with counts and duration
  */
-export async function syncVotes(drepIds?: string[]): Promise<SyncResult> {
+export async function syncVotes(
+  drepIds?: string[],
+  options?: SyncVotesOptions
+): Promise<SyncResult> {
   const startTime = Date.now();
   let synced = 0;
   let errors = 0;
+  const limit = options?.limit ?? 50;
+  const offset = options?.offset ?? 0;
 
   try {
     console.log(
       JSON.stringify({
         event: 'sync_votes_start',
         drepCount: drepIds?.length,
+        pagination: { limit, offset },
         timestamp: new Date().toISOString(),
       })
     );
@@ -37,13 +49,16 @@ export async function syncVotes(drepIds?: string[]): Promise<SyncResult> {
       console.log(
         JSON.stringify({
           event: 'fetching_drep_ids_from_db',
+          limit,
+          offset,
           timestamp: new Date().toISOString(),
         })
       );
       const { data: dreps, error: fetchError } = await supabaseAdmin
         .from('dreps')
         .select('drep_id')
-        .not('drep_id', 'like', 'drep_test%');
+        .not('drep_id', 'like', 'drep_test%')
+        .range(offset, offset + limit - 1);
 
       if (fetchError || !dreps) {
         throw new Error(`Failed to fetch DRep IDs from database: ${fetchError?.message}`);
@@ -54,6 +69,8 @@ export async function syncVotes(drepIds?: string[]): Promise<SyncResult> {
         JSON.stringify({
           event: 'drep_ids_fetched',
           count: targetDRepIds.length,
+          limit,
+          offset,
           timestamp: new Date().toISOString(),
         })
       );

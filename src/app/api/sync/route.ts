@@ -1,44 +1,48 @@
 /**
- * Sync API Route
- * POST /api/sync
- * Triggers the ETL sync jobs
+ * Sync API Routes
+ * POST /api/sync — DReps + Proposals (no votes)
+ * POST /api/sync/dreps — DReps only
+ * POST /api/sync/proposals — Proposals only
+ * POST /api/sync/votes — Votes only (with pagination)
+ * GET /api/sync — Health check
  * Requires Authorization header with CRON_SECRET
  */
 
-import { syncAll } from '@/lib/sync/sync-all';
+import { syncDRepsAndProposals } from '@/lib/sync/sync-all';
+
+function verifyAuth(request: Request): boolean {
+  const authHeader = request.headers.get('Authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    console.error(JSON.stringify({ event: 'cron_secret_missing' }));
+    return false;
+  }
+
+  const expectedAuth = `Bearer ${cronSecret}`;
+  if (!authHeader || authHeader !== expectedAuth) {
+    console.warn(JSON.stringify({ event: 'sync_unauthorized', provided: !!authHeader }));
+    return false;
+  }
+
+  return true;
+}
 
 /**
  * POST /api/sync
- * Triggers all sync jobs (DReps, Proposals, Votes)
- * Requires: Authorization: Bearer {CRON_SECRET} header
- * Returns: JSON summary of sync results
+ * Triggers DReps + Proposals sync (no votes)
  */
 export async function POST(request: Request): Promise<Response> {
   try {
-    // Verify CRON_SECRET
-    const authHeader = request.headers.get('Authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronSecret) {
-      console.error(JSON.stringify({ event: 'cron_secret_missing' }));
-      return new Response(JSON.stringify({ error: 'Server misconfiguration: CRON_SECRET not set' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const expectedAuth = `Bearer ${cronSecret}`;
-    if (!authHeader || authHeader !== expectedAuth) {
-      console.warn(JSON.stringify({ event: 'sync_unauthorized', provided: !!authHeader }));
+    if (!verifyAuth(request)) {
       return new Response(JSON.stringify({ error: 'Unauthorized: invalid or missing CRON_SECRET' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // Run sync
-    console.log(JSON.stringify({ event: 'sync_api_request', timestamp: new Date().toISOString() }));
-    const summary = await syncAll();
+    console.log(JSON.stringify({ event: 'sync_dreps_proposals_request', timestamp: new Date().toISOString() }));
+    const summary = await syncDRepsAndProposals();
 
     return new Response(JSON.stringify(summary), {
       status: 200,
