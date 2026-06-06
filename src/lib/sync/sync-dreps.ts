@@ -3,11 +3,7 @@
  * Fetches DRep data from Koios and writes to Supabase
  */
 
-import {
-  fetchAllDReps,
-  fetchDRepInfoBatched,
-  type KoiosDRep,
-} from '@/lib/koios';
+import { fetchDRepInfoBatched, type KoiosDRep } from '@/lib/koios';
 import { supabaseAdmin } from './supabase-admin';
 
 export interface SyncResult {
@@ -33,8 +29,57 @@ export async function syncDReps(): Promise<SyncResult> {
     console.log(JSON.stringify({ event: 'sync_dreps_start', timestamp: new Date().toISOString() }));
 
     // Step 1: Fetch all active DReps from Koios
+    // NOTE: Using raw Koios client instead of wrapper because of response format
     console.log(JSON.stringify({ event: 'fetching_drep_list', timestamp: new Date().toISOString() }));
-    const drepList = await fetchAllDReps();
+    const { koiosFetch } = await import('@/lib/koios/client');
+
+    interface DRepFromApi {
+      drep_id: string;
+      hex: string;
+      has_script: boolean;
+      registered: boolean;
+    }
+
+    const allDReps: DRepFromApi[] = [];
+    let offset = 0;
+    const limit = 100;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await koiosFetch<{ value: unknown[]; Count: number }>(
+        `/drep_list?offset=${offset}&limit=${limit}`,
+        { method: 'POST' }
+      );
+
+      const dreps = ((response.value as unknown[]) || []).map((d: unknown) => {
+        const dObj = d as Record<string, unknown>;
+        return {
+          drep_id: dObj.drep_id as string,
+          hex: dObj.hex as string,
+          has_script: dObj.has_script as boolean,
+          registered: dObj.registered as boolean,
+        };
+      });
+
+      allDReps.push(...dreps);
+
+      if (dreps.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
+
+      console.log(
+        JSON.stringify({
+          event: 'drep_list_paginated',
+          offset,
+          fetched: dreps.length,
+          total: allDReps.length,
+        })
+      );
+    }
+
+    const drepList = allDReps;
     console.log(
       JSON.stringify({
         event: 'drep_list_fetched',

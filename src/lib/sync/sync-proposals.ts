@@ -3,7 +3,7 @@
  * Fetches proposal (governance action) data from Koios and writes to Supabase
  */
 
-import { fetchAllProposals, type KoiosProposal } from '@/lib/koios';
+import type { KoiosProposal } from '@/lib/koios';
 import { supabaseAdmin } from './supabase-admin';
 import type { SyncResult } from './sync-dreps';
 
@@ -34,22 +34,31 @@ export async function syncProposals(): Promise<SyncResult> {
         timestamp: new Date().toISOString(),
       })
     );
-    const proposals = await fetchAllProposals();
+
+    const { koiosFetch } = await import('@/lib/koios/client');
+    const response = await koiosFetch<Record<string, unknown> | unknown[]>('/proposal_list', {
+      method: 'POST',
+    });
+
+    // Handle wrapped response format (value + Count) or direct array
+    const proposalsList: unknown[] = Array.isArray(response)
+      ? response
+      : ((response as Record<string, unknown>).value as unknown[]) || [];
     console.log(
       JSON.stringify({
         event: 'proposals_fetched',
-        count: proposals.length,
+        count: proposalsList.length,
         timestamp: new Date().toISOString(),
       })
     );
 
-    if (proposals.length === 0) {
+    if (proposalsList.length === 0) {
       console.log(JSON.stringify({ event: 'no_proposals_found', timestamp: new Date().toISOString() }));
       return { synced: 0, errors: 0, duration_ms: Date.now() - startTime };
     }
 
     // Step 2: Prepare upsert data with field mappings
-    const proposalRecords = proposals.map((p: KoiosProposal) => ({
+    const proposalRecords = (proposalsList as KoiosProposal[]).map((p: KoiosProposal) => ({
       proposal_id: p.proposal_id,
       tx_hash: p.proposal_tx_hash,
       cert_index: p.proposal_index,
