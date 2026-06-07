@@ -69,7 +69,7 @@ export async function syncProposals(): Promise<SyncResult> {
       proposed_epoch: p.proposed_epoch,
       submission_block_time: new Date(p.block_time * 1000).toISOString(),
       voting_starts_epoch: null,
-      voting_ends_epoch: null,
+      voting_ends_epoch: p.expiration,
       expires_at: null,
       status: determineProposalStatus(p),
       ratified_epoch: p.ratified_epoch,

@@ -76,7 +76,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     // Step 2: Get all proposals votable during this epoch
     const { data: proposals, error: proposalsError } = await supabaseAdmin
       .from('proposals')
-      .select('proposal_id, proposed_epoch, voting_starts_epoch, voting_ends_epoch, expired_epoch');
+      .select('proposal_id, proposed_epoch, voting_starts_epoch, voting_ends_epoch, expired_epoch, status');
 
     if (proposalsError || !proposals) {
       throw new Error(`Failed to fetch proposals: ${proposalsError?.message}`);
@@ -96,19 +96,15 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     let drepsWithEligibleVotes = 0;
 
     for (const drep of dreps) {
-      // Find proposals eligible for this DRep in this epoch
-      // A proposal is eligible if:
-      // 1. It has not yet expired or been enacted
-      // 2. For Phase 1, we include all proposals without explicit epoch filters
-      //    (voting_starts/ends_epoch may not be populated from Koios)
-      const eligibleProposals = proposals.filter((p) => {
-        // Skip proposals that have already expired or been enacted
-        if (p.expired_epoch !== null) return false;
+      // Find proposals eligible for this DRep
+      // Include active and passed proposals. If none match, fall back to all proposals
+      // for historical voting counting (Phase 1 requirement: score based on actual votes cast)
+      let eligibleProposals = proposals.filter((p) => p.status === 'active' || p.status === 'passed');
 
-        // For Phase 1, if voting epochs aren't populated, assume proposal is valid
-        // This will be refined in Phase 2 with proper voting window logic
-        return true;
-      });
+      // If no active/passed proposals, include all proposals (for historical voting)
+      if (eligibleProposals.length === 0) {
+        eligibleProposals = proposals;
+      }
 
       const votesEligible = eligibleProposals.length;
 
