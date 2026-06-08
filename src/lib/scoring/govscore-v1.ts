@@ -106,7 +106,6 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       JSON.stringify({
         event: 'proposals_fetched',
         count: proposals.length,
-        statuses: proposals.slice(0, 5).map((p) => p.status),
         timestamp: new Date().toISOString(),
       })
     );
@@ -125,9 +124,6 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       // If no active/passed proposals, include all proposals (for historical voting)
       if (eligibleProposals.length === 0) {
         eligibleProposals = proposals;
-        if (dreps.indexOf(drep) === 0) {
-          console.log(JSON.stringify({ event: 'no_active_proposals_using_all', totalProposals: proposals.length, timestamp: new Date().toISOString() }));
-        }
       }
 
       const votesEligible = eligibleProposals.length;
@@ -168,18 +164,6 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
         // Apply quadratic ADA-power dampening
         const dampener = calculateDampener(drep.amount_lovelace || BigInt(0));
         adjustedGovscore = rawGovscore * dampener;
-
-        if (dreps.indexOf(drep) < 3) {
-          console.log(JSON.stringify({
-            event: 'sample_score_calculation',
-            drep_id: drep.drep_id,
-            votes_eligible: votesEligible,
-            votes_cast: votesCast,
-            participation_rate: participationRate,
-            raw_govscore: rawGovscore,
-            adjusted_govscore: adjustedGovscore,
-          }));
-        }
       }
       // If votesEligible is 0, both remain null (per ROADMAP spec)
 
@@ -223,7 +207,6 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
         event: 'upserting_scores',
         count: scoresForUpsert.length,
         firstRecord: scoresForUpsert[0],
-        sampleRecords: scoresForUpsert.slice(0, 5),
         timestamp: new Date().toISOString(),
       })
     );
