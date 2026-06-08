@@ -86,6 +86,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       JSON.stringify({
         event: 'proposals_fetched',
         count: proposals.length,
+        statuses: proposals.slice(0, 5).map((p) => p.status),
         timestamp: new Date().toISOString(),
       })
     );
@@ -104,6 +105,9 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       // If no active/passed proposals, include all proposals (for historical voting)
       if (eligibleProposals.length === 0) {
         eligibleProposals = proposals;
+        if (dreps.indexOf(drep) === 0) {
+          console.log(JSON.stringify({ event: 'no_active_proposals_using_all', totalProposals: proposals.length, timestamp: new Date().toISOString() }));
+        }
       }
 
       const votesEligible = eligibleProposals.length;
