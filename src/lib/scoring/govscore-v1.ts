@@ -49,17 +49,36 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
   );
 
   try {
-    // Step 1: Get all DReps with their delegation amounts
+    // Step 1: Get all DReps with their delegation amounts (fetched in batches due to 1000-row limit)
     // Note: is_registered from Koios API may not reflect actual on-chain status for Phase 1
     // For now, include all DReps to enable scoring
-    const { data: dreps, error: drepsError } = await supabaseAdmin
-      .from('dreps')
-      .select('drep_id, is_registered, expires_epoch, amount_lovelace')
-      .limit(5000);
+    const allDReps: Array<{drep_id: string; is_registered: boolean; expires_epoch: number | null; amount_lovelace: bigint | null}> = [];
+    let offset = 0;
+    const batchSize = 1000;
+    let hasMorDReps = true;
 
-    if (drepsError || !dreps) {
-      throw new Error(`Failed to fetch registered DReps: ${drepsError?.message}`);
+    while (hasMorDReps) {
+      const { data: batch, error: drepsError } = await supabaseAdmin
+        .from('dreps')
+        .select('drep_id, is_registered, expires_epoch, amount_lovelace')
+        .range(offset, offset + batchSize - 1);
+
+      if (drepsError) {
+        throw new Error(`Failed to fetch DReps at offset ${offset}: ${drepsError.message}`);
+      }
+
+      if (!batch || batch.length === 0) {
+        hasMorDReps = false;
+      } else {
+        allDReps.push(...batch);
+        if (batch.length < batchSize) {
+          hasMorDReps = false;
+        }
+        offset += batchSize;
+      }
     }
+
+    const dreps = allDReps;
 
     console.log(
       JSON.stringify({
@@ -77,8 +96,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     // Step 2: Get all proposals votable during this epoch
     const { data: proposals, error: proposalsError } = await supabaseAdmin
       .from('proposals')
-      .select('proposal_id, proposed_epoch, voting_starts_epoch, voting_ends_epoch, expired_epoch, status')
-      .limit(5000);
+      .select('proposal_id, proposed_epoch, voting_starts_epoch, voting_ends_epoch, expired_epoch, status');
 
     if (proposalsError || !proposals) {
       throw new Error(`Failed to fetch proposals: ${proposalsError?.message}`);
