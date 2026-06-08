@@ -10,9 +10,9 @@ interface DRepScoring {
   amount_lovelace: bigint;
   votes_eligible: number;
   votes_cast: number;
-  participation_rate: number;
-  raw_govscore: number;
-  adjusted_govscore: number;
+  participation_rate: number | null;
+  raw_govscore: number | null;
+  adjusted_govscore: number | null;
 }
 
 interface ComputeResult {
@@ -152,9 +152,9 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
         amount_lovelace: drep.amount_lovelace || BigInt(0),
         votes_eligible: votesEligible,
         votes_cast: votesCast,
-        participation_rate: participationRate || 0,
-        raw_govscore: rawGovscore || 0,
-        adjusted_govscore: adjustedGovscore || 0,
+        participation_rate: participationRate,
+        raw_govscore: rawGovscore,
+        adjusted_govscore: adjustedGovscore,
       });
 
       if (participationRate !== null) {
@@ -176,9 +176,9 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     const scoresForUpsert = scoringResults.map((result) => ({
       drep_id: result.drep_id,
       epoch,
-      raw_govscore: result.raw_govscore !== 0 ? result.raw_govscore : null,
-      adjusted_govscore: result.adjusted_govscore !== 0 ? result.adjusted_govscore : null,
-      participation_rate: result.participation_rate !== 0 ? result.participation_rate : null,
+      raw_govscore: result.raw_govscore,
+      adjusted_govscore: result.adjusted_govscore,
+      participation_rate: result.participation_rate,
       computed_at: new Date().toISOString(),
     }));
 
