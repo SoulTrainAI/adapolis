@@ -54,7 +54,8 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     // For now, include all DReps to enable scoring
     const { data: dreps, error: drepsError } = await supabaseAdmin
       .from('dreps')
-      .select('drep_id, is_registered, expires_epoch, amount_lovelace');
+      .select('drep_id, is_registered, expires_epoch, amount_lovelace')
+      .limit(5000);
 
     if (drepsError || !dreps) {
       throw new Error(`Failed to fetch registered DReps: ${drepsError?.message}`);
@@ -76,7 +77,8 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     // Step 2: Get all proposals votable during this epoch
     const { data: proposals, error: proposalsError } = await supabaseAdmin
       .from('proposals')
-      .select('proposal_id, proposed_epoch, voting_starts_epoch, voting_ends_epoch, expired_epoch, status');
+      .select('proposal_id, proposed_epoch, voting_starts_epoch, voting_ends_epoch, expired_epoch, status')
+      .limit(5000);
 
     if (proposalsError || !proposals) {
       throw new Error(`Failed to fetch proposals: ${proposalsError?.message}`);
