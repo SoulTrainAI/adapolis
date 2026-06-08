@@ -237,26 +237,6 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       })
     );
 
-    // Step 5: Update sync_state
-    const { error: syncStateError } = await supabaseAdmin
-      .from('sync_state')
-      .upsert(
-        {
-          entity: 'scores',
-          last_synced_at: new Date().toISOString(),
-        },
-        { onConflict: 'entity' }
-      );
-
-    if (syncStateError) {
-      console.error(
-        JSON.stringify({
-          event: 'sync_state_update_error',
-          error: syncStateError.message,
-          timestamp: new Date().toISOString(),
-        })
-      );
-    }
 
     const avgParticipation = drepsWithEligibleVotes > 0 ? totalParticipation / drepsWithEligibleVotes : 0;
 

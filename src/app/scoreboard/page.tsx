@@ -6,6 +6,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { DRepCard } from '@/components/scoreboard/DRepCard';
 
+export const dynamic = 'force-dynamic';
+
 interface DRepScore {
   drep_id: string;
   hex_id: string | null;
@@ -58,17 +60,15 @@ async function getDRepScoresForCurrentEpoch(): Promise<
 
     const currentEpoch = latestEpochData?.[0]?.epoch || 0;
 
-    // Query 2: Get latest sync time
-    const { data: syncState, error: syncError } = await supabaseAdmin
+    // Query 2: Get latest sync time (use dreps entity as proxy for overall sync status)
+    const { data: syncStateArray } = await supabaseAdmin
       .from('sync_state')
       .select('last_synced_at')
-      .eq('entity', 'scores')
-      .single();
+      .eq('entity', 'dreps')
+      .order('last_synced_at', { ascending: false })
+      .limit(1);
 
-    if (syncError && syncError.code !== 'PGRST116') {
-      // PGRST116 is "no rows" which is fine for first time
-      console.warn('Failed to fetch sync state:', syncError.message);
-    }
+    const syncState = syncStateArray?.[0];
 
     // Query 3: Fetch all scores for current epoch (WITHOUT nested join)
     const { data: scores, error: scoresError } = await supabaseAdmin
