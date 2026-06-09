@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { DRepCard } from '@/components/scoreboard/DRepCard';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 interface DRepScore {
   drep_id: string;
@@ -70,12 +70,13 @@ async function getDRepScoresForCurrentEpoch(): Promise<
 
     const syncState = syncStateArray?.[0];
 
-    // Query 3: Fetch all scores for current epoch (WITHOUT nested join)
+    // Query 3: Fetch top 100 scores for current epoch
     const { data: scores, error: scoresError } = await supabaseAdmin
       .from('drep_scores')
       .select('epoch, drep_id, raw_govscore, adjusted_govscore, participation_rate')
       .eq('epoch', currentEpoch)
-      .order('adjusted_govscore', { ascending: false });
+      .order('adjusted_govscore', { ascending: false })
+      .limit(100);
 
     if (scoresError) {
       throw new Error(`Failed to fetch scores: ${scoresError.message}`);
