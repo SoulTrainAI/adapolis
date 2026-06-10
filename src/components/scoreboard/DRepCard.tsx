@@ -75,8 +75,14 @@ function CardFront({ props }: { props: DRepCardProps }) {
       </div>
 
       {/* Adjusted Score (prominent) */}
-      <div className="mb-6 text-center">
-        <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Adjusted Score</p>
+      <div className="mb-6 text-center group relative">
+        <div className="relative inline-block">
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1 cursor-help">Adjusted Score</p>
+          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-40 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
+            GovScore adjusted for ADA-power dampening. Rewards high participation from under-delegated DReps.
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+          </div>
+        </div>
         <p className="text-5xl font-bold text-white drop-shadow-lg">
           {props.adjustedScore !== null ? props.adjustedScore.toFixed(1) : '—'}
         </p>
@@ -84,24 +90,36 @@ function CardFront({ props }: { props: DRepCardProps }) {
 
       {/* Metrics grid */}
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <div className="bg-slate-700/30 rounded p-2 text-center">
-          <p className="text-xs text-slate-500">Participation</p>
+        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
+          <p className="text-xs text-slate-500 cursor-help">Participation</p>
+          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
+            % of eligible governance proposals voted on.
+          </div>
           <p className="text-sm font-semibold text-slate-100">
             {props.participationRate !== null ? `${(props.participationRate * 100).toFixed(0)}%` : '—'}
           </p>
         </div>
-        <div className="bg-slate-700/30 rounded p-2 text-center">
-          <p className="text-xs text-slate-500">Raw Score</p>
+        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
+          <p className="text-xs text-slate-500 cursor-help">Raw Score</p>
+          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
+            Participation rate × 100, before ADA dampening.
+          </div>
           <p className="text-sm font-semibold text-slate-100">
             {props.rawScore !== null ? props.rawScore.toFixed(1) : '—'}
           </p>
         </div>
-        <div className="bg-slate-700/30 rounded p-2 text-center">
-          <p className="text-xs text-slate-500">Delegated</p>
+        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
+          <p className="text-xs text-slate-500 cursor-help">Delegated</p>
+          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
+            Total ADA delegated to this DRep.
+          </div>
           <p className="text-sm font-semibold text-slate-100">{props.adaAmount}</p>
         </div>
-        <div className="bg-slate-700/30 rounded p-2 text-center">
-          <p className="text-xs text-slate-500">Delegators</p>
+        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
+          <p className="text-xs text-slate-500 cursor-help">Delegators</p>
+          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
+            Number of wallets delegating to this DRep.
+          </div>
           <p className="text-sm font-semibold text-slate-100">{props.delegatorCount || '—'}</p>
         </div>
       </div>
@@ -160,7 +178,13 @@ function CardBack({ props }: { props: DRepCardProps }) {
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Recent Votes</p>
           <div className="space-y-1">
             {recentVotes.map((vote, idx) => (
-              <div key={idx} className="text-xs text-slate-400">
+              <a
+                key={idx}
+                href={`https://gov.tools/governance_actions/${vote.proposal_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+              >
                 <span className={`font-semibold ${
                   vote.vote === 'yes' ? 'text-green-400' :
                   vote.vote === 'no' ? 'text-red-400' :
@@ -168,9 +192,10 @@ function CardBack({ props }: { props: DRepCardProps }) {
                 }`}>
                   {vote.vote.toUpperCase()}
                 </span>
-                {' '}
-                <span className="truncate">{vote.proposal_title || `Proposal ${vote.proposal_id.substring(0, 8)}`}</span>
-              </div>
+                <span className="truncate underline-offset-2 hover:underline">
+                  {vote.proposal_title || `Proposal ${vote.proposal_id.substring(0, 8)}`}
+                </span>
+              </a>
             ))}
           </div>
         </div>

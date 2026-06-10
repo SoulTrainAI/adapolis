@@ -190,6 +190,8 @@ function mapProposalType(actionType: string): string {
  */
 function extractTitleFromMetadata(json: Record<string, unknown> | null): string | null {
   if (!json) return null;
+  const body = json.body as Record<string, unknown> | undefined;
+  if (body && typeof body.title === 'string') return body.title;
   if (typeof json.title === 'string') return json.title;
   if (typeof json.name === 'string') return json.name;
   return null;
@@ -200,6 +202,8 @@ function extractTitleFromMetadata(json: Record<string, unknown> | null): string 
  */
 function extractAbstractFromMetadata(json: Record<string, unknown> | null): string | null {
   if (!json) return null;
+  const body = json.body as Record<string, unknown> | undefined;
+  if (body && typeof body.abstract === 'string') return body.abstract;
   if (typeof json.abstract === 'string') return json.abstract;
   if (typeof json.description === 'string') return json.description;
   return null;
