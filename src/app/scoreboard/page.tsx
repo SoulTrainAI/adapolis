@@ -148,7 +148,7 @@ async function getDRepScoresForCurrentEpoch(): Promise<
 function formatADA(lovelace: bigint | null): string {
   if (!lovelace || lovelace === BigInt(0)) return '0 ADA';
 
-  const ada = Number(lovelace) / 1_000_000_000_000;
+  const ada = Number(lovelace) / 1_000_000;
 
   if (ada >= 1_000_000) {
     return `${(ada / 1_000_000).toFixed(1)}M ADA`;
@@ -205,11 +205,11 @@ export default async function ScoreboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-3">DRep Scoreboard</h1>
+        <div className="mb-12">
+          <h1 className="text-5xl font-bold mb-4">DRep Scoreboard</h1>
           <p className="text-lg text-slate-300 mb-4">
             Live ranking of every Cardano DRep, scored on participation and adjusted for ADA-power dampening.
           </p>
@@ -234,7 +234,7 @@ export default async function ScoreboardPage() {
 
         {/* Scoreboard grid with flip-cards */}
         {dreps.length > 0 && (
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-max">
+          <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-max">
             {dreps.map((drep, index) => {
               const rank = index + 1;
               return (
@@ -261,6 +261,9 @@ export default async function ScoreboardPage() {
         {/* Footer */}
         <div className="mt-12 border-t border-slate-800 pt-6 text-sm text-slate-400">
           <div className="flex flex-wrap gap-6">
+            <a href="/about" className="hover:text-slate-300 transition-colors">
+              About
+            </a>
             <a href="#methodology" className="hover:text-slate-300 transition-colors">
               Methodology
             </a>
