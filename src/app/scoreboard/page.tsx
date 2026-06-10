@@ -123,9 +123,10 @@ async function getDRepScoresForCurrentEpoch(): Promise<
         voteSummaryMap.set(vote.drep_id, { yes: 0, no: 0, abstain: 0 });
       }
       const summary = voteSummaryMap.get(vote.drep_id)!;
-      if (vote.vote === 'yes') summary.yes++;
-      else if (vote.vote === 'no') summary.no++;
-      else if (vote.vote === 'abstain') summary.abstain++;
+      const voteType = vote.vote.toLowerCase();
+      if (voteType === 'yes') summary.yes++;
+      else if (voteType === 'no') summary.no++;
+      else if (voteType === 'abstain') summary.abstain++;
 
       // Recent votes (keep last 3)
       if (!recentVotesMap.has(vote.drep_id)) {
