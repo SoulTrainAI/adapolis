@@ -15,11 +15,11 @@ export default function MethodologyPage() {
       <div className="max-w-4xl mx-auto space-y-12">
         {/* Header */}
         <div className="space-y-4">
-          <h1 className="text-5xl font-bold text-white">ADApolis Methodology</h1>
-          <p className="text-lg text-slate-300">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white">ADApolis Methodology</h1>
+          <p className="text-base sm:text-lg text-slate-300">
             How we score DReps on participation, consistency, and accessibility to delegation.
           </p>
-          <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+          <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-slate-400">
             <span>Last updated: June 2026</span>
             <span>•</span>
             <span>Phase 1: Participation Rate</span>
@@ -28,7 +28,7 @@ export default function MethodologyPage() {
 
         {/* Section 1: Overview */}
         <section className="space-y-4">
-          <h2 className="text-3xl font-bold text-white">1. Overview</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">1. Overview</h2>
           <p className="text-slate-300 leading-relaxed">
             ADApolis <strong>GovScore</strong> is a composite participation metric computed from on-chain Cardano
             governance data. It measures how actively and consistently a DRep participates in governance, adjusted
@@ -47,7 +47,7 @@ export default function MethodologyPage() {
 
         {/* Section 2: Phase 1 Score */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold text-white">2. Phase 1 Score: Participation Rate</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">2. Phase 1 Score: Participation Rate</h2>
 
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
             <h3 className="text-xl font-semibold text-slate-100">Formula</h3>
@@ -114,7 +114,7 @@ export default function MethodologyPage() {
 
         {/* Section 3: Quadratic ADA Dampening */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold text-white">3. Quadratic ADA-Power Dampening</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">3. Quadratic ADA-Power Dampening</h2>
 
           <p className="text-slate-300 leading-relaxed">
             A DRep&apos;s <strong>Adjusted GovScore</strong> is the Raw GovScore multiplied by a dampening factor
@@ -210,7 +210,7 @@ and ADA_M = ADA delegated in millions`}
 
         {/* Section 4: What GovScore Does NOT Measure */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold text-white">4. What GovScore Does NOT Measure (Phase 1)</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">4. What GovScore Does NOT Measure (Phase 1)</h2>
 
           <p className="text-slate-300 leading-relaxed">
             Be explicit about what this score is <em>not</em>. Clarity on limitations is essential to credibility.
@@ -270,7 +270,7 @@ and ADA_M = ADA delegated in millions`}
 
         {/* Section 5: Planned Expansions */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold text-white">5. Planned Score Expansions</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">5. Planned Score Expansions</h2>
 
           <p className="text-slate-300 leading-relaxed">
             Phase 1 is intentionally narrow. Future phases will add richer signals to GovScore, all while
@@ -320,7 +320,7 @@ and ADA_M = ADA delegated in millions`}
 
         {/* Section 6: Data Sources */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold text-white">6. Data Sources and Transparency</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">6. Data Sources and Transparency</h2>
 
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-slate-100">Primary Data Source</h3>
@@ -381,7 +381,7 @@ and ADA_M = ADA delegated in millions`}
 
         {/* Section 7: Limitations */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold text-white">7. Limitations and Known Issues</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">7. Limitations and Known Issues</h2>
 
           <p className="text-slate-300 leading-relaxed">
             Intellectual honesty requires naming the shortcomings of this approach.

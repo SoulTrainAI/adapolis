@@ -6,18 +6,18 @@
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-5xl font-bold mb-4">About ADApolis</h1>
-          <p className="text-lg text-slate-300">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4">About ADApolis</h1>
+          <p className="text-base sm:text-lg text-slate-300">
             The civic engine for Cardano governance
           </p>
         </div>
 
         {/* What is ADApolis */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-blue-400">What is ADApolis</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-blue-400">What is ADApolis</h2>
           <p className="text-slate-300 leading-relaxed mb-4">
             ADApolis is a Cardano governance platform that gamifies DRep participation with fantasy-sports mechanics,
             structured deliberation, and reputation scoring. We turn governance from a chore into a sport, without
@@ -32,7 +32,7 @@ export default function AboutPage() {
 
         {/* What is a DRep */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-blue-400">What is a DRep</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-blue-400">What is a DRep</h2>
           <p className="text-slate-300 leading-relaxed">
             A DRep (Delegated Representative) is a participant in Cardano&apos;s governance system who votes on
             governance actions on behalf of delegators. Defined in CIP-1694, DReps can be individuals, organizations,
@@ -43,7 +43,7 @@ export default function AboutPage() {
 
         {/* How GovScore Works */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-blue-400">How GovScore Works</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-blue-400">How GovScore Works</h2>
           <div className="space-y-3 text-slate-300">
             <p>
               <span className="text-slate-100 font-semibold">Participation Rate:</span> We measure the percentage of
@@ -67,7 +67,7 @@ export default function AboutPage() {
 
         {/* Our Principles */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-blue-400">Our Principles</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-blue-400">Our Principles</h2>
           <ul className="space-y-4">
             <li className="flex gap-3">
               <span className="text-blue-400 font-bold mt-1">•</span>
@@ -104,7 +104,7 @@ export default function AboutPage() {
 
         {/* Built on Cardano */}
         <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-blue-400">Built on Cardano</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-blue-400">Built on Cardano</h2>
           <p className="text-slate-300 leading-relaxed mb-4">
             ADApolis is powered by the Koios API, which provides read-only access to Cardano&apos;s governance data. We
             sync DReps, proposals, and votes directly from the blockchain and make them queryable and analyzable.
