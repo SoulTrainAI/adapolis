@@ -206,7 +206,7 @@ export default async function ScoreboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-5xl font-bold mb-4">DRep Scoreboard</h1>
@@ -234,7 +234,7 @@ export default async function ScoreboardPage() {
 
         {/* Scoreboard grid with flip-cards */}
         {dreps.length > 0 && (
-          <div className="grid gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-max">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 w-full">
             {dreps.map((drep, index) => {
               const rank = index + 1;
               return (
@@ -257,24 +257,6 @@ export default async function ScoreboardPage() {
             })}
           </div>
         )}
-
-        {/* Footer */}
-        <div className="mt-12 border-t border-slate-800 pt-6 text-sm text-slate-400">
-          <div className="flex flex-wrap gap-6">
-            <a href="/about" className="hover:text-slate-300 transition-colors">
-              About
-            </a>
-            <a href="#methodology" className="hover:text-slate-300 transition-colors">
-              Methodology
-            </a>
-            <a href="#open-data" className="hover:text-slate-300 transition-colors">
-              Open Data
-            </a>
-            <a href="#api" className="hover:text-slate-300 transition-colors">
-              API
-            </a>
-          </div>
-        </div>
       </div>
     </div>
   );
