@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Award } from 'lucide-react';
+import { Award, ExternalLink, Code, Globe, MessageSquare } from 'lucide-react';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
 
 interface DRepCardProps {
@@ -23,6 +23,10 @@ interface DRepCardProps {
   delegatorCount: number | null;
   isRegistered: boolean;
   votingStreak?: number;
+  bio?: string | null;
+  voteSummary?: { yes: number; no: number; abstain: number };
+  recentVotes?: Array<{ proposal_title: string; vote: string; proposal_id: string }>;
+  socialLinks?: { website?: string; twitter?: string; github?: string; forum?: string };
 }
 
 function getMetalBadgeColor(rank: number): { label: string; ringClass: string } {
@@ -117,11 +121,134 @@ function CardFront({ props }: { props: DRepCardProps }) {
   );
 }
 
-function CardBack() {
+function CardBack({ props }: { props: DRepCardProps }) {
+  const voteSummary = props.voteSummary || { yes: 0, no: 0, abstain: 0 };
+  const recentVotes = props.recentVotes || [];
+  const socialLinks = props.socialLinks || {};
+  const bio = props.bio || 'No bio provided';
+
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/50 p-4 justify-center items-center">
-      <p className="text-slate-400 text-center">Back of card coming soon...</p>
-      <p className="text-slate-500 text-sm mt-2">Click to flip back</p>
+    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/50 p-4 overflow-y-auto">
+      {/* Bio Section */}
+      <div className="mb-4 pb-3 border-b border-slate-700/50">
+        <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Bio</p>
+        <p className="text-sm text-slate-300 line-clamp-3">{bio}</p>
+      </div>
+
+      {/* Voting History Summary */}
+      <div className="mb-4 pb-3 border-b border-slate-700/50">
+        <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Voting History</p>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-slate-700/30 rounded p-2 text-center">
+            <p className="text-xs text-slate-500">Yes</p>
+            <p className="text-lg font-bold text-green-400">{voteSummary.yes}</p>
+          </div>
+          <div className="bg-slate-700/30 rounded p-2 text-center">
+            <p className="text-xs text-slate-500">No</p>
+            <p className="text-lg font-bold text-red-400">{voteSummary.no}</p>
+          </div>
+          <div className="bg-slate-700/30 rounded p-2 text-center">
+            <p className="text-xs text-slate-500">Abstain</p>
+            <p className="text-lg font-bold text-yellow-400">{voteSummary.abstain}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Votes */}
+      {recentVotes.length > 0 && (
+        <div className="mb-4 pb-3 border-b border-slate-700/50">
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Recent Votes</p>
+          <div className="space-y-1">
+            {recentVotes.map((vote, idx) => (
+              <div key={idx} className="text-xs text-slate-400">
+                <span className={`font-semibold ${
+                  vote.vote === 'yes' ? 'text-green-400' :
+                  vote.vote === 'no' ? 'text-red-400' :
+                  'text-yellow-400'
+                }`}>
+                  {vote.vote.toUpperCase()}
+                </span>
+                {' '}
+                <span className="truncate">{vote.proposal_title || `Proposal ${vote.proposal_id.substring(0, 8)}`}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Career Legacy Score */}
+      <div className="mb-4 pb-3 border-b border-slate-700/50">
+        <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Career Legacy Score</p>
+        <p className="text-sm font-semibold text-slate-300">—</p>
+      </div>
+
+      {/* Social Links */}
+      {(socialLinks.website || socialLinks.twitter || socialLinks.github || socialLinks.forum) && (
+        <div className="mb-4 pb-3 border-b border-slate-700/50">
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Links</p>
+          <div className="flex gap-2 flex-wrap">
+            {socialLinks.website && (
+              <a
+                href={socialLinks.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                title="Website"
+              >
+                <Globe size={14} className="text-slate-300" />
+              </a>
+            )}
+            {socialLinks.twitter && (
+              <a
+                href={socialLinks.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                title="Twitter"
+              >
+                <span className="text-slate-300 text-xs font-bold">𝕏</span>
+              </a>
+            )}
+            {socialLinks.github && (
+              <a
+                href={socialLinks.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                title="GitHub"
+              >
+                <Code size={14} className="text-slate-300" />
+              </a>
+            )}
+            {socialLinks.forum && (
+              <a
+                href={socialLinks.forum}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                title="Forum"
+              >
+                <MessageSquare size={14} className="text-slate-300" />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Delegate Button */}
+      <div className="mt-auto pt-3">
+        <a
+          href={`https://gov.tools/connected/drep_directory/${props.drepId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
+        >
+          Delegate via GovTool
+          <ExternalLink size={14} />
+        </a>
+      </div>
+
+      <p className="text-xs text-slate-600 text-center mt-3">Click to flip back</p>
     </div>
   );
 }
@@ -181,7 +308,7 @@ export function DRepCard({ props }: { props: DRepCardProps }) {
           }}
           className="w-full aspect-[5/7] absolute inset-0"
         >
-          <CardBack />
+          <CardBack props={props} />
         </motion.div>
       </motion.div>
     </motion.button>

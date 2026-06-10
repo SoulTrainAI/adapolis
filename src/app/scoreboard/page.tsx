@@ -18,6 +18,10 @@ interface DRepScore {
   adjusted_govscore: number | null;
   participation_rate: number | null;
   epoch: number;
+  voteSummary?: { yes: number; no: number; abstain: number };
+  recentVotes?: Array<{ proposal_title: string; vote: string; proposal_id: string }>;
+  bio?: string | null;
+  socialLinks?: { website?: string; twitter?: string; github?: string; forum?: string };
 }
 
 interface ErrorState {
@@ -97,6 +101,51 @@ async function getDRepScoresForCurrentEpoch(): Promise<
       throw new Error(`Failed to fetch DRep details: ${drepsError.message}`);
     }
 
+    // Query 5: Fetch votes for vote summary
+    const { data: allVotes, error: votesError } = await supabaseAdmin
+      .from('votes')
+      .select('drep_id, vote, proposals(proposal_id, title)')
+      .in('drep_id', drepIds);
+
+    if (votesError) {
+      console.warn('Failed to fetch votes for summary:', votesError.message);
+    }
+
+    // Aggregate vote summaries by DRep
+    const voteSummaryMap = new Map<string, { yes: number; no: number; abstain: number }>();
+    const recentVotesMap = new Map<string, Array<{ proposal_title: string; vote: string; proposal_id: string }>>();
+
+    (allVotes || []).forEach((voteData: unknown) => {
+      const vote = voteData as { drep_id: string; vote: string; proposals: { title: string; proposal_id: string } | null };
+
+      // Vote summary
+      if (!voteSummaryMap.has(vote.drep_id)) {
+        voteSummaryMap.set(vote.drep_id, { yes: 0, no: 0, abstain: 0 });
+      }
+      const summary = voteSummaryMap.get(vote.drep_id)!;
+      if (vote.vote === 'yes') summary.yes++;
+      else if (vote.vote === 'no') summary.no++;
+      else if (vote.vote === 'abstain') summary.abstain++;
+
+      // Recent votes (keep last 3)
+      if (!recentVotesMap.has(vote.drep_id)) {
+        recentVotesMap.set(vote.drep_id, []);
+      }
+      const recent = recentVotesMap.get(vote.drep_id)!;
+      recent.push({
+        proposal_title: vote.proposals?.title || 'Untitled',
+        vote: vote.vote,
+        proposal_id: vote.proposals?.proposal_id || 'unknown',
+      });
+    });
+
+    // Keep only last 3 recent votes per DRep
+    recentVotesMap.forEach((votes) => {
+      if (votes.length > 3) {
+        votes.splice(0, votes.length - 3);
+      }
+    });
+
     // Create lookup map for DRep data
     const drepMap = new Map(
       (drepsData || []).map((d) => [
@@ -129,6 +178,10 @@ async function getDRepScoresForCurrentEpoch(): Promise<
         adjusted_govscore: score.adjusted_govscore,
         participation_rate: score.participation_rate,
         epoch: score.epoch,
+        voteSummary: voteSummaryMap.get(score.drep_id) || { yes: 0, no: 0, abstain: 0 },
+        recentVotes: recentVotesMap.get(score.drep_id) || [],
+        bio: null,
+        socialLinks: {},
       };
     });
 
@@ -251,6 +304,10 @@ export default async function ScoreboardPage() {
                     delegatorCount: drep.delegator_count,
                     isRegistered: drep.is_registered,
                     votingStreak: 0,
+                    voteSummary: drep.voteSummary,
+                    recentVotes: drep.recentVotes,
+                    bio: drep.bio,
+                    socialLinks: drep.socialLinks,
                   }}
                 />
               );
