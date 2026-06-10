@@ -127,10 +127,10 @@ PHASE 1 — Scoreboard MVP  (locked after Phase 0 complete)
 [x] 1.6  Quadratic ADA dampening
 [x] 1.7  Scoreboard list page (server-rendered)
 [x] 1.8  Flip-card component (front)
-[ ] 1.9  Flip-card component (back)
-[ ] 1.10 Voting streak calculation
-[ ] 1.11 Hover tooltips on metrics
-[ ] 1.12 Link out to rationales
+[x] 1.9  Flip-card component (back)
+[x] 1.10 Voting streak calculation
+[x] 1.11 Hover tooltips on metrics
+[x] 1.12 Link out to rationales
 [ ] 1.13 Custom domain + production deploy
 [ ] 1.14 Soft launch announcement post
 ```
