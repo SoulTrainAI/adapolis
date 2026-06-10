@@ -1,7 +1,7 @@
 # ADApolis — The Civic Engine for Cardano Governance
 
 **Concept Document — v1.0**
-**Last updated:** 2026-05-22
+**Last updated:** 2026-06-09
 **Status:** Living document. Update as decisions are made.
 
 ---
@@ -366,6 +366,16 @@ When a user connects their wallet:
 - The system suggests three alternative DReps with higher alignment to the user's stated positions (drawn from Quiz/Speak-Your-Mind output, or inferred from past behavior)
 - A "Compare My DRep vs Alternative" view side-by-sides their stats
 
+### 6.4.1 The 'Find My DRep' Default Mode
+
+The platform's flagship guided flow. It combines three signals in strict priority order to surface the DRep a user should delegate to:
+
+1. **Participation gate** — only DReps above a participation threshold are eligible (low-participation DReps are filtered out entirely).
+2. **Alignment ranking** — eligible DReps are ranked by the user's Personal Alignment Score (from the values quiz, Section 6.4).
+3. **Decentralization tiebreak** — among well-matched, high-participation DReps, the one with the LOWEST ADA delegated ranks highest.
+
+The thesis: if every delegator used this flow, delegation would flow to high-quality, value-aligned, under-delegated DReps — decentralizing Cardano by default. This is the single clearest expression of the platform's purpose. Other default presets ("Top Participation," "Underdogs," "Most Consistent") are saved filter+sort configurations over the same universal data.
+
 ### 6.5 Why Build This First
 
 - It's high-leverage: it produces a live ranking of every DRep on Cardano, which becomes immediately citable in Forum, Twitter, and journalist coverage
@@ -388,6 +398,18 @@ ADApolis treats this as a presentation layer, not a scoring layer:
 - Coalitions never define the canonical score; they define their *interpretation* of it
 
 This is part of "accountability through transparency, not hierarchy" (Section 2.5). The data is universal and open. Communities apply their own meaning.
+
+### 6.6.1 Filter, Sort, and Search Mechanics
+
+The Scoreboard supports deep, composable data exploration over the universal metric set:
+
+- **Independent sorting** — every tracked metric is independently sortable, ascending or descending.
+- **Stacked filters** — multi-pass filters compose (e.g., "aligns with my values AND ecosystem-growth focus AND high participation, sorted by lowest ADA delegated").
+- **Full-text search** — search on DRep name, ADAhandle, and DRep ID.
+- **Server-side pagination** — results are pulled in pages (e.g., 50 per page) so the entire DRep set is browsable without capping at top-N and without loading all rows at once.
+- **Saved presets** — default views are saved filter+sort configurations over the same data; they never alter the underlying universal metrics.
+
+**Implementation note:** pagination and sort/filter run against a dedicated API endpoint querying the database with limit/offset/order parameters, keeping each page fast. The ISR-cached top-of-board view remains the default fast-loading landing surface. Domain-based filtering (Treasury, Protocol, etc.) and alignment-based sorting depend on the proposal categorization engine and the user values quiz respectively — both are Phase 2/3 features and are NOT part of the Phase 1 Scoreboard MVP.
 
 ---
 
@@ -1741,6 +1763,8 @@ To be resolved as the project progresses. Updated as decisions land.
 ---
 
 ## 30. Version Log
+
+- **v1.1 (2026-06-09)** — Sharpened Scoreboard discovery spec. Added Section 6.4.1 ("Find My DRep" default mode: participation gate → alignment ranking → lowest-ADA tiebreak). Added Section 6.6.1 (filter/sort/search/pagination mechanics). Clarified that domain-based and alignment-based discovery are Phase 2/3, keeping the Phase 1 Scoreboard scoped to participation + dampening.
 
 - **v1.0 (2026-05-23)** — **Lock for execution.** Eight major structural changes completing the lean-startup pass. (1) New Section 1A introduces Lean Startup Discipline principles. (2) Section 9 consolidated: Living NFT + Soulbound badges + Civic Character classes → single Civic Identity NFT system. (3) Section 10 slimmed: Guilds cut entirely (replaced by Coalitions); now contains only Quests, Streaks, Referrals, and Sagas. (4) New Section 10.5 explicitly documents why Guilds were removed. (5) Section 11 simplified: Steelman + Devil's Advocate merged into single Mind-Mover Award with For/Against sub-categories. (6) Section 8.6 reframed: Genesis Cards renamed Founding Members Mint with permanent benefits, explicit non-investment positioning. (7) New Section 23.6 introduces Coalition Quarterly Reports as the first paid product (Phase 2 launch). (8) Monetization arc rewritten — first revenue in month 4 (Coalition Reports), then Catalyst grant, then Intel subscriptions, then NFTs. (9) Section 24 updated: TrustLevel decision locked at "build fresh, do not fork" per Phase 0 investigation. Open Question 2 closed. Fantasy League stays in MVP per founder decision. **The document is now the build spec.**
 
