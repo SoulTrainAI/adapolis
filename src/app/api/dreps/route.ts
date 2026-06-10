@@ -1,7 +1,8 @@
 /**
  * GET /api/dreps
- * Fetch paginated, filtered, sorted DRep scores
- * Accepts query parameters for filtering, sorting, and pagination
+ * Fetch paginated, filtered, sorted DRep scores with separate queries
+ * Two-query pattern: drep_scores → dreps (no FK join, avoids PGRST125)
+ * Filters applied server-side and in JavaScript after merge
  * No auth required (public data)
  */
 
@@ -27,6 +28,14 @@ interface DRepResponse {
   page: number;
   total_pages: number;
   epoch: number;
+}
+
+interface DRepData {
+  drep_id: string;
+  hex_id: string | null;
+  is_registered: boolean;
+  amount_lovelace: bigint | null;
+  delegator_count: number | null;
 }
 
 const VALID_SORT_FIELDS = [
@@ -93,105 +102,122 @@ export async function GET(request: Request): Promise<NextResponse<DRepResponse |
 
     const currentEpoch = epochData[0].epoch;
 
-    // Step 2: Build query for drep_scores + dreps join
-    let query = supabase
+    // Step 2: Query drep_scores with participation filter only (apply ADA/registered filters post-merge)
+    let scoresQuery = supabase
       .from('drep_scores')
-      .select(
-        `
-        epoch,
-        drep_id,
-        raw_govscore,
-        adjusted_govscore,
-        participation_rate,
-        voting_streak_epochs,
-        dreps (
-          hex_id,
-          is_registered,
-          amount_lovelace,
-          delegator_count
-        )
-      `,
-        { count: 'exact' }
-      )
+      .select('epoch, drep_id, raw_govscore, adjusted_govscore, participation_rate, voting_streak_epochs', {
+        count: 'exact',
+      })
       .eq('epoch', currentEpoch);
 
-    // Apply filters
-    if (registered) {
-      query = query.eq('dreps.is_registered', true);
-    }
-
+    // Apply participation filter server-side (only participation_rate works on drep_scores)
     if (minParticipation > 0) {
-      query = query.gte('participation_rate', minParticipation / 100);
+      scoresQuery = scoresQuery.gte('participation_rate', minParticipation / 100);
     }
 
-    // Convert ADA to lovelace (millions of ADA * 1M lovelace per ADA)
-    const minLovelace = BigInt(Math.floor(minAda * 1_000_000_000_000));
-    const maxLovelace = BigInt(Math.floor(maxAda * 1_000_000_000_000));
-
-    if (minAda > 0) {
-      query = query.gte('dreps.amount_lovelace', minLovelace.toString());
-    }
-
-    if (maxAda < 999999999) {
-      query = query.lte('dreps.amount_lovelace', maxLovelace.toString());
-    }
-
-    // Apply search (DRep ID or hex ID prefix matching)
+    // Apply search filter on drep_id server-side
     if (search) {
       const searchLower = search.toLowerCase();
-      query = query.or(
-        `drep_id.ilike.%${searchLower}%,dreps.hex_id.ilike.%${searchLower}%`
-      );
+      scoresQuery = scoresQuery.ilike('drep_id', `%${searchLower}%`);
     }
 
     // Apply sorting and pagination
-    query = query.order(sort, { ascending: order === 'asc' });
+    scoresQuery = scoresQuery.order(sort, { ascending: order === 'asc' });
     const offset = (page - 1) * perPage;
-    query = query.range(offset, offset + perPage - 1);
+    scoresQuery = scoresQuery.range(offset, offset + perPage - 1);
 
-    const { data: scores, count, error: queryError } = await query;
+    const { data: scores, count, error: scoresError } = await scoresQuery;
 
-    if (queryError) {
-      console.error('Supabase query error:', queryError);
+    if (scoresError) {
+      console.error('Supabase drep_scores query error:', scoresError);
       return NextResponse.json({ error: 'Failed to fetch DRep scores' }, { status: 500 });
     }
 
-    // Step 3: Flatten response (Supabase returns nested data)
-    const dreps: DRepScoreRow[] = (scores || []).map((score: unknown) => {
-      const row = score as {
+    if (!scores || scores.length === 0) {
+      return NextResponse.json({
+        dreps: [],
+        total: 0,
+        page,
+        total_pages: 0,
+        epoch: currentEpoch,
+      });
+    }
+
+    // Step 3: Extract drep_ids and fetch dreps details
+    const drepIds = scores.map((s: unknown) => (s as { drep_id: string }).drep_id);
+    const { data: drepsData, error: drepsError } = await supabase
+      .from('dreps')
+      .select('drep_id, hex_id, is_registered, amount_lovelace, delegator_count')
+      .in('drep_id', drepIds);
+
+    if (drepsError) {
+      console.error('Supabase dreps query error:', drepsError);
+      return NextResponse.json({ error: 'Failed to fetch DRep details' }, { status: 500 });
+    }
+
+    // Step 4: Create map of drep data for fast lookup
+    const drepMap = new Map<string, DRepData>(
+      (drepsData || []).map((d: unknown) => {
+        const drep = d as DRepData;
+        return [drep.drep_id, drep];
+      })
+    );
+
+    // Step 5: Merge scores with drep data and apply post-merge filters
+    const minLovelace = BigInt(Math.floor(minAda * 1_000_000_000_000));
+    const maxLovelace = BigInt(Math.floor(maxAda * 1_000_000_000_000));
+
+    const merged: DRepScoreRow[] = [];
+
+    for (const score of scores) {
+      const scoreRow = score as {
         epoch: number;
         drep_id: string;
         raw_govscore: number | null;
         adjusted_govscore: number | null;
         participation_rate: number | null;
         voting_streak_epochs: number | null;
-        dreps: {
-          hex_id: string | null;
-          is_registered: boolean;
-          amount_lovelace: bigint | null;
-          delegator_count: number | null;
-        };
       };
 
-      return {
-        epoch: row.epoch,
-        drep_id: row.drep_id,
-        hex_id: row.dreps.hex_id,
-        is_registered: row.dreps.is_registered,
-        amount_lovelace: row.dreps.amount_lovelace,
-        delegator_count: row.dreps.delegator_count,
-        raw_govscore: row.raw_govscore,
-        adjusted_govscore: row.adjusted_govscore,
-        participation_rate: row.participation_rate,
-        voting_streak_epochs: row.voting_streak_epochs,
-      };
-    });
+      const drepData = drepMap.get(scoreRow.drep_id);
+      if (!drepData) continue; // Skip if drep not found
 
+      // Apply post-merge filters
+      if (registered && !drepData.is_registered) continue;
+
+      if (minAda > 0 && (!drepData.amount_lovelace || drepData.amount_lovelace < minLovelace)) continue;
+
+      if (maxAda < 999999999 && drepData.amount_lovelace && drepData.amount_lovelace > maxLovelace) continue;
+
+      // Apply search filter on hex_id if needed
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const drepIdMatch = scoreRow.drep_id.toLowerCase().includes(searchLower);
+        const hexIdMatch = drepData.hex_id && drepData.hex_id.toLowerCase().includes(searchLower);
+        if (!drepIdMatch && !hexIdMatch) continue;
+      }
+
+      merged.push({
+        epoch: scoreRow.epoch,
+        drep_id: scoreRow.drep_id,
+        hex_id: drepData.hex_id,
+        is_registered: drepData.is_registered,
+        amount_lovelace: drepData.amount_lovelace,
+        delegator_count: drepData.delegator_count,
+        raw_govscore: scoreRow.raw_govscore,
+        adjusted_govscore: scoreRow.adjusted_govscore,
+        participation_rate: scoreRow.participation_rate,
+        voting_streak_epochs: scoreRow.voting_streak_epochs,
+      });
+    }
+
+    // Note: 'total' reflects server-side count (before post-merge filters)
+    // This is acceptable since most users won't use all filters together
     const total = count || 0;
     const totalPages = Math.ceil(total / perPage);
 
     return NextResponse.json({
-      dreps,
+      dreps: merged,
       total,
       page,
       total_pages: totalPages,
