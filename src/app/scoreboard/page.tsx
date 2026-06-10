@@ -101,49 +101,55 @@ async function getDRepScoresForCurrentEpoch(): Promise<
       throw new Error(`Failed to fetch DRep details: ${drepsError.message}`);
     }
 
-    // Query 5: Fetch votes for vote summary
-    const { data: allVotes, error: votesError } = await supabaseAdmin
-      .from('votes')
-      .select('drep_id, vote, proposals(proposal_id, title)')
-      .in('drep_id', drepIds);
-
-    if (votesError) {
-      console.warn('Failed to fetch votes for summary:', votesError.message);
+    // Query 5: Get vote summaries via database function (avoids 1,000-row PostgREST limit)
+    interface VoteSummaryRow {
+      drep_id: string;
+      yes_count: number | bigint;
+      no_count: number | bigint;
+      abstain_count: number | bigint;
     }
 
-    // Aggregate vote summaries by DRep
-    const voteSummaryMap = new Map<string, { yes: number; no: number; abstain: number }>();
-    const recentVotesMap = new Map<string, Array<{ proposal_title: string; vote: string; proposal_id: string }>>();
+    const { data: voteSummariesData, error: votesError } = await supabaseAdmin
+      .rpc('get_vote_summaries', { drep_ids: drepIds });
 
-    (allVotes || []).forEach((voteData: unknown) => {
+    if (votesError) {
+      console.warn('Failed to fetch vote summaries:', votesError.message);
+    }
+
+    // Build vote summary map from RPC result
+    const voteSummaryMap = new Map<string, { yes: number; no: number; abstain: number }>();
+    (voteSummariesData || []).forEach((row: unknown) => {
+      const summary = row as VoteSummaryRow;
+      voteSummaryMap.set(summary.drep_id, {
+        yes: Number(summary.yes_count),
+        no: Number(summary.no_count),
+        abstain: Number(summary.abstain_count),
+      });
+    });
+
+    // Query 5b: Fetch recent votes (limited to 300 rows)
+    const { data: recentVotesData } = await supabaseAdmin
+      .from('votes')
+      .select('drep_id, vote, proposals(proposal_id, title)')
+      .in('drep_id', drepIds)
+      .order('block_time', { ascending: false })
+      .limit(300);
+
+    // Build recent votes map (keeping last 3 per DRep)
+    const recentVotesMap = new Map<string, Array<{ proposal_title: string; vote: string; proposal_id: string }>>();
+    (recentVotesData || []).forEach((voteData: unknown) => {
       const vote = voteData as { drep_id: string; vote: string; proposals: { title: string; proposal_id: string } | null };
 
-      // Vote summary
-      if (!voteSummaryMap.has(vote.drep_id)) {
-        voteSummaryMap.set(vote.drep_id, { yes: 0, no: 0, abstain: 0 });
-      }
-      const summary = voteSummaryMap.get(vote.drep_id)!;
-      const voteType = vote.vote.toLowerCase();
-      if (voteType === 'yes') summary.yes++;
-      else if (voteType === 'no') summary.no++;
-      else if (voteType === 'abstain') summary.abstain++;
-
-      // Recent votes (keep last 3)
       if (!recentVotesMap.has(vote.drep_id)) {
         recentVotesMap.set(vote.drep_id, []);
       }
       const recent = recentVotesMap.get(vote.drep_id)!;
-      recent.push({
-        proposal_title: vote.proposals?.title || 'Untitled',
-        vote: vote.vote,
-        proposal_id: vote.proposals?.proposal_id || 'unknown',
-      });
-    });
-
-    // Keep only last 3 recent votes per DRep
-    recentVotesMap.forEach((votes) => {
-      if (votes.length > 3) {
-        votes.splice(0, votes.length - 3);
+      if (recent.length < 3) {
+        recent.push({
+          proposal_title: vote.proposals?.title || 'Untitled',
+          vote: vote.vote,
+          proposal_id: vote.proposals?.proposal_id || 'unknown',
+        });
       }
     });
 
