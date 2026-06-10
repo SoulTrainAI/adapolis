@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { DRepCard } from '@/components/scoreboard/DRepCard';
 
-export const revalidate = 300;
+export const revalidate = 0;
 
 interface DRepScore {
   drep_id: string;
