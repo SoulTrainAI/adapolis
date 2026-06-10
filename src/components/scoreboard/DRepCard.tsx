@@ -318,7 +318,7 @@ export function DRepCard({ props }: { props: DRepCardProps }) {
           transformStyle: 'preserve-3d',
           perspective: 1200,
         }}
-        className="w-full"
+        className="w-full h-full"
       >
         {/* Front */}
         <motion.div
@@ -326,7 +326,7 @@ export function DRepCard({ props }: { props: DRepCardProps }) {
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
           }}
-          className="w-full aspect-[5/7]"
+          className="w-full h-full"
         >
           <CardFront props={props} />
         </motion.div>
@@ -338,7 +338,7 @@ export function DRepCard({ props }: { props: DRepCardProps }) {
             WebkitBackfaceVisibility: 'hidden',
             rotateY: 180,
           }}
-          className="w-full aspect-[5/7] absolute inset-0"
+          className="w-full h-full absolute inset-0"
         >
           <CardBack props={props} />
         </motion.div>
