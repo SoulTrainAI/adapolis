@@ -88,6 +88,13 @@ function CardFront({ props }: { props: DRepCardProps }) {
         </p>
       </div>
 
+      {/* Voting Streak */}
+      {props.votingStreak && props.votingStreak > 1 && (
+        <div className="mb-4 text-center">
+          <p className="text-lg font-semibold text-orange-400">🔥 {props.votingStreak} epoch streak</p>
+        </div>
+      )}
+
       {/* Metrics grid */}
       <div className="grid grid-cols-2 gap-2 mb-4">
         <div className="bg-slate-700/30 rounded p-2 text-center group relative">

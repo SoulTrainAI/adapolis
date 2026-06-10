@@ -13,6 +13,7 @@ interface DRepScoring {
   participation_rate: number | null;
   raw_govscore: number | null;
   adjusted_govscore: number | null;
+  voting_streak_epochs: number;
 }
 
 interface ComputeResult {
@@ -29,6 +30,33 @@ function calculateDampener(amountLovelace: bigint): number {
   const ada = Number(amountLovelace) / 1_000_000_000_000; // Convert lovelace to millions of ADA
   const dampener = 1 / (1 + Math.log10(ada + 1) / 4);
   return dampener;
+}
+
+/**
+ * Computes voting streak for a DRep
+ * Streak = consecutive epochs with at least one vote, counting backwards from the highest epoch
+ * Example: epochs [600,599,598,596] → streak = 3
+ */
+function computeVotingStreak(epochSet: Set<number> | undefined): number {
+  if (!epochSet || epochSet.size === 0) return 0;
+
+  const epochs = Array.from(epochSet).sort((a, b) => b - a);
+  let streak = 0;
+
+  for (let i = 0; i < epochs.length; i++) {
+    if (i === 0) {
+      streak = 1;
+    } else {
+      // Check if consecutive (epoch - 1 compared to previous)
+      if (epochs[i] === epochs[i - 1] - 1) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return streak;
 }
 
 /**
@@ -49,6 +77,37 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
   );
 
   try {
+    // Step 0: Fetch drep→epoch map (single query to get voting streaks)
+    // Query: SELECT DISTINCT drep_id, proposed_epoch FROM votes JOIN proposals
+    const { data: drepEpochData, error: drepEpochError } = await supabaseAdmin
+      .from('votes')
+      .select('drep_id, proposals(proposed_epoch)')
+      .limit(50000);
+
+    if (drepEpochError) {
+      throw new Error(`Failed to fetch DRep voting epochs: ${drepEpochError.message}`);
+    }
+
+    // Build map of drep_id → Set<epoch>
+    const drepEpochMap = new Map<string, Set<number>>();
+    (drepEpochData || []).forEach((row: unknown) => {
+      const voteRow = row as { drep_id: string; proposals: { proposed_epoch: number } | null };
+      if (voteRow.proposals?.proposed_epoch !== undefined && voteRow.proposals.proposed_epoch !== null) {
+        if (!drepEpochMap.has(voteRow.drep_id)) {
+          drepEpochMap.set(voteRow.drep_id, new Set());
+        }
+        drepEpochMap.get(voteRow.drep_id)!.add(voteRow.proposals.proposed_epoch);
+      }
+    });
+
+    console.log(
+      JSON.stringify({
+        event: 'drep_epoch_map_built',
+        uniqueDReps: drepEpochMap.size,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
     // Step 1: Get all DReps with their delegation amounts (fetched in batches due to 1000-row limit)
     // Note: is_registered from Koios API may not reflect actual on-chain status for Phase 1
     // For now, include all DReps to enable scoring
@@ -167,6 +226,9 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       }
       // If votesEligible is 0, both remain null (per ROADMAP spec)
 
+      // Compute voting streak for this DRep
+      const votingStreak = computeVotingStreak(drepEpochMap.get(drep.drep_id));
+
       scoringResults.push({
         drep_id: drep.drep_id,
         amount_lovelace: drep.amount_lovelace || BigInt(0),
@@ -175,6 +237,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
         participation_rate: participationRate,
         raw_govscore: rawGovscore,
         adjusted_govscore: adjustedGovscore,
+        voting_streak_epochs: votingStreak,
       });
 
       if (participationRate !== null) {
@@ -199,6 +262,7 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       raw_govscore: result.raw_govscore,
       adjusted_govscore: result.adjusted_govscore,
       participation_rate: result.participation_rate,
+      voting_streak_epochs: result.voting_streak_epochs,
       computed_at: new Date().toISOString(),
     }));
 

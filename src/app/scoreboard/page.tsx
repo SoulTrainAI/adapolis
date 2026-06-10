@@ -17,6 +17,7 @@ interface DRepScore {
   raw_govscore: number | null;
   adjusted_govscore: number | null;
   participation_rate: number | null;
+  voting_streak_epochs: number | null;
   epoch: number;
   voteSummary?: { yes: number; no: number; abstain: number };
   recentVotes?: Array<{ proposal_title: string; vote: string; proposal_id: string }>;
@@ -77,7 +78,7 @@ async function getDRepScoresForCurrentEpoch(): Promise<
     // Query 3: Fetch top 100 scores for current epoch
     const { data: scores, error: scoresError } = await supabaseAdmin
       .from('drep_scores')
-      .select('epoch, drep_id, raw_govscore, adjusted_govscore, participation_rate')
+      .select('epoch, drep_id, raw_govscore, adjusted_govscore, participation_rate, voting_streak_epochs')
       .eq('epoch', currentEpoch)
       .order('adjusted_govscore', { ascending: false })
       .limit(100);
@@ -175,18 +176,28 @@ async function getDRepScoresForCurrentEpoch(): Promise<
         delegator_count: null,
       };
 
+      const scoreRow = score as unknown as {
+        epoch: number;
+        drep_id: string;
+        raw_govscore: number | null;
+        adjusted_govscore: number | null;
+        participation_rate: number | null;
+        voting_streak_epochs: number | null;
+      };
+
       return {
-        drep_id: score.drep_id,
+        drep_id: scoreRow.drep_id,
         hex_id: drepData.hex_id,
         is_registered: drepData.is_registered,
         amount_lovelace: drepData.amount_lovelace,
         delegator_count: drepData.delegator_count,
-        raw_govscore: score.raw_govscore,
-        adjusted_govscore: score.adjusted_govscore,
-        participation_rate: score.participation_rate,
-        epoch: score.epoch,
-        voteSummary: voteSummaryMap.get(score.drep_id) || { yes: 0, no: 0, abstain: 0 },
-        recentVotes: recentVotesMap.get(score.drep_id) || [],
+        raw_govscore: scoreRow.raw_govscore,
+        adjusted_govscore: scoreRow.adjusted_govscore,
+        participation_rate: scoreRow.participation_rate,
+        voting_streak_epochs: scoreRow.voting_streak_epochs,
+        epoch: scoreRow.epoch,
+        voteSummary: voteSummaryMap.get(scoreRow.drep_id) || { yes: 0, no: 0, abstain: 0 },
+        recentVotes: recentVotesMap.get(scoreRow.drep_id) || [],
         bio: null,
         socialLinks: {},
       };
@@ -310,7 +321,7 @@ export default async function ScoreboardPage() {
                     adaAmount: formatADA(drep.amount_lovelace),
                     delegatorCount: drep.delegator_count,
                     isRegistered: drep.is_registered,
-                    votingStreak: 0,
+                    votingStreak: drep.voting_streak_epochs || 0,
                     voteSummary: drep.voteSummary,
                     recentVotes: drep.recentVotes,
                     bio: drep.bio,
