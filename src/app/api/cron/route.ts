@@ -1,10 +1,11 @@
 /**
  * Full Cron Pipeline
  * POST /api/cron
- * Runs: syncDReps() → syncProposals() → computeGovScoresForEpoch(currentEpoch)
+ * Returns 202 Accepted immediately, runs sync + score pipeline in background
  * Requires Authorization header with CRON_SECRET
  */
 
+import { NextResponse } from 'next/server';
 import { syncDReps } from '@/lib/sync/sync-dreps';
 import { syncProposals } from '@/lib/sync/sync-proposals';
 import { computeGovScoresForEpoch } from '@/lib/scoring/govscore-v1';
@@ -53,20 +54,13 @@ async function getCurrentEpoch(): Promise<number> {
 }
 
 /**
- * POST /api/cron
- * Runs full sync + score pipeline
+ * Runs the full sync + score pipeline in background
+ * Does not block the HTTP response
  */
-export async function POST(request: Request): Promise<Response> {
+async function runPipeline(): Promise<void> {
   const pipelineStartTime = Date.now();
 
   try {
-    if (!verifyAuth(request)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized: invalid or missing CRON_SECRET' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
     console.log(JSON.stringify({ event: 'cron_pipeline_start', timestamp: new Date().toISOString() }));
 
     // Step 1: Sync DReps
@@ -114,51 +108,56 @@ export async function POST(request: Request): Promise<Response> {
     );
 
     const pipelineDuration = Date.now() - pipelineStartTime;
-
-    const summary = {
-      status: 'success',
-      pipeline_duration_ms: pipelineDuration,
-      timestamp: new Date().toISOString(),
-      steps: {
-        sync_dreps: drepsSyncResult,
-        sync_proposals: proposalsSyncResult,
-        current_epoch: currentEpoch,
-        compute_govscore: scoreResult,
-      },
-    };
-
-    console.log(JSON.stringify({ event: 'cron_pipeline_complete', summary, timestamp: new Date().toISOString() }));
-
-    return new Response(JSON.stringify(summary), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.log(
+      JSON.stringify({
+        event: 'cron_pipeline_complete',
+        duration_ms: pipelineDuration,
+        timestamp: new Date().toISOString(),
+      })
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(JSON.stringify({ event: 'cron_pipeline_error', error: errorMessage, timestamp: new Date().toISOString() }));
-
-    return new Response(
+    console.error(
       JSON.stringify({
-        status: 'error',
-        error: 'Cron pipeline failed',
-        details: errorMessage,
+        event: 'cron_pipeline_error',
+        error: errorMessage,
         timestamp: new Date().toISOString(),
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      })
     );
   }
+}
+
+/**
+ * POST /api/cron
+ * Returns 202 Accepted immediately, pipeline runs in background
+ */
+export async function POST(request: Request): Promise<NextResponse> {
+  if (!verifyAuth(request)) {
+    return NextResponse.json({ error: 'Unauthorized: invalid or missing CRON_SECRET' }, { status: 401 });
+  }
+
+  console.log(JSON.stringify({ event: 'cron_request_accepted', timestamp: new Date().toISOString() }));
+
+  // Fire and forget — do not await
+  runPipeline().catch((error) => {
+    console.error(JSON.stringify({ event: 'cron_unhandled_error', error: String(error), timestamp: new Date().toISOString() }));
+  });
+
+  // Return immediately with 202 Accepted
+  return NextResponse.json(
+    {
+      status: 'accepted',
+      message: 'Cron pipeline scheduled to run in background',
+      timestamp: new Date().toISOString(),
+    },
+    { status: 202 }
+  );
 }
 
 /**
  * Health check endpoint
  * GET /api/cron returns 200 if the endpoint is reachable
  */
-export async function GET(): Promise<Response> {
-  return new Response(JSON.stringify({ status: 'ok', message: 'Cron endpoint is ready' }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+export async function GET(): Promise<NextResponse> {
+  return NextResponse.json({ status: 'ok', message: 'Cron endpoint is ready' });
 }
