@@ -451,6 +451,31 @@ and ADA_M = ADA delegated in millions`}
           </div>
         </section>
 
+        {/* Section 8: Find My DRep */}
+        <section id="find-my-drep" className="space-y-6 scroll-mt-24">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">8. How Find My DRep Matching Works</h2>
+          <p className="text-slate-300 leading-relaxed">
+            The <a href="/match" className="text-violet-400 hover:text-violet-300">Find My DRep</a> quiz compares your
+            answers with how DReps have actually voted on-chain. Everything is computed by fixed rules from public data; no
+            AI is involved. Your answers are scored in your browser and are never sent to us or stored.
+          </p>
+          <ul className="space-y-2 text-slate-300">
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Who can be matched:</strong> registered DReps with at least 3 votes and at least 50% participation, excluding DReps that set CIP-119 <code>doNotList</code> (they asked not to be promoted for delegation).</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Your answers:</strong> each statement is rated 1–10 for agreement and Not at all / A little / Somewhat / Very for importance (weights 0 / 1 / 2 / 3).</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>DRep positions:</strong> measured from votes on the relevant governance actions (e.g. treasury withdrawals), from rationale publication rate, or from delegated ADA. Treasury, protocol-change, transparency and size positions are ranked relative to other DReps.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Parameter topics</strong> (stake pool decentralization, staking rewards, fees) use parameter-change votes. Each change is classified by comparing the proposed values with the values in force when it was proposed; a Yes on a change that lowers the minimum pool fee, for example, counts as siding with small pools.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Thin records:</strong> each DRep&apos;s position is blended with the average DRep as if they had cast 3 extra average votes. A DRep with 3 votes can still match well, but one vote can&apos;t make them look extreme. Results label profiles with fewer than 10 votes as early.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Real-vote questions</strong> are recent proposals (last ~2 years) with their own title and summary, on which eligible DReps split most evenly. A DRep&apos;s Yes counts as 10, No as 1, Abstain or not voting as the midpoint. Answers near the middle count less, since they usually mean &quot;unsure&quot;.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Match %</strong> is the importance-weighted average agreement across every answered topic. &quot;My DRep should explain every vote&quot; only counts when you agree with it.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Decentralization boost:</strong> every ranking adds up to 5 points for the smallest DReps (scaled by delegated-ADA rank), so voting power spreads out. The boost is shown separately and never changes the match %. Exact ties go to the DRep with less delegated ADA.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Not yet measurable:</strong> some topics (e.g. DRep pay, treasury investing) haven&apos;t been voted on. The quiz asks them, but they don&apos;t affect matches until DReps publish positions.</span></li>
+          </ul>
+          <p className="text-slate-400 text-sm">
+            Because about two-thirds of governance actions so far are treasury withdrawals, matches currently lean on treasury
+            attitudes. Data refreshes every 6 hours.
+          </p>
+        </section>
+
         {/* Footer */}
         <section className="pt-8 border-t border-slate-800 space-y-4">
           <p className="text-slate-400 text-sm">

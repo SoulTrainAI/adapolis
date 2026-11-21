@@ -67,6 +67,12 @@ export default async function Home() {
             View the Scoreboard
           </Link>
           <Link
+            href="/match"
+            className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            Find my DRep
+          </Link>
+          <Link
             href="/methodology"
             className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-semibold py-3 px-6 rounded-lg transition-colors"
           >
