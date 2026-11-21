@@ -16,6 +16,24 @@ import { syncDRepMetadata } from '@/lib/metadata/drep-metadata';
 import { getMatchData } from '@/lib/match/profiles';
 import { isStatementRunActive, runStatementSummaries } from '@/lib/statements/run';
 
+const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
+
+// The last run time lives in the database so a redeploy doesn't reset the schedule.
+async function statementsDue(): Promise<boolean> {
+  const hours = STATEMENT_INTERVAL_HOURS[process.env.STATEMENT_SUMMARIES ?? ''];
+  if (hours === undefined) return false;
+  if (hours === 0) return true;
+  const { data, error } = await supabaseAdmin
+    .from('drep_statement_runs')
+    .select('generated_at')
+    .order('generated_at', { ascending: false })
+    .limit(1);
+  if (error) return false;
+  const last = data?.[0]?.generated_at;
+  // 1h slack so a 24h schedule doesn't slip to 30h on a 6-hourly cron.
+  return !last || Date.now() - new Date(last).getTime() >= (hours - 1) * 3_600_000;
+}
+
 function verifyAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
   const cronSecret = process.env.CRON_SECRET;
@@ -132,9 +150,10 @@ async function runPipeline(): Promise<void> {
     const currentEpoch = await step('get_epoch', () => getCurrentEpoch());
     await step('compute_scores', () => computeGovScoresForEpoch(currentEpoch));
 
-    // Incremental AI summaries for DReps whose published words changed. Off
-    // unless STATEMENT_SUMMARIES=on; capped per run so cost can't run away.
-    if (process.env.STATEMENT_SUMMARIES === 'on' && !isStatementRunActive()) {
+    // Incremental AI summaries for DReps whose published words changed.
+    // STATEMENT_SUMMARIES = daily | weekly | on (every refresh); unset = off.
+    // Batching DReps into fewer runs is cheaper, since each DRep is re-read once per run.
+    if ((await statementsDue()) && !isStatementRunActive()) {
       try {
         await step('summarize_statements', async () => {
           const r = await runStatementSummaries({ limit: 50, maxCostUsd: 0.25 });
