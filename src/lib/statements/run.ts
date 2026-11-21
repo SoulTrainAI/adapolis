@@ -6,6 +6,7 @@
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { inputFingerprint, loadSources, profileText, SOURCE_LIMITS } from './sources';
 import { DEFAULT_STATEMENTS_MODEL, priceFor, summarizeStatements } from './summarize';
+import { getMatchData } from '@/lib/match/profiles';
 
 const DB_PAGE_SIZE = 1000;
 const WORKERS = 3;
@@ -235,6 +236,12 @@ export async function runStatementSummaries(options: RunOptions = {}): Promise<R
     };
     await Promise.all(Array.from({ length: WORKERS }, worker));
     status.stopped_reason ??= 'completed';
+    if (status.positions_found > 0) {
+      // Make new statements visible in the quiz now rather than at the next 6-hour refresh.
+      await getMatchData({ force: true }).catch((error: unknown) => {
+        status.last_error = `match refresh failed: ${error instanceof Error ? error.message : String(error)}`;
+      });
+    }
     return status;
   } catch (error) {
     status.last_error = error instanceof Error ? error.message : String(error);
