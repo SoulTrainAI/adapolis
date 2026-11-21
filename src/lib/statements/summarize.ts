@@ -42,6 +42,8 @@ Rules:
 - Use only the provided sources. Never use outside knowledge about the DRep, and never infer a position from how they voted alone.
 - Record a topic only if the DRep clearly states or clearly implies a GENERAL view on it. An objection to one specific proposal (e.g. "this budget is too high") is not a general view unless the DRep generalizes (e.g. "the treasury should only fund essentials").
 - The quote must be about the topic itself, not a neighbouring subject. For example, the size of the Constitutional Committee is not about large ADA holders' voting power, and voting to enact one election result is not a general view on trusting the committee.
+- Test every position: someone reading ONLY the quote and the topic statement should be able to see the DRep's stance on that topic. If they could not, omit it. Thanks, praise, or a review of one proposal ("good effort but needs iteration") is never a position.
+- Pay for the Constitutional Committee, Intersect staff or proposal teams is not DRep compensation. drep_compensation is only about paying DReps.
 - stance: 1-10 agreement with the topic statement exactly as worded (10 = strongly agrees, 1 = strongly disagrees, 5-6 = explicitly mixed).
 - confidence: "high" if explicit, "medium" if clearly implied. If neither, omit the topic.
 - quote: copy 5-30 consecutive words EXACTLY as they appear in the cited source (same words, same order). Do not paraphrase, fix typos, or join separate passages.
