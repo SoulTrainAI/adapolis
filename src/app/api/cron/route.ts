@@ -32,6 +32,32 @@ function verifyAuth(request: Request): boolean {
   return true;
 }
 
+interface PipelineRun {
+  started_at: string;
+  finished_at: string | null;
+  current_step: string;
+  completed_steps: Record<string, unknown>;
+  error: { step: string; message: string } | null;
+}
+
+// Railway runs a single long-lived replica, so in-memory state is enough to
+// report the most recent run. It resets on redeploy, which is acceptable for a
+// diagnostic: the tables themselves are the durable record.
+let lastRun: PipelineRun | null = null;
+
+async function step<T>(name: string, fn: () => Promise<T>): Promise<T> {
+  if (lastRun) lastRun.current_step = name;
+  try {
+    const result = await fn();
+    if (lastRun) lastRun.completed_steps[name] = result;
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (lastRun) lastRun.error = { step: name, message };
+    throw error;
+  }
+}
+
 /**
  * Uses the live chain epoch so scores roll forward each epoch. Falls back to
  * the latest stored epoch only if Koios is unreachable, so a Koios outage
@@ -70,90 +96,55 @@ async function getCurrentEpoch(): Promise<number> {
  */
 async function runPipeline(): Promise<void> {
   const pipelineStartTime = Date.now();
+  lastRun = {
+    started_at: new Date().toISOString(),
+    finished_at: null,
+    current_step: 'starting',
+    completed_steps: {},
+    error: null,
+  };
 
   try {
-    console.log(JSON.stringify({ event: 'cron_pipeline_start', timestamp: new Date().toISOString() }));
+    console.log(JSON.stringify({ event: 'cron_pipeline_start', timestamp: lastRun.started_at }));
 
-    // Step 1: Sync DReps
-    console.log(JSON.stringify({ event: 'cron_step_1_sync_dreps', timestamp: new Date().toISOString() }));
-    const drepsSyncResult = await syncDReps();
-    console.log(
-      JSON.stringify({
-        event: 'cron_step_1_complete',
-        result: drepsSyncResult,
-        timestamp: new Date().toISOString(),
-      })
-    );
+    await step('sync_dreps', () => syncDReps());
 
-    // Metadata failures are logged but don't stop scoring: profiles are cosmetic,
-    // scores are the product.
+    // Metadata failures are logged but don't stop scoring: profiles are
+    // display-only, scores are the product.
     try {
-      const metadataResult = await syncDRepMetadata();
-      console.log(JSON.stringify({ event: 'cron_step_1b_metadata_complete', result: metadataResult }));
+      await step('sync_metadata', () => syncDRepMetadata());
     } catch (error) {
+      if (lastRun) lastRun.error = null;
       console.error(
         JSON.stringify({
-          event: 'cron_step_1b_metadata_failed',
+          event: 'cron_step_metadata_failed',
           error: error instanceof Error ? error.message : String(error),
         })
       );
     }
 
-    // Step 2: Sync Proposals
-    console.log(JSON.stringify({ event: 'cron_step_2_sync_proposals', timestamp: new Date().toISOString() }));
-    const proposalsSyncResult = await syncProposals();
-    console.log(
-      JSON.stringify({
-        event: 'cron_step_2_complete',
-        result: proposalsSyncResult,
-        timestamp: new Date().toISOString(),
-      })
-    );
+    await step('sync_proposals', () => syncProposals());
+    // Votes need DReps and proposals present first (foreign keys), and scoring
+    // needs fresh votes, so this sits between them.
+    await step('sync_votes', () => syncAllVotes());
+    const currentEpoch = await step('get_epoch', () => getCurrentEpoch());
+    await step('compute_scores', () => computeGovScoresForEpoch(currentEpoch));
 
-    // Votes depend on DReps and proposals existing first (foreign keys), and
-    // scoring depends on fresh votes, so this sits between them.
-    const votesSyncResult = await syncAllVotes();
-    console.log(JSON.stringify({ event: 'cron_step_2b_votes_complete', result: votesSyncResult }));
-
-    // Step 3: Get current epoch
-    console.log(JSON.stringify({ event: 'cron_step_3_get_epoch', timestamp: new Date().toISOString() }));
-    const currentEpoch = await getCurrentEpoch();
-    console.log(JSON.stringify({ event: 'current_epoch_determined', epoch: currentEpoch }));
-
-    // Step 4: Compute GovScores
+    lastRun.current_step = 'done';
     console.log(
-      JSON.stringify({
-        event: 'cron_step_4_compute_scores',
-        epoch: currentEpoch,
-        timestamp: new Date().toISOString(),
-      })
-    );
-    const scoreResult = await computeGovScoresForEpoch(currentEpoch);
-    console.log(
-      JSON.stringify({
-        event: 'cron_step_4_complete',
-        result: scoreResult,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    const pipelineDuration = Date.now() - pipelineStartTime;
-    console.log(
-      JSON.stringify({
-        event: 'cron_pipeline_complete',
-        duration_ms: pipelineDuration,
-        timestamp: new Date().toISOString(),
-      })
+      JSON.stringify({ event: 'cron_pipeline_complete', duration_ms: Date.now() - pipelineStartTime, steps: lastRun.completed_steps })
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       JSON.stringify({
         event: 'cron_pipeline_error',
-        error: errorMessage,
+        step: lastRun?.error?.step,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
       })
     );
+  } finally {
+    if (lastRun) lastRun.finished_at = new Date().toISOString();
   }
 }
 
@@ -184,10 +175,33 @@ export async function POST(request: Request): Promise<NextResponse> {
   );
 }
 
+async function tableCounts(): Promise<Record<string, number | string>> {
+  const tables = ['dreps', 'proposals', 'votes', 'drep_scores'] as const;
+  const counts: Record<string, number | string> = {};
+  for (const table of tables) {
+    const { count, error } = await supabaseAdmin.from(table).select('*', { count: 'exact', head: true });
+    counts[table] = error ? `error: ${error.message}` : (count ?? 0);
+  }
+  return counts;
+}
+
 /**
- * Health check endpoint
- * GET /api/cron returns 200 if the endpoint is reachable
+ * GET /api/cron — public status page: the latest pipeline run (which step it
+ * reached, any error) and current row counts. Contains no secrets.
  */
 export async function GET(): Promise<NextResponse> {
-  return NextResponse.json({ status: 'ok', message: 'Cron endpoint is ready' });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  let supabaseHost = 'not set';
+  try {
+    supabaseHost = new URL(supabaseUrl).host + (new URL(supabaseUrl).pathname !== '/' ? ' (WARNING: URL has a path; it should end at .supabase.co)' : '');
+  } catch {
+    supabaseHost = 'invalid URL';
+  }
+
+  return NextResponse.json({
+    status: 'ok',
+    supabase_host: supabaseHost,
+    last_run: lastRun ?? 'no run since this deploy started',
+    counts: await tableCounts(),
+  });
 }
