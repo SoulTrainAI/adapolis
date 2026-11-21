@@ -4,7 +4,9 @@
  */
 
 import { TOPICS, MATCH_RULES } from './topics';
-import type { MatchDRep, RealVoteQuestion } from './profiles';
+import type { MatchDRep, RealVoteQuestion, StatedStance } from './profiles';
+
+export type RankMode = 'votes' | 'statements';
 
 export interface TopicAnswer {
   /** 1-10 agreement with the statement */
@@ -34,6 +36,13 @@ export interface MatchResult {
   reasons: MatchReason[];
   realVoteAgreement: { agreed: number; compared: number };
   earlyProfile: boolean;
+  /** Agreement with what the DRep has said, 0-100; null if fewer than 2 overlapping topics */
+  statedPercent: number | null;
+  statedTopics: number;
+  /** The DRep's statements on topics the user cares most about */
+  statedHighlights: Array<{ topicId: string; statement: string; stated: StatedStance }>;
+  /** Topics where what the DRep says and how it votes point in different directions */
+  saysVsDoes: Array<{ statement: string; says: number; does: string }>;
 }
 
 const toUnit = (v: number) => (Math.min(10, Math.max(1, v)) - 1) / 9;
@@ -41,7 +50,8 @@ const toUnit = (v: number) => (Math.min(10, Math.max(1, v)) - 1) / 9;
 export function scoreMatches(
   dreps: MatchDRep[],
   realVotes: RealVoteQuestion[],
-  answers: Answers
+  answers: Answers,
+  mode: RankMode = 'votes'
 ): MatchResult[] {
   const results: MatchResult[] = [];
 
@@ -97,19 +107,74 @@ export function scoreMatches(
     const matchPercent = (weighted / weightSum) * 100;
     const smallness = drep.positions.small_dreps?.value ?? 0.5;
     const boost = MATCH_RULES.maxDecentralizationBoost * smallness;
+    const stated = scoreStated(drep, answers);
+    if (mode === 'statements' && stated.percent === null) continue;
 
     results.push({
       drep,
       matchPercent,
       boost,
-      rankScore: matchPercent + boost,
+      rankScore: (mode === 'statements' ? stated.percent ?? 0 : matchPercent) + boost,
       reasons: buildReasons(drep, contributions),
       realVoteAgreement: { agreed, compared },
       earlyProfile: drep.votes_cast < 10,
+      statedPercent: stated.percent,
+      statedTopics: stated.topics,
+      statedHighlights: stated.highlights,
+      saysVsDoes: saysVsDoes(drep),
     });
   }
 
   return results.sort((a, b) => b.rankScore - a.rankScore || a.drep.ada - b.drep.ada);
+}
+
+/**
+ * Agreement with the DRep's stated positions, scored exactly like vote-based
+ * topics but kept as a separate number. Needs at least 2 overlapping topics.
+ */
+function scoreStated(drep: MatchDRep, answers: Answers) {
+  let weightSum = 0;
+  let weighted = 0;
+  let topics = 0;
+  const ranked: Array<{ topicId: string; importance: number }> = [];
+  for (const topic of TOPICS) {
+    const answer = answers.topics[topic.id];
+    const stance = drep.stated[topic.id];
+    if (!answer || answer.importance <= 0 || !stance) continue;
+    const u = toUnit(answer.agree);
+    const s = toUnit(stance.stance);
+    let weight = answer.importance;
+    if (topic.oneSided) {
+      if (u <= 0.5) continue;
+      weight = answer.importance * (u - 0.5) * 2;
+    }
+    weightSum += weight;
+    weighted += weight * (1 - Math.abs(u - s));
+    topics++;
+    ranked.push({ topicId: topic.id, importance: answer.importance });
+  }
+  const highlights = ranked
+    .sort((a, b) => b.importance - a.importance)
+    .slice(0, 2)
+    .map(({ topicId }) => ({
+      topicId,
+      statement: TOPICS.find((t) => t.id === topicId)?.statement ?? topicId,
+      stated: drep.stated[topicId],
+    }));
+  return { percent: topics >= 2 && weightSum > 0 ? (weighted / weightSum) * 100 : null, topics, highlights };
+}
+
+function saysVsDoes(drep: MatchDRep): MatchResult['saysVsDoes'] {
+  const out: MatchResult['saysVsDoes'] = [];
+  for (const topic of TOPICS) {
+    const stance = drep.stated[topic.id];
+    const position = drep.positions[topic.id];
+    if (!stance || !position || position.n < 3 || !topic.describe) continue;
+    if (Math.abs(toUnit(stance.stance) - position.rate) >= 0.5) {
+      out.push({ statement: topic.statement, says: stance.stance, does: topic.describe(position.rate) });
+    }
+  }
+  return out;
 }
 
 interface Contribution {

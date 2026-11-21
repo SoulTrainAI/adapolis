@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { fetchCurrentEpoch } from '@/lib/koios';
 import { syncDRepMetadata } from '@/lib/metadata/drep-metadata';
 import { getMatchData } from '@/lib/match/profiles';
+import { isStatementRunActive, runStatementSummaries } from '@/lib/statements/run';
 
 function verifyAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
@@ -130,6 +131,22 @@ async function runPipeline(): Promise<void> {
     await step('sync_votes', () => syncAllVotes());
     const currentEpoch = await step('get_epoch', () => getCurrentEpoch());
     await step('compute_scores', () => computeGovScoresForEpoch(currentEpoch));
+
+    // Incremental AI summaries for DReps whose published words changed. Off
+    // unless STATEMENT_SUMMARIES=on; capped per run so cost can't run away.
+    if (process.env.STATEMENT_SUMMARIES === 'on' && !isStatementRunActive()) {
+      try {
+        await step('summarize_statements', async () => {
+          const r = await runStatementSummaries({ limit: 50, maxCostUsd: 0.25 });
+          return { processed: r.processed, positions_found: r.positions_found, spent_usd: r.spent_usd, stopped: r.stopped_reason };
+        });
+      } catch (error) {
+        if (lastRun) lastRun.error = null;
+        console.error(
+          JSON.stringify({ event: 'cron_step_statements_failed', error: error instanceof Error ? error.message : String(error) })
+        );
+      }
+    }
 
     // The quiz reads a cached snapshot; refresh it from the new scores. A
     // failure here leaves the previous snapshot in place rather than failing the run.

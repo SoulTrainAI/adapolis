@@ -476,6 +476,28 @@ and ADA_M = ADA delegated in millions`}
           </p>
         </section>
 
+        {/* Section 9: Stated positions */}
+        <section id="stated-positions" className="space-y-6 scroll-mt-24">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">9. What DReps Say: AI-Summarized Stated Positions</h2>
+          <p className="text-slate-300 leading-relaxed">
+            Alongside voting records, Find My DRep can show what each DRep has <em>said</em> about the quiz topics. These are
+            kept separate from voting-record data and never change a match % based on votes, so you can compare what a DRep
+            says with what it does.
+          </p>
+          <ul className="space-y-2 text-slate-300">
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Sources:</strong> only the DRep&apos;s own published words: its CIP-119 profile and up to its 40 most recent distinct vote rationales (CIP-100/136), each verified by Koios against its on-chain hash.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Summarizer:</strong> an AI model (Claude Haiku 5.5) records a 1–10 stance on a topic only when the DRep clearly states or clearly implies a general view. Objections to a single proposal don&apos;t count as a general view. Omitting a topic is preferred to guessing.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Every stance is quoted:</strong> each one must include a verbatim quote from the cited source. Quotes that can&apos;t be found word-for-word in the source are automatically discarded, along with their stance.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Says vs. does:</strong> when a DRep&apos;s stated stance and its voting record on the same topic (3+ votes) differ by half the scale or more, results flag it.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>&quot;What they say&quot; ranking</strong> uses only stated positions, needs at least 2 topics in common with your answers, and applies the same decentralization boost.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>DReps can override:</strong> once DRep-signed positions are available, a DRep&apos;s own signed answer replaces the AI summary for that topic.</span></li>
+            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Freshness:</strong> a DRep is re-summarized only when its profile or rationales change.</span></li>
+          </ul>
+          <p className="text-slate-400 text-sm">
+            AI summaries can still misread nuance. Always check the quoted source before relying on a stated position.
+          </p>
+        </section>
+
         {/* Footer */}
         <section className="pt-8 border-t border-slate-800 space-y-4">
           <p className="text-slate-400 text-sm">

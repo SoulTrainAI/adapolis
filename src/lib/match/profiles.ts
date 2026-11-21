@@ -23,6 +23,18 @@ export interface TopicPosition {
   n: number;
 }
 
+export interface StatedStance {
+  /** 1-10 agreement with the topic statement */
+  stance: number;
+  confidence: 'high' | 'medium';
+  quote: string;
+  source_kind: 'profile' | 'rationale';
+  source_url: string | null;
+  proposal_id: string | null;
+  /** 'ai' = summarized from the DRep's words; 'pledge' = signed by the DRep (Phase 3) */
+  origin: 'ai' | 'pledge';
+}
+
 export interface MatchDRep {
   drep_id: string;
   name: string | null;
@@ -33,6 +45,8 @@ export interface MatchDRep {
   positions: Record<string, TopicPosition>;
   /** proposal_id -> 'yes' | 'no' | 'abstain' for the real-vote questions */
   real_votes: Record<string, 'yes' | 'no' | 'abstain'>;
+  /** What the DRep has said, by topic. Never mixed into `positions`. */
+  stated: Record<string, StatedStance>;
 }
 
 export interface RealVoteQuestion {
@@ -148,6 +162,7 @@ export interface MatchInputs {
   votes: Vote[];
   proposals: Proposal[];
   directions: Map<string, Record<string, 1 | -1>>;
+  stated?: Array<{ drep_id: string; topic_id: string } & StatedStance>;
 }
 
 async function computeMatchData(): Promise<MatchData> {
@@ -162,11 +177,11 @@ async function computeMatchData(): Promise<MatchData> {
     loadAll<Proposal>('proposals', 'proposal_id, action_type, proposed_epoch, title, abstract', 'proposal_id'),
     paramDirections(),
   ]);
-  return buildMatchData({ dreps, scores, votes, proposals, directions });
+  return buildMatchData({ dreps, scores, votes, proposals, directions, stated: await loadStated() });
 }
 
 /** Pure: turns loaded records into match data. Separated from I/O for testing. */
-export function buildMatchData({ dreps, scores, votes, proposals, directions }: MatchInputs): MatchData {
+export function buildMatchData({ dreps, scores, votes, proposals, directions, stated = [] }: MatchInputs): MatchData {
   const epoch = scores.reduce((max, s) => Math.max(max, s.epoch), 0);
   const latestScore = new Map(scores.filter((s) => s.epoch === epoch).map((s) => [s.drep_id, s]));
   const proposalById = new Map(proposals.map((p) => [p.proposal_id, p]));
@@ -256,6 +271,16 @@ export function buildMatchData({ dreps, scores, votes, proposals, directions }: 
     }
   }
 
+  const statedByDRep = new Map<string, Record<string, StatedStance>>();
+  for (const row of stated) {
+    if (!eligibleIds.has(row.drep_id)) continue;
+    const { drep_id, topic_id, ...stance } = row;
+    const existing = statedByDRep.get(drep_id) ?? {};
+    // A DRep-signed pledge always wins over an AI summary for the same topic.
+    if (!existing[topic_id] || stance.origin === 'pledge') existing[topic_id] = stance;
+    statedByDRep.set(drep_id, existing);
+  }
+
   const realVotes = pickRealVotes(proposals, votes, eligibleIds, epoch);
   const realIds = new Set(realVotes.map((r) => r.proposal_id));
 
@@ -278,9 +303,27 @@ export function buildMatchData({ dreps, scores, votes, proposals, directions }: 
         votes_cast: s?.votes_cast ?? 0,
         positions: positions.get(d.drep_id) ?? {},
         real_votes: real,
+        stated: statedByDRep.get(d.drep_id) ?? {},
       };
     }),
   };
+}
+
+/**
+ * Stated positions are optional data: if migration 007 hasn't been applied
+ * yet, matching still works on voting records alone.
+ */
+async function loadStated(): Promise<NonNullable<MatchInputs['stated']>> {
+  try {
+    return await loadAll<NonNullable<MatchInputs['stated']>[number]>(
+      'drep_stated_positions',
+      'drep_id, topic_id, stance, confidence, quote, source_kind, source_url, proposal_id, origin',
+      'drep_id'
+    );
+  } catch (error) {
+    console.warn(JSON.stringify({ event: 'stated_positions_unavailable', error: error instanceof Error ? error.message : String(error) }));
+    return [];
+  }
 }
 
 /**

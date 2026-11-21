@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertTriangle, ExternalLink, MessageSquareQuote, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
 import { TOPICS, IMPORTANCE_LEVELS, MATCH_RULES, type Topic } from '@/lib/match/topics';
-import { scoreMatches, formatAda, type Answers, type MatchResult } from '@/lib/match/score';
+import { scoreMatches, formatAda, type Answers, type MatchResult, type RankMode } from '@/lib/match/score';
 import type { MatchData, RealVoteQuestion } from '@/lib/match/profiles';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
 
@@ -116,6 +116,48 @@ function ResultCard({ result, rank }: { result: MatchResult; rank: number }) {
         )}
       </ul>
 
+      {(result.statedHighlights.length > 0 || result.saysVsDoes.length > 0) && (
+        <div className="mt-4 border-t border-slate-800 pt-3 space-y-2">
+          <p className="text-xs uppercase tracking-wider text-slate-500 flex items-center gap-1">
+            <MessageSquareQuote size={12} /> In their own words · AI-summarized from their published statements
+          </p>
+          {result.statedPercent !== null && (
+            <p className="text-sm text-slate-300">
+              {Math.round(result.statedPercent)}% agreement with what they&apos;ve said, across {result.statedTopics} topics.
+            </p>
+          )}
+          {result.statedHighlights.map(({ topicId, statement, stated }) => (
+            <div key={topicId} className="text-sm">
+              <p className="text-slate-400">
+                “{statement.replace(/\.$/, '')}”: says <span className="text-slate-200 font-semibold">{stated.stance}/10</span>
+                {stated.origin === 'pledge' ? ' (signed by the DRep)' : ''}
+              </p>
+              <blockquote className="border-l-2 border-slate-700 pl-3 text-slate-300 italic">
+                “{stated.quote}”
+                {stated.source_url && (
+                  <a
+                    href={stated.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="not-italic text-xs text-violet-300 hover:text-violet-200 ml-2"
+                  >
+                    {stated.source_kind === 'rationale' ? 'vote rationale' : 'profile'} ↗
+                  </a>
+                )}
+              </blockquote>
+            </div>
+          ))}
+          {result.saysVsDoes.map((d) => (
+            <p key={d.statement} className="text-sm text-amber-300 flex gap-2">
+              <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+              <span>
+                Says vs. does: says {d.says}/10 on “{d.statement.replace(/\.$/, '')}”, but {d.does}.
+              </span>
+            </p>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2 mt-4">
         <a
           href={`https://gov.tools/connected/drep_directory/${result.drep.drep_id}`}
@@ -146,6 +188,7 @@ export function MatchQuiz() {
   const [includeDeeper, setIncludeDeeper] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const [rankMode, setRankMode] = useState<RankMode>('votes');
 
   useEffect(() => {
     fetch('/api/match')
@@ -178,9 +221,10 @@ export function MatchQuiz() {
   }, [stepIndex]);
 
   const results = useMemo(
-    () => (data && step.kind === 'results' ? scoreMatches(data.dreps, data.real_votes, answers) : []),
-    [data, answers, step.kind]
+    () => (data && step.kind === 'results' ? scoreMatches(data.dreps, data.real_votes, answers, rankMode) : []),
+    [data, answers, step.kind, rankMode]
   );
+  const drepsWithStatements = data ? data.dreps.filter((d) => Object.keys(d.stated).length > 0).length : 0;
   const statedAnswered = TOPICS.filter((t) => t.source === 'stated' && (answers.topics[t.id]?.importance ?? 0) > 0);
 
   if (loadError) {
@@ -327,9 +371,41 @@ export function MatchQuiz() {
             matters to you. Smaller DReps get up to +{MATCH_RULES.maxDecentralizationBoost} points in the ranking to help
             spread voting power. <Link href="/methodology#find-my-drep" className="text-violet-300 hover:text-violet-200">How matching works</Link>
           </p>
+          {drepsWithStatements > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-slate-400">Rank by:</span>
+              {(
+                [
+                  ['votes', 'How they vote'],
+                  ['statements', 'What they say'],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    setRankMode(mode);
+                    setShowAll(false);
+                  }}
+                  aria-pressed={rankMode === mode}
+                  className={`px-3 py-1.5 rounded-md ${rankMode === mode ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                >
+                  {label}
+                </button>
+              ))}
+              {rankMode === 'statements' && (
+                <span className="text-xs text-slate-500 w-full">
+                  Ranked by agreement with AI summaries of DReps&apos; own published words ({drepsWithStatements} DReps have
+                  statements on file). Match % still shows their voting record.
+                </span>
+              )}
+            </div>
+          )}
           {results.length === 0 ? (
             <p className="text-slate-300">
-              We couldn&apos;t compute matches. Try marking at least one topic as mattering to you.
+              {rankMode === 'statements'
+                ? 'No DRep has published statements on at least two of the topics you marked as important. Try "How they vote".'
+                : 'We couldn\'t compute matches. Try marking at least one topic as mattering to you.'}
             </p>
           ) : (
             (showAll ? results.slice(0, 10) : results.slice(0, 3)).map((r, i) => (
@@ -341,11 +417,14 @@ export function MatchQuiz() {
               Show 7 more matches
             </button>
           )}
-          {statedAnswered.length > 0 && (
+          {statedAnswered.length > 0 && rankMode === 'votes' && (
             <p className="text-xs text-slate-500 border-t border-slate-800 pt-4">
-              Your answers on {statedAnswered.length} topic{statedAnswered.length === 1 ? '' : 's'} (
-              {statedAnswered.map((t) => t.statement.replace(/\.$/, '').toLowerCase()).join('; ')}) aren&apos;t used yet: DReps
-              haven&apos;t voted on them, and published DRep positions are coming soon.
+              {statedAnswered.length} of your answers (
+              {statedAnswered.map((t) => t.statement.replace(/\.$/, '').toLowerCase()).join('; ')}) are on topics DReps
+              haven&apos;t voted on, so they don&apos;t affect this ranking.{' '}
+              {drepsWithStatements > 0
+                ? 'Switch to "What they say" to match on them using DReps\' published statements.'
+                : 'They will count once DRep statements are summarized.'}
             </p>
           )}
           <button
@@ -354,6 +433,7 @@ export function MatchQuiz() {
               setAnswers({ topics: {}, realVotes: {} });
               setIncludeDeeper(false);
               setShowAll(false);
+              setRankMode('votes');
               setStepIndex(0);
             }}
             className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
