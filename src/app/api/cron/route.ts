@@ -13,6 +13,7 @@ import { computeGovScoresForEpoch } from '@/lib/scoring/govscore-v1';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { fetchCurrentEpoch } from '@/lib/koios';
 import { syncDRepMetadata } from '@/lib/metadata/drep-metadata';
+import { getMatchData } from '@/lib/match/profiles';
 
 function verifyAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
@@ -129,6 +130,20 @@ async function runPipeline(): Promise<void> {
     await step('sync_votes', () => syncAllVotes());
     const currentEpoch = await step('get_epoch', () => getCurrentEpoch());
     await step('compute_scores', () => computeGovScoresForEpoch(currentEpoch));
+
+    // The quiz reads a cached snapshot; refresh it from the new scores. A
+    // failure here leaves the previous snapshot in place rather than failing the run.
+    try {
+      await step('refresh_match_data', async () => {
+        const data = await getMatchData({ force: true });
+        return { eligible_dreps: data.eligible_count, real_vote_questions: data.real_votes.length };
+      });
+    } catch (error) {
+      if (lastRun) lastRun.error = null;
+      console.error(
+        JSON.stringify({ event: 'cron_step_match_failed', error: error instanceof Error ? error.message : String(error) })
+      );
+    }
 
     lastRun.current_step = 'done';
     console.log(
