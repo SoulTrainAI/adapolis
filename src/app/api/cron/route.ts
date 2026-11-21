@@ -10,6 +10,7 @@ import { syncDReps } from '@/lib/sync/sync-dreps';
 import { syncProposals } from '@/lib/sync/sync-proposals';
 import { computeGovScoresForEpoch } from '@/lib/scoring/govscore-v1';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
+import { fetchCurrentEpoch } from '@/lib/koios';
 
 function verifyAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
@@ -30,27 +31,35 @@ function verifyAuth(request: Request): boolean {
 }
 
 /**
- * Gets the current epoch from drep_scores (latest computed epoch)
+ * Uses the live chain epoch so scores roll forward each epoch. Falls back to
+ * the latest stored epoch only if Koios is unreachable, so a Koios outage
+ * re-scores the current epoch instead of failing the whole pipeline.
  */
 async function getCurrentEpoch(): Promise<number> {
-  const { data: latestEpochData, error: epochError } = await supabaseAdmin
-    .from('drep_scores')
-    .select('epoch')
-    .order('epoch', { ascending: false })
-    .limit(1);
+  try {
+    return await fetchCurrentEpoch();
+  } catch (error) {
+    const { data, error: dbError } = await supabaseAdmin
+      .from('drep_scores')
+      .select('epoch')
+      .order('epoch', { ascending: false })
+      .limit(1);
 
-  if (epochError || !latestEpochData || latestEpochData.length === 0) {
+    if (dbError || !data || data.length === 0) {
+      throw new Error(
+        `Cannot determine current epoch: Koios /tip failed (${error instanceof Error ? error.message : String(error)}) and no stored scores exist. Check https://api.koios.rest/ status and retry.`
+      );
+    }
+
     console.warn(
       JSON.stringify({
-        event: 'current_epoch_fetch_failed',
-        error: epochError?.message || 'No epochs found',
-        defaulting_to: 600,
+        event: 'current_epoch_koios_fallback',
+        error: error instanceof Error ? error.message : String(error),
+        using_stored_epoch: data[0].epoch,
       })
     );
-    return 600; // Fallback to epoch 600 if no scores exist
+    return data[0].epoch;
   }
-
-  return latestEpochData[0].epoch;
 }
 
 /**

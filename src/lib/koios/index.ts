@@ -6,7 +6,7 @@
  */
 
 // Export client functions
-export { koiosFetch, checkKoiosHealth } from './client';
+export { koiosFetch, checkKoiosHealth, fetchCurrentEpoch } from './client';
 
 // Export types
 export type {

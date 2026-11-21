@@ -4,6 +4,8 @@
  * Base URL: https://api.koios.rest/api/v1
  */
 
+import { z } from 'zod';
+
 const KOIOS_BASE_URL = 'https://api.koios.rest/api/v1';
 const RATE_LIMIT_DELAY_MS = 1000; // 1 request per second
 
@@ -109,6 +111,26 @@ export async function koiosFetch<T>(
 
   // Should never reach here, but TypeScript requires it
   throw lastError || new Error(`Unknown error fetching ${endpoint}`);
+}
+
+const KoiosTipSchema = z
+  .array(z.object({ epoch_no: z.number().int().positive() }))
+  .min(1);
+
+/**
+ * Current chain epoch from the Koios tip. Scoring must be keyed to the real
+ * epoch: deriving it from the latest stored score never advances past the
+ * first epoch ever scored.
+ */
+export async function fetchCurrentEpoch(): Promise<number> {
+  const raw = await koiosFetch<unknown>('/tip', { method: 'GET' });
+  const parsed = KoiosTipSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error(
+      `Koios /tip returned an unexpected shape: ${parsed.error.message}. Check https://api.koios.rest/ for API changes.`
+    );
+  }
+  return parsed.data[0].epoch_no;
 }
 
 /**
