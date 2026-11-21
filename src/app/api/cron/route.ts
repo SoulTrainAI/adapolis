@@ -11,6 +11,7 @@ import { syncProposals } from '@/lib/sync/sync-proposals';
 import { computeGovScoresForEpoch } from '@/lib/scoring/govscore-v1';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { fetchCurrentEpoch } from '@/lib/koios';
+import { syncDRepMetadata } from '@/lib/metadata/drep-metadata';
 
 function verifyAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
@@ -82,6 +83,20 @@ async function runPipeline(): Promise<void> {
         timestamp: new Date().toISOString(),
       })
     );
+
+    // Metadata failures are logged but don't stop scoring: profiles are cosmetic,
+    // scores are the product.
+    try {
+      const metadataResult = await syncDRepMetadata();
+      console.log(JSON.stringify({ event: 'cron_step_1b_metadata_complete', result: metadataResult }));
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: 'cron_step_1b_metadata_failed',
+          error: error instanceof Error ? error.message : String(error),
+        })
+      );
+    }
 
     // Step 2: Sync Proposals
     console.log(JSON.stringify({ event: 'cron_step_2_sync_proposals', timestamp: new Date().toISOString() }));
