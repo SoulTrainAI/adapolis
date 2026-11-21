@@ -24,6 +24,7 @@ interface DRepScoreRow {
   votes_eligible: number | null;
   epoch: number;
   profile: DisplayProfile;
+  vote_summary: { yes: number; no: number; abstain: number };
 }
 
 interface DRepResponse {
@@ -226,7 +227,22 @@ export async function GET(request: Request): Promise<NextResponse<DRepResponse |
         votes_cast: scoreRow.votes_cast,
         votes_eligible: scoreRow.votes_eligible,
         profile: toDisplayProfile(drepData.metadata, drepData.metadata_fetch_status),
+        vote_summary: { yes: 0, no: 0, abstain: 0 },
       });
+    }
+
+    const { data: summaries, error: summaryError } = await supabase.rpc('get_vote_summaries', {
+      drep_ids: merged.map((d) => d.drep_id),
+    });
+    if (summaryError) {
+      console.error(JSON.stringify({ event: 'vote_summary_error', error: summaryError.message }));
+    } else {
+      const byDRep = new Map(
+        ((summaries ?? []) as Array<{ drep_id: string; yes_count: number; no_count: number; abstain_count: number }>).map(
+          (r) => [r.drep_id, { yes: Number(r.yes_count), no: Number(r.no_count), abstain: Number(r.abstain_count) }]
+        )
+      );
+      for (const d of merged) d.vote_summary = byDRep.get(d.drep_id) ?? d.vote_summary;
     }
 
     // Note: 'total' reflects server-side count (before post-merge filters)

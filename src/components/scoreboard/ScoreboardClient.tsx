@@ -25,6 +25,7 @@ interface DRepScore {
     links: Array<{ label: string; url: string }>;
     doNotList: boolean;
   };
+  vote_summary?: { yes: number; no: number; abstain: number };
 }
 
 interface ApiResponse {
@@ -190,7 +191,7 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
                   delegatorCount: drep.delegator_count,
                   isRegistered: drep.is_registered,
                   votingStreak: drep.voting_streak_epochs || 0,
-                  voteSummary: { yes: 0, no: 0, abstain: 0 },
+                  voteSummary: drep.vote_summary ?? { yes: 0, no: 0, abstain: 0 },
                   recentVotes: [],
                   bio: drep.profile?.bio ?? null,
                   profileImage: drep.profile?.image ?? null,
