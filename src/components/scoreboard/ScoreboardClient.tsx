@@ -15,7 +15,16 @@ interface DRepScore {
   adjusted_govscore: number | null;
   participation_rate: number | null;
   voting_streak_epochs: number | null;
+  votes_cast: number | null;
+  votes_eligible: number | null;
   epoch: number;
+  profile: {
+    name: string | null;
+    image: string | null;
+    bio: string | null;
+    links: Array<{ label: string; url: string }>;
+    doNotList: boolean;
+  };
 }
 
 interface ApiResponse {
@@ -173,7 +182,7 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
                 props={{
                   rank,
                   drepId: drep.drep_id,
-                  displayName: drep.hex_id ? drep.hex_id : truncateDRepId(drep.drep_id),
+                  displayName: drep.profile?.name ?? truncateDRepId(drep.drep_id),
                   adjustedScore: drep.adjusted_govscore,
                   rawScore: drep.raw_govscore,
                   participationRate: drep.participation_rate,
@@ -183,8 +192,12 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
                   votingStreak: drep.voting_streak_epochs || 0,
                   voteSummary: { yes: 0, no: 0, abstain: 0 },
                   recentVotes: [],
-                  bio: null,
-                  socialLinks: {},
+                  bio: drep.profile?.bio ?? null,
+                  profileImage: drep.profile?.image ?? null,
+                  links: drep.profile?.links ?? [],
+                  doNotList: drep.profile?.doNotList ?? false,
+                  votesCast: drep.votes_cast,
+                  votesEligible: drep.votes_eligible,
                 }}
               />
             );

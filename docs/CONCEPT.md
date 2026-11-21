@@ -316,6 +316,15 @@ Every DRep appears as a card on the Scoreboard.
 - Career legacy score (cross-season, never resets)
 - Recent rationales with direct links to read them
 
+### 6.1.1 Honoring CIP-119 `doNotList` (decided 2026-11-21)
+
+CIP-119 lets a DRep set `doNotList: true` to say it does not want delegation-campaign tools to promote it. The spec expects record-keeping tools (block explorers) to keep listing such DReps, and asks tools built for delegation campaigns to respect the flag. ADApolis is both, so:
+
+- **Scoreboard (accountability):** these DReps stay listed with their scores, since their voting record is public. The card shows a "Not seeking delegation" label and omits the "Delegate via GovTool" button.
+- **Delegation discovery:** Find My DRep (6.4.1), alignment-quiz matches, and any "top DReps to delegate to" promotion must exclude them.
+
+Profiles that fail Koios hash verification against the on-chain anchor are never displayed.
+
 ### 6.2 The Scoring Engine — Multi-Source
 
 Score is a composite across 40+ metrics in eight categories. Below is the initial 5-dimension formula; the engine expands as more data sources are integrated.

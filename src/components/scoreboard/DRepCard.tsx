@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Award, ExternalLink, Code, Globe, MessageSquare } from 'lucide-react';
+import { Award, ExternalLink, Globe } from 'lucide-react';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
 
 interface DRepCardProps {
@@ -24,9 +24,47 @@ interface DRepCardProps {
   isRegistered: boolean;
   votingStreak?: number;
   bio?: string | null;
+  profileImage?: string | null;
+  links?: Array<{ label: string; url: string }>;
+  /** CIP-119 doNotList: the DRep asked tools not to campaign for delegation to it */
+  doNotList?: boolean;
+  votesCast?: number | null;
+  votesEligible?: number | null;
   voteSummary?: { yes: number; no: number; abstain: number };
   recentVotes?: Array<{ proposal_title: string; vote: string; proposal_id: string }>;
-  socialLinks?: { website?: string; twitter?: string; github?: string; forum?: string };
+}
+
+function Avatar({ props, ringClass }: { props: DRepCardProps; ringClass: string }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const className = `w-12 h-12 rounded-full flex-shrink-0 object-cover border-2 ${
+    props.rank <= 3 ? `ring-2 ${ringClass}` : 'border-slate-600'
+  }`;
+
+  if (props.profileImage && !imageFailed) {
+    return (
+      // next/image needs every host allow-listed; DRep images come from arbitrary self-chosen hosts.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={props.profileImage}
+        alt={`${props.displayName} profile photo`}
+        width={48}
+        height={48}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setImageFailed(true)}
+        className={className}
+      />
+    );
+  }
+  return (
+    <Image
+      src={getAvatarDataUri(props.drepId)}
+      alt={`${props.displayName} avatar`}
+      width={48}
+      height={48}
+      className={className}
+    />
+  );
 }
 
 function getMetalBadgeColor(rank: number): { label: string; ringClass: string } {
@@ -43,16 +81,7 @@ function CardFront({ props }: { props: DRepCardProps }) {
     <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/50 p-4 justify-between">
       {/* Header: Avatar + Rank + Metal Badge */}
       <div className="flex items-start justify-between mb-4">
-        {/* Avatar */}
-        <Image
-          src={getAvatarDataUri(props.drepId)}
-          alt={`${props.displayName} avatar`}
-          width={48}
-          height={48}
-          className={`rounded-full flex-shrink-0 border-2 ${
-            props.rank <= 3 ? `ring-2 ${metalBadge.ringClass}` : 'border-slate-600'
-          }`}
-        />
+        <Avatar props={props} ringClass={metalBadge.ringClass} />
 
         {/* Rank badge + Metal badge */}
         <div className="flex flex-col items-end gap-1">
@@ -105,6 +134,11 @@ function CardFront({ props }: { props: DRepCardProps }) {
           <p className="text-sm font-semibold text-slate-100">
             {props.participationRate !== null ? `${(props.participationRate * 100).toFixed(0)}%` : '—'}
           </p>
+          {props.votesEligible ? (
+            <p className="text-[10px] text-slate-500">
+              {props.votesCast ?? 0} of {props.votesEligible} votes
+            </p>
+          ) : null}
         </div>
         <div className="bg-slate-700/30 rounded p-2 text-center group relative">
           <p className="text-xs text-slate-500 cursor-help">Raw Score</p>
@@ -140,7 +174,16 @@ function CardFront({ props }: { props: DRepCardProps }) {
         >
           {props.isRegistered ? 'Registered' : 'Inactive'}
         </span>
-        <span className="text-slate-500 italic">Click to view</span>
+        {props.doNotList ? (
+          <span
+            className="px-2 py-1 rounded bg-slate-700/50 text-slate-300"
+            title="This DRep has asked tools not to promote it for delegation (CIP-119 doNotList)."
+          >
+            Not seeking delegation
+          </span>
+        ) : (
+          <span className="text-slate-500 italic">Click to view</span>
+        )}
       </div>
     </div>
   );
@@ -149,7 +192,7 @@ function CardFront({ props }: { props: DRepCardProps }) {
 function CardBack({ props }: { props: DRepCardProps }) {
   const voteSummary = props.voteSummary || { yes: 0, no: 0, abstain: 0 };
   const recentVotes = props.recentVotes || [];
-  const socialLinks = props.socialLinks || {};
+  const links = props.links || [];
   const bio = props.bio || 'No bio provided';
 
   return (
@@ -214,70 +257,44 @@ function CardBack({ props }: { props: DRepCardProps }) {
         <p className="text-sm font-semibold text-slate-300">—</p>
       </div>
 
-      {/* Social Links */}
-      {(socialLinks.website || socialLinks.twitter || socialLinks.github || socialLinks.forum) && (
+      {links.length > 0 && (
         <div className="mb-4 pb-3 border-b border-slate-700/50">
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Links</p>
-          <div className="flex gap-2 flex-wrap">
-            {socialLinks.website && (
+          <div className="flex flex-col gap-1">
+            {links.map((link) => (
               <a
-                href={socialLinks.website}
+                key={link.url}
+                href={link.url}
                 target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
-                title="Website"
+                rel="noopener noreferrer nofollow"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-2 text-xs text-slate-300 hover:text-white truncate"
               >
-                <Globe size={14} className="text-slate-300" />
+                <Globe size={12} className="flex-shrink-0 text-slate-500" />
+                <span className="truncate">{link.label}</span>
               </a>
-            )}
-            {socialLinks.twitter && (
-              <a
-                href={socialLinks.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
-                title="Twitter"
-              >
-                <span className="text-slate-300 text-xs font-bold">𝕏</span>
-              </a>
-            )}
-            {socialLinks.github && (
-              <a
-                href={socialLinks.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
-                title="GitHub"
-              >
-                <Code size={14} className="text-slate-300" />
-              </a>
-            )}
-            {socialLinks.forum && (
-              <a
-                href={socialLinks.forum}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
-                title="Forum"
-              >
-                <MessageSquare size={14} className="text-slate-300" />
-              </a>
-            )}
+            ))}
           </div>
         </div>
       )}
 
-      {/* Delegate Button */}
       <div className="mt-auto pt-3">
-        <a
-          href={`https://gov.tools/connected/drep_directory/${props.drepId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
-        >
-          Delegate via GovTool
-          <ExternalLink size={14} />
-        </a>
+        {props.doNotList ? (
+          <p className="text-xs text-slate-400 text-center">
+            This DRep has asked not to be promoted for delegation.
+          </p>
+        ) : (
+          <a
+            href={`https://gov.tools/connected/drep_directory/${props.drepId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
+          >
+            Delegate via GovTool
+            <ExternalLink size={14} />
+          </a>
+        )}
       </div>
 
       <p className="text-xs text-slate-600 text-center mt-3">Click to flip back</p>
