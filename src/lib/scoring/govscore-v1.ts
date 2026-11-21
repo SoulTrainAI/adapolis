@@ -1,332 +1,201 @@
 /**
- * GovScore v1 — Participation Rate Only
- * Computes DRep participation across all eligible governance actions
+ * GovScore v1 — Participation Rate
+ *
+ * A DRep is judged only on governance actions it had the chance to vote on:
+ * those whose voting window overlapped a period when the DRep was registered.
+ * A DRep that joined last month and voted on everything since scores 100%.
+ *
+ * Proposals still open for voting count only if the DRep has already voted on
+ * them: a DRep can't have "missed" a vote whose window hasn't closed.
  */
 
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
+import { fetchDRepRegistrationPeriods, type RegistrationPeriod } from '@/lib/koios/drep-registrations';
 
-interface DRepScoring {
-  drep_id: string;
-  amount_lovelace: bigint;
-  votes_eligible: number;
-  votes_cast: number;
-  participation_rate: number | null;
-  raw_govscore: number | null;
-  adjusted_govscore: number | null;
-  voting_streak_epochs: number;
-}
+const DB_PAGE_SIZE = 1000;
 
 interface ComputeResult {
   dreps_scored: number;
   avg_participation: number;
 }
 
-/**
- * Calculates the quadratic ADA-power dampener
- * Formula: dampener = 1 / (1 + log10(ada_m + 1) / 4)
- * Where ada_m is ADA amount in millions
- */
-function calculateDampener(amountLovelace: bigint): number {
-  const ada = Number(amountLovelace) / 1_000_000_000_000; // Convert lovelace to millions of ADA
-  const dampener = 1 / (1 + Math.log10(ada + 1) / 4);
-  return dampener;
+export interface ProposalWindow {
+  proposal_id: string;
+  start: number;
+  /** null while voting is still open */
+  end: number | null;
+}
+
+export interface DRepScoreRow {
+  drep_id: string;
+  votes_cast: number;
+  votes_eligible: number;
+  participation_rate: number | null;
+  raw_govscore: number | null;
+  adjusted_govscore: number | null;
+  voting_streak_epochs: number;
 }
 
 /**
- * Computes voting streak for a DRep
- * Streak = consecutive epochs with at least one vote, counting backwards from the highest epoch
- * Example: epochs [600,599,598,596] → streak = 3
+ * Quadratic ADA-power dampener: 1 / (1 + log10(ada_m + 1) / 4), ada_m = ADA in millions.
  */
-function computeVotingStreak(epochSet: Set<number> | undefined): number {
-  if (!epochSet || epochSet.size === 0) return 0;
+function calculateDampener(amountLovelace: number): number {
+  const adaMillions = amountLovelace / 1_000_000_000_000;
+  return 1 / (1 + Math.log10(adaMillions + 1) / 4);
+}
 
-  const epochs = Array.from(epochSet).sort((a, b) => b - a);
-  let streak = 0;
-
-  for (let i = 0; i < epochs.length; i++) {
-    if (i === 0) {
-      streak = 1;
-    } else {
-      // Check if consecutive (epoch - 1 compared to previous)
-      if (epochs[i] === epochs[i - 1] - 1) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-  }
-
+/**
+ * Consecutive epochs (counting back from the most recent) in which the DRep
+ * voted on at least one proposal submitted that epoch.
+ */
+function computeVotingStreak(epochs: Set<number> | undefined): number {
+  if (!epochs || epochs.size === 0) return 0;
+  const sorted = Array.from(epochs).sort((a, b) => b - a);
+  let streak = 1;
+  for (let i = 1; i < sorted.length && sorted[i] === sorted[i - 1] - 1; i++) streak++;
   return streak;
 }
 
+export function proposalWindow(p: {
+  proposal_id: string;
+  proposed_epoch: number;
+  status: string;
+  ratified_epoch: number | null;
+  expired_epoch: number | null;
+  voting_ends_epoch: number | null;
+}): ProposalWindow {
+  if (p.status === 'active') return { proposal_id: p.proposal_id, start: p.proposed_epoch, end: null };
+  // Dropped proposals have no stored drop epoch; their expiration is the
+  // latest epoch they could have been voted on.
+  const end = p.ratified_epoch ?? p.expired_epoch ?? p.voting_ends_epoch ?? p.proposed_epoch;
+  return { proposal_id: p.proposal_id, start: p.proposed_epoch, end };
+}
+
+function overlaps(window: ProposalWindow, periods: RegistrationPeriod[], currentEpoch: number): boolean {
+  const windowEnd = window.end ?? currentEpoch;
+  return periods.some((r) => r.from <= windowEnd && (r.to === null || r.to >= window.start));
+}
+
 /**
- * Computes GovScore v1 for all registered DReps for a given epoch
- * Participation rate = votes_cast / votes_eligible
- * raw_govscore = participation_rate * 100
- *
- * @param epoch The epoch to score
- * @returns Summary of scoring results
+ * Pure scoring step, separated from I/O so it can be tested directly.
  */
+export function scoreDReps(
+  dreps: Array<{ drep_id: string; amount_lovelace: number }>,
+  proposals: ProposalWindow[],
+  votesByDRep: Map<string, Set<string>>,
+  periods: Map<string, RegistrationPeriod[]>,
+  currentEpoch: number
+): DRepScoreRow[] {
+  const proposalStart = new Map(proposals.map((p) => [p.proposal_id, p.start]));
+
+  return dreps.map((drep) => {
+    const voted = votesByDRep.get(drep.drep_id) ?? new Set<string>();
+    // A DRep with no registration history in Koios is treated as always
+    // registered, so the gap never inflates its score.
+    const drepPeriods = periods.get(drep.drep_id) ?? [{ from: 0, to: null }];
+
+    const eligible = new Set<string>();
+    for (const p of proposals) {
+      if (voted.has(p.proposal_id)) {
+        eligible.add(p.proposal_id);
+      } else if (p.end !== null && overlaps(p, drepPeriods, currentEpoch)) {
+        eligible.add(p.proposal_id);
+      }
+    }
+
+    const votesCast = Array.from(voted).filter((id) => eligible.has(id)).length;
+    const votesEligible = eligible.size;
+    const participation = votesEligible > 0 ? votesCast / votesEligible : null;
+    const raw = participation === null ? null : participation * 100;
+
+    const epochs = new Set<number>();
+    for (const id of Array.from(voted)) {
+      const start = proposalStart.get(id);
+      if (start !== undefined) epochs.add(start);
+    }
+
+    return {
+      drep_id: drep.drep_id,
+      votes_cast: votesCast,
+      votes_eligible: votesEligible,
+      participation_rate: participation,
+      raw_govscore: raw,
+      adjusted_govscore: raw === null ? null : raw * calculateDampener(drep.amount_lovelace),
+      voting_streak_epochs: computeVotingStreak(epochs),
+    };
+  });
+}
+
+async function loadAll<T>(table: string, columns: string): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += DB_PAGE_SIZE) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .select(columns)
+      .order(columns.split(',')[0].trim())
+      .range(from, from + DB_PAGE_SIZE - 1);
+    if (error) {
+      throw new Error(`Failed to read ${table} for scoring: ${error.message}. Check SUPABASE_SERVICE_ROLE_KEY and table grants (migration 006).`);
+    }
+    rows.push(...((data ?? []) as T[]));
+    if (!data || data.length < DB_PAGE_SIZE) return rows;
+  }
+}
+
 export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeResult> {
+  const [dreps, proposalRows, votes, periods] = await Promise.all([
+    loadAll<{ drep_id: string; amount_lovelace: number | string | null }>('dreps', 'drep_id, amount_lovelace'),
+    loadAll<{
+      proposal_id: string;
+      proposed_epoch: number;
+      status: string;
+      ratified_epoch: number | null;
+      expired_epoch: number | null;
+      voting_ends_epoch: number | null;
+    }>('proposals', 'proposal_id, proposed_epoch, status, ratified_epoch, expired_epoch, voting_ends_epoch'),
+    loadAll<{ drep_id: string; proposal_id: string }>('votes', 'drep_id, proposal_id'),
+    fetchDRepRegistrationPeriods(),
+  ]);
+
+  const votesByDRep = new Map<string, Set<string>>();
+  for (const v of votes) {
+    const set = votesByDRep.get(v.drep_id) ?? new Set<string>();
+    set.add(v.proposal_id);
+    votesByDRep.set(v.drep_id, set);
+  }
+
+  const scores = scoreDReps(
+    dreps.map((d) => ({ drep_id: d.drep_id, amount_lovelace: Number(d.amount_lovelace ?? 0) })),
+    proposalRows.map(proposalWindow),
+    votesByDRep,
+    periods,
+    epoch
+  );
+
+  const computedAt = new Date().toISOString();
+  const rows = scores.map((s) => ({ ...s, epoch, computed_at: computedAt }));
+  for (let i = 0; i < rows.length; i += DB_PAGE_SIZE) {
+    const { error } = await supabaseAdmin
+      .from('drep_scores')
+      .upsert(rows.slice(i, i + DB_PAGE_SIZE), { onConflict: 'drep_id,epoch' });
+    if (error) {
+      throw new Error(`Failed to save scores (chunk starting at ${i}): ${error.message}. Re-running is safe; the upsert is idempotent.`);
+    }
+  }
+
+  const rated = scores.filter((s) => s.participation_rate !== null);
+  const avgParticipation =
+    rated.length > 0 ? rated.reduce((sum, s) => sum + (s.participation_rate ?? 0), 0) / rated.length : 0;
+
   console.log(
     JSON.stringify({
-      event: 'compute_govscore_start',
+      event: 'compute_govscore_complete',
       epoch,
-      timestamp: new Date().toISOString(),
+      dreps_scored: scores.length,
+      dreps_with_eligible_votes: rated.length,
+      avg_participation: avgParticipation,
     })
   );
 
-  try {
-    // Step 0: Fetch drep→epoch map (single query to get voting streaks)
-    // Query: SELECT DISTINCT drep_id, proposed_epoch FROM votes JOIN proposals
-    const { data: drepEpochData, error: drepEpochError } = await supabaseAdmin
-      .from('votes')
-      .select('drep_id, proposals(proposed_epoch)')
-      .limit(50000);
-
-    if (drepEpochError) {
-      throw new Error(`Failed to fetch DRep voting epochs: ${drepEpochError.message}`);
-    }
-
-    // Build map of drep_id → Set<epoch>
-    const drepEpochMap = new Map<string, Set<number>>();
-    (drepEpochData || []).forEach((row: unknown) => {
-      const voteRow = row as { drep_id: string; proposals: { proposed_epoch: number } | null };
-      if (voteRow.proposals?.proposed_epoch !== undefined && voteRow.proposals.proposed_epoch !== null) {
-        if (!drepEpochMap.has(voteRow.drep_id)) {
-          drepEpochMap.set(voteRow.drep_id, new Set());
-        }
-        drepEpochMap.get(voteRow.drep_id)!.add(voteRow.proposals.proposed_epoch);
-      }
-    });
-
-    console.log(
-      JSON.stringify({
-        event: 'drep_epoch_map_built',
-        uniqueDReps: drepEpochMap.size,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // Step 1: Get all DReps with their delegation amounts (fetched in batches due to 1000-row limit)
-    // Note: is_registered from Koios API may not reflect actual on-chain status for Phase 1
-    // For now, include all DReps to enable scoring
-    const allDReps: Array<{drep_id: string; is_registered: boolean; expires_epoch: number | null; amount_lovelace: bigint | null}> = [];
-    let offset = 0;
-    const batchSize = 1000;
-    let hasMorDReps = true;
-
-    while (hasMorDReps) {
-      const { data: batch, error: drepsError } = await supabaseAdmin
-        .from('dreps')
-        .select('drep_id, is_registered, expires_epoch, amount_lovelace')
-        .range(offset, offset + batchSize - 1);
-
-      if (drepsError) {
-        throw new Error(`Failed to fetch DReps at offset ${offset}: ${drepsError.message}`);
-      }
-
-      if (!batch || batch.length === 0) {
-        hasMorDReps = false;
-      } else {
-        allDReps.push(...batch);
-        if (batch.length < batchSize) {
-          hasMorDReps = false;
-        }
-        offset += batchSize;
-      }
-    }
-
-    const dreps = allDReps;
-
-    console.log(
-      JSON.stringify({
-        event: 'dreps_fetched',
-        count: dreps.length,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    if (dreps.length === 0) {
-      console.log(JSON.stringify({ event: 'no_registered_dreps', timestamp: new Date().toISOString() }));
-      return { dreps_scored: 0, avg_participation: 0 };
-    }
-
-    // Step 2: Get all proposals votable during this epoch
-    const { data: proposals, error: proposalsError } = await supabaseAdmin
-      .from('proposals')
-      .select('proposal_id, proposed_epoch, voting_starts_epoch, voting_ends_epoch, expired_epoch, status');
-
-    if (proposalsError || !proposals) {
-      throw new Error(`Failed to fetch proposals: ${proposalsError?.message}`);
-    }
-
-    console.log(
-      JSON.stringify({
-        event: 'proposals_fetched',
-        count: proposals.length,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // Step 3: Compute scores for each DRep
-    const scoringResults: DRepScoring[] = [];
-    let totalParticipation = 0;
-    let drepsWithEligibleVotes = 0;
-
-    for (const drep of dreps) {
-      // Find proposals eligible for this DRep
-      // Include active and passed proposals. If none match, fall back to all proposals
-      // for historical voting counting (Phase 1 requirement: score based on actual votes cast)
-      let eligibleProposals = proposals.filter((p) => p.status === 'active' || p.status === 'passed');
-
-      // If no active/passed proposals, include all proposals (for historical voting)
-      if (eligibleProposals.length === 0) {
-        eligibleProposals = proposals;
-      }
-
-      const votesEligible = eligibleProposals.length;
-
-      // Count actual votes cast by this DRep on eligible proposals
-      const { data: votes, error: votesError } = await supabaseAdmin
-        .from('votes')
-        .select('proposal_id', { count: 'exact' })
-        .eq('drep_id', drep.drep_id)
-        .in(
-          'proposal_id',
-          eligibleProposals.map((p) => p.proposal_id)
-        );
-
-      if (votesError) {
-        console.error(
-          JSON.stringify({
-            event: 'vote_fetch_error',
-            drep_id: drep.drep_id,
-            error: votesError.message,
-            timestamp: new Date().toISOString(),
-          })
-        );
-        continue;
-      }
-
-      const votesCast = votes?.length || 0;
-
-      // Compute participation rate (null if 0 eligible proposals)
-      let participationRate: number | null = null;
-      let rawGovscore: number | null = null;
-      let adjustedGovscore: number | null = null;
-
-      if (votesEligible > 0) {
-        participationRate = votesCast / votesEligible;
-        rawGovscore = participationRate * 100;
-
-        // Apply quadratic ADA-power dampening
-        const dampener = calculateDampener(drep.amount_lovelace || BigInt(0));
-        adjustedGovscore = rawGovscore * dampener;
-      }
-      // If votesEligible is 0, both remain null (per ROADMAP spec)
-
-      // Compute voting streak for this DRep
-      const votingStreak = computeVotingStreak(drepEpochMap.get(drep.drep_id));
-
-      scoringResults.push({
-        drep_id: drep.drep_id,
-        amount_lovelace: drep.amount_lovelace || BigInt(0),
-        votes_eligible: votesEligible,
-        votes_cast: votesCast,
-        participation_rate: participationRate,
-        raw_govscore: rawGovscore,
-        adjusted_govscore: adjustedGovscore,
-        voting_streak_epochs: votingStreak,
-      });
-
-      if (participationRate !== null) {
-        totalParticipation += participationRate;
-        drepsWithEligibleVotes++;
-      }
-    }
-
-    console.log(
-      JSON.stringify({
-        event: 'scores_computed',
-        drepsScored: scoringResults.length,
-        avgParticipation: scoringResults.length > 0 ? totalParticipation / scoringResults.length : 0,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // Step 4: Upsert into drep_scores table
-    const scoresForUpsert = scoringResults.map((result) => ({
-      drep_id: result.drep_id,
-      epoch,
-      raw_govscore: result.raw_govscore,
-      adjusted_govscore: result.adjusted_govscore,
-      participation_rate: result.participation_rate,
-      voting_streak_epochs: result.voting_streak_epochs,
-      computed_at: new Date().toISOString(),
-    }));
-
-    console.log(
-      JSON.stringify({
-        event: 'upserting_scores',
-        count: scoresForUpsert.length,
-        firstRecord: scoresForUpsert[0],
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    const { error: upsertError } = await supabaseAdmin
-      .from('drep_scores')
-      .upsert(scoresForUpsert, { onConflict: 'drep_id,epoch' });
-
-    if (upsertError) {
-      console.error(
-        JSON.stringify({
-          event: 'drep_scores_upsert_error',
-          error: upsertError.message,
-          code: upsertError.code,
-          details: upsertError.details,
-          firstRecord: scoresForUpsert[0],
-          timestamp: new Date().toISOString(),
-        })
-      );
-      throw new Error(`Failed to upsert scores: ${upsertError.message}`);
-    }
-
-    console.log(
-      JSON.stringify({
-        event: 'scores_upserted',
-        count: scoresForUpsert.length,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-
-    const avgParticipation = drepsWithEligibleVotes > 0 ? totalParticipation / drepsWithEligibleVotes : 0;
-
-    console.log(
-      JSON.stringify({
-        event: 'compute_govscore_complete',
-        drepsScored: scoringResults.length,
-        drepsWithEligibleVotes,
-        avgParticipation,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    return {
-      dreps_scored: scoringResults.length,
-      avg_participation: avgParticipation,
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(
-      JSON.stringify({
-        event: 'compute_govscore_error',
-        error: errorMessage,
-        timestamp: new Date().toISOString(),
-      })
-    );
-    throw error;
-  }
+  return { dreps_scored: scores.length, avg_participation: avgParticipation };
 }

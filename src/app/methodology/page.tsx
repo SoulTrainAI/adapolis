@@ -70,7 +70,15 @@ export default function MethodologyPage() {
                 <span className="text-violet-400 flex-shrink-0">•</span>
                 <span>
                   <strong>Eligible Proposals:</strong> Any governance action that was active during an epoch
-                  where the DRep was registered on-chain.
+                  where the DRep was registered on-chain. A DRep that registered recently is measured only
+                  against proposals since it joined, so a new DRep that has voted on everything scores 100.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-violet-400 flex-shrink-0">•</span>
+                <span>
+                  <strong>Proposals still open for voting</strong> count only once the DRep has voted on
+                  them. A vote can&apos;t be missed until its voting window closes.
                 </span>
               </li>
               <li className="flex gap-3">

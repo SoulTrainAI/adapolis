@@ -285,7 +285,7 @@ export async function syncAllVotes(): Promise<SyncResult & { skipped: number }> 
 
   for (let offset = 0; ; offset += KOIOS_PAGE_SIZE) {
     const raw = await koiosFetch<unknown>(
-      `/vote_list?voter_role=eq.DRep&select=voter_id,proposal_id,vote,block_time,vote_tx_hash,meta_url,meta_hash&order=block_time.asc&offset=${offset}&limit=${KOIOS_PAGE_SIZE}`,
+      `/vote_list?voter_role=eq.DRep&select=voter_id,proposal_id,vote,block_time,vote_tx_hash,meta_url,meta_hash&order=block_time.asc,vote_tx_hash.asc,proposal_id.asc&offset=${offset}&limit=${KOIOS_PAGE_SIZE}`,
       { method: 'GET' }
     );
     const parsed = z.array(KoiosBulkVoteSchema).safeParse(raw);
