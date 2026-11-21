@@ -38,6 +38,7 @@ export const KoiosDRepInfoSchema = z.object({
   expires_epoch_no: z.number().nullable(),
   meta_url: z.string().nullable(),
   meta_hash: z.string().nullable(),
+  live_delegator_count: z.number().int().nonnegative().nullable().optional(),
 });
 
 export type KoiosDRepInfo = z.infer<typeof KoiosDRepInfoSchema>;

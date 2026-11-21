@@ -97,21 +97,26 @@ export async function syncDReps(): Promise<SyncResult> {
     const infoMap = new Map(drepInfoList.map((info) => [info.drep_id, info]));
 
     // Step 4: Prepare upsert data with field mappings
-    const drepRecords = drepList.map((drep: KoiosDRep) => ({
-      drep_id: drep.drep_id,
-      hex_id: drep.hex,
-      is_script: drep.has_script,
-      is_registered: drep.registered,
-      deposit_lovelace: infoMap.get(drep.drep_id)?.deposit ? BigInt(infoMap.get(drep.drep_id)!.deposit!) : BigInt(0),
-      active_epoch: null,
-      expires_epoch: infoMap.get(drep.drep_id)?.expires_epoch_no ?? null,
-      amount_lovelace: infoMap.get(drep.drep_id) ? BigInt(infoMap.get(drep.drep_id)!.amount) : BigInt(0),
-      delegator_count: null,
-      voting_anchor_url: infoMap.get(drep.drep_id)?.meta_url ?? null,
-      voting_anchor_hash: infoMap.get(drep.drep_id)?.meta_hash ?? null,
-      metadata: null,
-      updated_at: new Date().toISOString(),
-    }));
+    // Lovelace goes over the wire as a string: JSON.stringify cannot serialize
+    // BigInt, and per-DRep totals can exceed Number.MAX_SAFE_INTEGER. metadata is
+    // deliberately omitted so this upsert never wipes what syncDRepMetadata saved.
+    const drepRecords = drepList.map((drep: KoiosDRep) => {
+      const info = infoMap.get(drep.drep_id);
+      return {
+        drep_id: drep.drep_id,
+        hex_id: drep.hex,
+        is_script: drep.has_script,
+        is_registered: drep.registered,
+        deposit_lovelace: info?.deposit ?? '0',
+        active_epoch: null,
+        expires_epoch: info?.expires_epoch_no ?? null,
+        amount_lovelace: info?.amount ?? '0',
+        delegator_count: info?.live_delegator_count ?? null,
+        voting_anchor_url: info?.meta_url ?? null,
+        voting_anchor_hash: info?.meta_hash ?? null,
+        updated_at: new Date().toISOString(),
+      };
+    });
 
     // Step 5: Upsert into dreps table (conflict on drep_id)
     console.log(
