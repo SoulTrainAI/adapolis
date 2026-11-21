@@ -10,21 +10,20 @@ const KOIOS_BASE_URL = 'https://api.koios.rest/api/v1';
 const RATE_LIMIT_DELAY_MS = 1000; // 1 request per second
 
 let lastRequestTime = 0;
+let queue: Promise<void> = Promise.resolve();
 
 /**
- * Rate limiter: ensures max 1 request per second
+ * Max 1 request per second, serialized through a promise chain so concurrent
+ * callers queue instead of all waking up after the same delay and bursting.
  */
-async function rateLimit(): Promise<void> {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-
-  if (timeSinceLastRequest < RATE_LIMIT_DELAY_MS) {
-    await new Promise((resolve) =>
-      setTimeout(resolve, RATE_LIMIT_DELAY_MS - timeSinceLastRequest)
-    );
-  }
-
-  lastRequestTime = Date.now();
+function rateLimit(): Promise<void> {
+  const turn = queue.then(async () => {
+    const wait = RATE_LIMIT_DELAY_MS - (Date.now() - lastRequestTime);
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    lastRequestTime = Date.now();
+  });
+  queue = turn.catch(() => undefined);
+  return turn;
 }
 
 interface FetchOptions {
