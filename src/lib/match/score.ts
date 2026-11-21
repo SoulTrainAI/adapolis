@@ -48,7 +48,7 @@ export function scoreMatches(
   for (const drep of dreps) {
     let weightSum = 0;
     let weighted = 0;
-    const contributions: Array<{ topicId: string; weight: number; similarity: number }> = [];
+    const contributions: Contribution[] = [];
 
     for (const topic of TOPICS) {
       const answer = answers.topics[topic.id];
@@ -69,7 +69,7 @@ export function scoreMatches(
       }
       weightSum += weight;
       weighted += weight * similarity;
-      contributions.push({ topicId: topic.id, weight, similarity });
+      contributions.push({ topicId: topic.id, weight, similarity, userPosition: u });
     }
 
     let agreed = 0;
@@ -112,10 +112,31 @@ export function scoreMatches(
   return results.sort((a, b) => b.rankScore - a.rankScore || a.drep.ada - b.drep.ada);
 }
 
-function buildReasons(
-  drep: MatchDRep,
-  contributions: Array<{ topicId: string; weight: number; similarity: number }>
-): MatchReason[] {
+interface Contribution {
+  topicId: string;
+  weight: number;
+  similarity: number;
+  userPosition: number;
+}
+
+/**
+ * A reason is only stated when it's clearly true in plain terms: the user took
+ * a side (not 4–7), and, for raw-rate topics, the DRep's actual record (not
+ * just its evidence-blended position) is on the same side.
+ */
+function isClearlyStated(drep: MatchDRep, c: Contribution, kind: MatchReason['kind']): boolean {
+  if (Math.abs(c.userPosition - 0.5) < 0.2) return false;
+  const topic = TOPICS.find((t) => t.id === c.topicId);
+  const position = drep.positions[c.topicId];
+  if (!topic || !position) return false;
+  if (topic.scale === 'absolute' && position.n > 0) {
+    const gap = Math.abs(c.userPosition - position.rate);
+    return kind === 'agree' ? gap <= 0.35 : gap >= 0.5;
+  }
+  return true;
+}
+
+function buildReasons(drep: MatchDRep, contributions: Contribution[]): MatchReason[] {
   const describe = (topicId: string) => {
     const topic = TOPICS.find((t) => t.id === topicId);
     const position = drep.positions[topicId];
@@ -127,12 +148,12 @@ function buildReasons(
   const label = (topicId: string) => TOPICS.find((t) => t.id === topicId)?.statement.replace(/\.$/, '') ?? topicId;
 
   const reasons: MatchReason[] = [];
-  const agreements = contributions.filter((c) => c.similarity >= 0.75).sort((a, b) => b.weight * b.similarity - a.weight * a.similarity);
+  const agreements = contributions.filter((c) => c.similarity >= 0.75 && isClearlyStated(drep, c, 'agree')).sort((a, b) => b.weight * b.similarity - a.weight * a.similarity);
   for (const c of agreements.slice(0, 2)) {
     const d = describe(c.topicId);
     if (d) reasons.push({ kind: 'agree', text: `Close to you on “${label(c.topicId)}”: ${d}.` });
   }
-  const biggestGap = contributions.filter((c) => c.similarity < 0.5).sort((a, b) => b.weight - a.weight)[0];
+  const biggestGap = contributions.filter((c) => c.similarity < 0.5 && isClearlyStated(drep, c, 'differ')).sort((a, b) => b.weight - a.weight)[0];
   if (biggestGap) {
     const d = describe(biggestGap.topicId);
     if (d) reasons.push({ kind: 'differ', text: `Differs from you on “${label(biggestGap.topicId)}”: ${d}.` });

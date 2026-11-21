@@ -173,6 +173,10 @@ export function MatchQuiz() {
   const next = () => setStepIndex((i) => Math.min(i + 1, steps.length - 1));
   const back = () => setStepIndex((i) => Math.max(i - 1, 0));
 
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [stepIndex]);
+
   const results = useMemo(
     () => (data && step.kind === 'results' ? scoreMatches(data.dreps, data.real_votes, answers) : []),
     [data, answers, step.kind]

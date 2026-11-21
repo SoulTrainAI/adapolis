@@ -314,13 +314,24 @@ function pickRealVotes(proposals: Proposal[], votes: Vote[], eligibleIds: Set<st
     .slice(0, MATCH_RULES.realVoteCount)
     .map(({ p, t }) => ({
       proposal_id: p.proposal_id,
-      title: (p.title ?? '').trim().slice(0, 160),
-      summary: (p.abstract ?? '').replace(/\s+/g, ' ').trim().slice(0, 500),
+      title: stripMarkdown(p.title ?? '').slice(0, 160),
+      summary: stripMarkdown(p.abstract ?? '').slice(0, 500),
       action_type: p.action_type,
       proposed_epoch: p.proposed_epoch,
       yes: t.yes,
       no: t.no,
     }));
+}
+
+/** Proposal text is often Markdown; the quiz shows it as plain text. */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*`]+/g, '')
+    .replace(/(^|\s)_+([^_\s][^_]*?)_+(?=[\s.,;:!?]|$)/g, '$1$2')
+    .replace(/^#+\s*/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 let cache: { data: MatchData; at: number } | null = null;
