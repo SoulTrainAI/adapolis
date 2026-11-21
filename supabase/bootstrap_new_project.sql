@@ -1,5 +1,5 @@
 -- ADApolis: one-paste setup for a NEW, EMPTY Supabase project
--- Generated from migrations 001 + 004 + 005 (003 is superseded by 004).
+-- Generated from migrations 001 + 004 + 005 + 006 (003 is superseded by 004).
 -- Does NOT include 002_seed_data.sql: that file is mock data for local dev only.
 -- Paste into Supabase Dashboard -> SQL Editor -> New query -> Run.
 
@@ -411,3 +411,25 @@ COMMENT ON COLUMN dreps.metadata_fetch_status IS
 
 COMMENT ON COLUMN dreps.metadata_fetched_at IS
 'Timestamp of the most recent CIP-119 metadata fetch attempt, used to detect staleness and avoid re-fetching unchanged data.';
+
+-- Grant table privileges to Supabase's API roles
+-- Newer Supabase projects no longer auto-grant privileges on tables created in
+-- the public schema, so the service role got "permission denied" (42501) on
+-- every write and public reads failed. RLS (from 001) still governs rows: anon
+-- and authenticated get SELECT only; writes go through the service role.
+-- Safe to run more than once.
+-- Created: 2026-11-20
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
+
+-- Tables added by future migrations inherit the same access.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
+
