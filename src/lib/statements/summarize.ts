@@ -41,6 +41,7 @@ const SYSTEM_PROMPT = `You record what a Cardano DRep (delegated representative)
 Rules:
 - Use only the provided sources. Never use outside knowledge about the DRep, and never infer a position from how they voted alone.
 - Record a topic only if the DRep clearly states or clearly implies a GENERAL view on it. An objection to one specific proposal (e.g. "this budget is too high") is not a general view unless the DRep generalizes (e.g. "the treasury should only fund essentials").
+- The quote must be about the topic itself, not a neighbouring subject. For example, the size of the Constitutional Committee is not about large ADA holders' voting power, and voting to enact one election result is not a general view on trusting the committee.
 - stance: 1-10 agreement with the topic statement exactly as worded (10 = strongly agrees, 1 = strongly disagrees, 5-6 = explicitly mixed).
 - confidence: "high" if explicit, "medium" if clearly implied. If neither, omit the topic.
 - quote: copy 5-30 consecutive words EXACTLY as they appear in the cited source (same words, same order). Do not paraphrase, fix typos, or join separate passages.
@@ -94,7 +95,7 @@ export function quoteIsVerbatim(quote: string, sourceText: string): boolean {
 }
 
 function buildUserMessage(sources: StatementSource[]): string {
-  const topics = TOPICS.map((t) => `- ${t.id}: "${t.statement}"`).join('\n');
+  const topics = TOPICS.map((t) => `- ${t.id}: "${t.statement}" (${t.context})`).join('\n');
   const docs = sources
     .map((s) => `<source index="${s.index}" kind="${s.kind}">\n${s.text}\n</source>`)
     .join('\n\n');
