@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { koiosFetch } from '@/lib/koios/client';
 
 export const SOURCE_LIMITS = {
-  maxRationales: 40,
+  maxRationales: 100,
   maxCharsPerSource: 2000,
   maxProfileChars: 3000,
 } as const;
@@ -30,6 +30,7 @@ export interface StatementSource {
   text: string;
   url: string | null;
   proposal_id: string | null;
+  date?: string;
 }
 
 function textValue(v: unknown): string | null {
@@ -90,7 +91,7 @@ export async function loadSources(drepId: string, metadata: unknown): Promise<St
   if (profile) sources.push({ index: 0, kind: 'profile', text: profile, url: null, proposal_id: null });
 
   const raw = await koiosFetch<unknown>(
-    `/vote_list?voter_id=eq.${encodeURIComponent(drepId)}&meta_json=not.is.null&select=proposal_id,block_time,meta_url,meta_json&order=block_time.desc&limit=200`,
+    `/vote_list?voter_id=eq.${encodeURIComponent(drepId)}&meta_json=not.is.null&select=proposal_id,block_time,meta_url,meta_json&order=block_time.desc&limit=500`,
     { method: 'GET' }
   );
   const rows = z.array(RationaleRowSchema).parse(raw);
@@ -110,6 +111,7 @@ export async function loadSources(drepId: string, metadata: unknown): Promise<St
       text: text.slice(0, SOURCE_LIMITS.maxCharsPerSource),
       url: row.meta_url,
       proposal_id: row.proposal_id,
+      date: new Date(row.block_time * 1000).toISOString().slice(0, 10),
     });
   }
   return sources;

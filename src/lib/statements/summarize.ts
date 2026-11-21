@@ -44,6 +44,7 @@ Rules:
 - The quote must be about the topic itself, not a neighbouring subject. For example, the size of the Constitutional Committee is not about large ADA holders' voting power, and voting to enact one election result is not a general view on trusting the committee.
 - Test every position: someone reading ONLY the quote and the topic statement should be able to see the DRep's stance on that topic. If they could not, omit it. Thanks, praise, or a review of one proposal ("good effort but needs iteration") is never a position.
 - Pay for the Constitutional Committee, Intersect staff or proposal teams is not DRep compensation. drep_compensation is only about paying DReps.
+- Views change. Rationales are dated, newest first. If the DRep's newer writing conflicts with older writing on a topic, record the newer view and quote the newer source.
 - stance: 1-10 agreement with the topic statement exactly as worded (10 = strongly agrees, 1 = strongly disagrees, 5-6 = explicitly mixed).
 - confidence: "high" if explicit, "medium" if clearly implied. If neither, omit the topic.
 - quote: copy 5-30 consecutive words EXACTLY as they appear in the cited source (same words, same order). Do not paraphrase, fix typos, or join separate passages.
@@ -99,7 +100,7 @@ export function quoteIsVerbatim(quote: string, sourceText: string): boolean {
 function buildUserMessage(sources: StatementSource[]): string {
   const topics = TOPICS.map((t) => `- ${t.id}: "${t.statement}" (${t.context})`).join('\n');
   const docs = sources
-    .map((s) => `<source index="${s.index}" kind="${s.kind}">\n${s.text}\n</source>`)
+    .map((s) => `<source index="${s.index}" kind="${s.kind}"${s.date ? ` date="${s.date}"` : ''}>\n${s.text}\n</source>`)
     .join('\n\n');
   return `Topics (stance = agreement with each statement):\n${topics}\n\nThe DRep's own published words:\n\n${docs}`;
 }
