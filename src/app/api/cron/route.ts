@@ -8,6 +8,7 @@
 import { NextResponse } from 'next/server';
 import { syncDReps } from '@/lib/sync/sync-dreps';
 import { syncProposals } from '@/lib/sync/sync-proposals';
+import { syncAllVotes } from '@/lib/sync/sync-votes';
 import { computeGovScoresForEpoch } from '@/lib/scoring/govscore-v1';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { fetchCurrentEpoch } from '@/lib/koios';
@@ -108,6 +109,11 @@ async function runPipeline(): Promise<void> {
         timestamp: new Date().toISOString(),
       })
     );
+
+    // Votes depend on DReps and proposals existing first (foreign keys), and
+    // scoring depends on fresh votes, so this sits between them.
+    const votesSyncResult = await syncAllVotes();
+    console.log(JSON.stringify({ event: 'cron_step_2b_votes_complete', result: votesSyncResult }));
 
     // Step 3: Get current epoch
     console.log(JSON.stringify({ event: 'cron_step_3_get_epoch', timestamp: new Date().toISOString() }));

@@ -3,7 +3,9 @@
  * Fetches DRep votes from Koios and writes to Supabase
  */
 
+import { z } from 'zod';
 import { fetchDRepVotesBatch } from '@/lib/koios';
+import { koiosFetch } from '@/lib/koios/client';
 import { supabaseAdmin } from './supabase-admin';
 import type { SyncResult } from './sync-dreps';
 
@@ -232,4 +234,106 @@ export async function syncVotes(
     );
     throw error;
   }
+}
+
+const KOIOS_PAGE_SIZE = 1000;
+const DB_PAGE_SIZE = 1000;
+
+const KoiosBulkVoteSchema = z.object({
+  voter_id: z.string(),
+  proposal_id: z.string(),
+  vote: z.enum(['Yes', 'No', 'Abstain']),
+  block_time: z.number().int(),
+  vote_tx_hash: z.string(),
+  meta_url: z.string().nullable(),
+  meta_hash: z.string().nullable(),
+});
+
+async function loadIds(table: 'dreps' | 'proposals', column: 'drep_id' | 'proposal_id'): Promise<Set<string>> {
+  const ids = new Set<string>();
+  for (let from = 0; ; from += DB_PAGE_SIZE) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .select(column)
+      .order(column)
+      .range(from, from + DB_PAGE_SIZE - 1);
+    if (error) {
+      throw new Error(`Failed to read ${table}.${column} from Supabase: ${error.message}. Check SUPABASE_SERVICE_ROLE_KEY.`);
+    }
+    for (const row of (data ?? []) as Array<Record<string, string>>) ids.add(row[column]);
+    if (!data || data.length < DB_PAGE_SIZE) return ids;
+  }
+}
+
+/**
+ * Syncs every DRep vote via Koios /vote_list (~32 paged requests) instead of
+ * one /drep_votes call per DRep (~1,700 requests at Koios's 1 req/s limit),
+ * which is what made the old sync too slow to run in the cron.
+ *
+ * Votes referencing a DRep or proposal not yet in the database are skipped,
+ * since a single foreign-key violation would reject the whole upsert chunk.
+ */
+export async function syncAllVotes(): Promise<SyncResult & { skipped: number }> {
+  const startTime = Date.now();
+  const [drepIds, proposalIds] = await Promise.all([
+    loadIds('dreps', 'drep_id'),
+    loadIds('proposals', 'proposal_id'),
+  ]);
+
+  const latest = new Map<string, z.infer<typeof KoiosBulkVoteSchema>>();
+  let skipped = 0;
+
+  for (let offset = 0; ; offset += KOIOS_PAGE_SIZE) {
+    const raw = await koiosFetch<unknown>(
+      `/vote_list?voter_role=eq.DRep&select=voter_id,proposal_id,vote,block_time,vote_tx_hash,meta_url,meta_hash&order=block_time.asc&offset=${offset}&limit=${KOIOS_PAGE_SIZE}`,
+      { method: 'GET' }
+    );
+    const parsed = z.array(KoiosBulkVoteSchema).safeParse(raw);
+    if (!parsed.success) {
+      throw new Error(
+        `Koios /vote_list returned an unexpected shape at offset ${offset}: ${parsed.error.message}. Check https://api.koios.rest/#/Governance/vote_list for schema changes.`
+      );
+    }
+
+    for (const v of parsed.data) {
+      if (!drepIds.has(v.voter_id) || !proposalIds.has(v.proposal_id)) {
+        skipped++;
+        continue;
+      }
+      // A DRep may change its vote; rows arrive oldest-first so the last one wins.
+      latest.set(`${v.voter_id}:${v.proposal_id}`, v);
+    }
+
+    if (parsed.data.length < KOIOS_PAGE_SIZE) break;
+  }
+
+  const records = Array.from(latest.values()).map((v) => ({
+    drep_id: v.voter_id,
+    proposal_id: v.proposal_id,
+    vote: v.vote.toLowerCase(),
+    rationale_url: v.meta_url,
+    rationale_hash: v.meta_hash,
+    block_time: new Date(v.block_time * 1000).toISOString(),
+    tx_hash: v.vote_tx_hash,
+  }));
+
+  let synced = 0;
+  for (let i = 0; i < records.length; i += DB_PAGE_SIZE) {
+    const chunk = records.slice(i, i + DB_PAGE_SIZE);
+    const { error } = await supabaseAdmin.from('votes').upsert(chunk, { onConflict: 'drep_id,proposal_id' });
+    if (error) {
+      throw new Error(
+        `Failed to save votes (chunk starting at ${i}): ${error.message}. Earlier chunks were saved; re-running is safe because the upsert is idempotent.`
+      );
+    }
+    synced += chunk.length;
+  }
+
+  await supabaseAdmin
+    .from('sync_state')
+    .upsert({ entity: 'votes', last_synced_at: new Date().toISOString() }, { onConflict: 'entity' });
+
+  const result = { synced, errors: 0, skipped, duration_ms: Date.now() - startTime };
+  console.log(JSON.stringify({ event: 'sync_all_votes_complete', ...result }));
+  return result;
 }
