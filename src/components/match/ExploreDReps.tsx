@@ -106,7 +106,9 @@ export function ExploreDReps({
     const adaPct = percentiles(dreps.map((d) => d.ada));
     const delPct = percentiles(dreps.map((d) => d.delegators));
     const total = (Object.keys(effective) as WeightKey[]).reduce((s, k) => s + Math.abs(effective[k]), 0) || 1;
-    return dreps.map((drep) => {
+    // Defaults guard against a stale cached payload from before these fields existed.
+    return dreps.map((raw) => {
+      const drep = { ...raw, govscore: raw.govscore ?? 0, delegators: raw.delegators ?? 0, votes_eligible: raw.votes_eligible ?? 0 };
       const result = byId.get(drep.drep_id) ?? null;
       const parts: Record<WeightKey, number> = {
         values: result ? result.matchPercent / 100 : 0.5,

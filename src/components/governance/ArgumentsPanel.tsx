@@ -48,7 +48,7 @@ export function ArgumentsPanel({
                         {...(href(a)?.startsWith('/') ? {} : { target: '_blank', rel: 'noopener noreferrer nofollow' })}
                         className="ml-2 text-violet-300 hover:text-violet-200"
                       >
-                        {a.linkLabel ?? 'Read full rationale ↗'}
+                        {a.linkLabel ?? (href(a)?.startsWith('/') ? 'Read full rationale →' : 'Read full rationale ↗')}
                       </a>
                     )}
                   </span>
