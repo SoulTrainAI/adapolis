@@ -12,6 +12,14 @@ export const metadata: Metadata = {
     'DRep season points: earned by voting, explaining votes and voting on time. Never by which way they vote.',
 };
 
+function Plus({ children }: { children: React.ReactNode }) {
+  return <span className="font-semibold text-emerald-400">{children}</span>;
+}
+
+function Minus({ children }: { children: React.ReactNode }) {
+  return <span className="font-semibold text-rose-400">{children}</span>;
+}
+
 export default async function SeasonPage() {
   let data: SeasonData | null = null;
   try {
@@ -51,15 +59,15 @@ export default async function SeasonPage() {
         <section className="max-w-3xl bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-2 text-sm text-slate-300">
           <h2 className="text-white font-semibold">How points work</h2>
           <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1">
-            <li>Vote on a governance action: +{POINT_RULES.vote}</li>
-            <li>Publish a rationale with it: +{POINT_RULES.rationale}</li>
-            <li>Unique rationale, not reused: +{POINT_RULES.freshRationale}</li>
-            <li>Vote in the first half of the window: +{POINT_RULES.early}</li>
-            <li>Let an action close without voting: {POINT_RULES.missed}</li>
+            <li>Vote on a governance action: <Plus>+{POINT_RULES.vote}</Plus></li>
+            <li>Publish a rationale with it: <Plus>+{POINT_RULES.rationale}</Plus></li>
+            <li>Vote in the first half of the window: <Plus>+{POINT_RULES.early}</Plus></li>
+            <li>Unique rationale, not reused: <Plus>+{POINT_RULES.freshRationale}</Plus></li>
             <li>
-              Streak: +{POINT_RULES.streakStep} per clean epoch in a row, up to +
-              {POINT_RULES.streakStep * POINT_RULES.streakCap}
+              Streak: <Plus>+{POINT_RULES.streakStep}</Plus> per clean epoch in a row, up to{' '}
+              <Plus>+{POINT_RULES.streakStep * POINT_RULES.streakCap}</Plus>
             </li>
+            <li>Let an action close without voting: <Minus>{POINT_RULES.missed}</Minus></li>
           </ul>
           <p className="text-slate-400">
             Underdog: smaller DReps, by both ADA and number of delegators, will be worth up to{' '}
