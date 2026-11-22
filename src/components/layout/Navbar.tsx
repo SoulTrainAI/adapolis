@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { WalletSignIn } from '@/components/auth/WalletSignIn';
 
 export function Navbar() {
   return (
@@ -15,6 +16,7 @@ export function Navbar() {
           <span className="text-slate-200 text-base">Open Data</span>
           <span className="text-slate-200 text-base">API</span>
         </div>
+        <WalletSignIn />
       </div>
     </nav>
   );
