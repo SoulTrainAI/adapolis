@@ -11,6 +11,19 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        brand: {
+          navy: "#0b1020",
+          ink: "#141c38",
+          violet: "#8b5cf6",
+          lilac: "#c4b5fd",
+          gold: "#f5b301",
+          "gold-light": "#fcd34d",
+        },
+      },
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        display: ["var(--font-display)", "var(--font-geist-sans)", "system-ui", "sans-serif"],
       },
       keyframes: {
         shimmer: {

@@ -88,7 +88,7 @@ export default async function SeasonPage() {
   const progress = data ? Math.min(data.current_epoch, data.end_epoch) - data.start_epoch + 1 : 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-brand-navy text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8">
         <header className="space-y-3">
           <p className="text-sm uppercase tracking-wider text-violet-300">

@@ -15,6 +15,13 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
+const display = localFont({
+  src: [
+    { path: "./fonts/SpaceGrotesk-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/SpaceGrotesk-700.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-display",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -42,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${display.variable} antialiased flex flex-col min-h-screen bg-brand-navy`}
       >
         <Navbar />
         <main className="flex-1">

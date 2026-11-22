@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LogoMark } from '@/components/brand/Logo';
 import { createClient } from '@supabase/supabase-js';
 
 export const revalidate = 300;
@@ -39,8 +40,8 @@ async function getStats(): Promise<HomeStats | null> {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-5 text-center">
-      <p className="text-3xl font-bold text-white">{value}</p>
+    <div className="rounded-xl border border-brand-gold/20 bg-brand-ink/70 px-4 py-5 text-center">
+      <p className="font-display text-3xl font-bold text-gold-gradient">{value}</p>
       <p className="text-sm text-slate-400 mt-1">{label}</p>
     </div>
   );
@@ -50,31 +51,49 @@ export default async function Home() {
   const stats = await getStats();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 sm:px-6 lg:px-8 py-20">
-      <div className="max-w-4xl mx-auto text-center space-y-6">
-        <h1 className="text-5xl sm:text-6xl font-bold text-white">ADApolis</h1>
-        <p className="text-xl sm:text-2xl text-slate-300">The civic engine for Cardano governance</p>
-        <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
+    <div className="relative min-h-screen overflow-hidden bg-brand-navy px-4 sm:px-6 lg:px-8 py-16">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(60% 45% at 50% 22%, rgba(139,92,246,0.28), transparent 70%)' }}
+      />
+      <div className="relative max-w-4xl mx-auto text-center space-y-6">
+        <LogoMark size={200} className="mx-auto drop-shadow-[0_0_40px_rgba(139,92,246,0.35)]" />
+        <h1 className="font-display text-6xl sm:text-7xl tracking-tight">
+          <span className="font-bold text-white">ADA</span>
+          <span className="font-normal text-brand-lilac">polis</span>
+        </h1>
+        <p className="font-display text-sm sm:text-base uppercase tracking-[0.3em] text-slate-400">
+          The civic engine for Cardano governance
+        </p>
+        <div className="brand-hairline mx-auto h-px w-64" />
+        <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto">
           Every Cardano DRep, scored on whether they actually show up to vote. Scores come straight from the
           blockchain and the formula is public, so you can check our work.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center pt-2">
           <Link
             href="/scoreboard"
-            className="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="rounded-lg bg-brand-violet px-6 py-3 font-semibold text-white shadow-lg shadow-violet-900/40 transition-colors hover:bg-violet-500"
           >
             View the Scoreboard
           </Link>
           <Link
+            href="/draft"
+            className="rounded-lg bg-brand-gold px-6 py-3 font-semibold text-brand-navy shadow-lg shadow-amber-900/30 transition-colors hover:bg-brand-gold-light"
+          >
+            Draft your Season 1 team
+          </Link>
+          <Link
             href="/match"
-            className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="rounded-lg border border-brand-lilac/30 bg-brand-ink px-6 py-3 font-semibold text-slate-100 transition-colors hover:border-brand-lilac/60"
           >
             Find my DRep
           </Link>
           <Link
             href="/methodology"
-            className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="rounded-lg border border-brand-lilac/30 bg-brand-ink px-6 py-3 font-semibold text-slate-100 transition-colors hover:border-brand-lilac/60"
           >
             How scoring works
           </Link>

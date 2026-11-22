@@ -3,6 +3,7 @@
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { X_HANDLE, X_URL } from '@/lib/site/social';
+import { Logo } from '@/components/brand/Logo';
 
 const WALLET_ADDRESS = 'addr1q9gajv8k3qvl59z5knpyypecf3s6mhdrpr9xd8jsd5y5fsqpy0t8a58zxqqup43d84ju95m62dqrwvdz7s6t429yx6hs56g2mm';
 
@@ -16,8 +17,12 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-slate-900 border-t border-slate-800 py-6">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <footer className="bg-brand-navy">
+      <div className="brand-hairline h-px w-full opacity-60" />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <div className="mb-5 flex justify-center">
+          <Logo size={44} textClass="text-2xl" />
+        </div>
         <p className="text-sm text-slate-400 mb-2">Support ADApolis — Donate ADA or CNTs:</p>
         <div className="flex items-center justify-center gap-2">
           <code className="text-xs sm:text-sm text-slate-300 font-mono break-all">

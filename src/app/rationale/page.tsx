@@ -37,7 +37,7 @@ export default async function RationalePage({ searchParams }: { searchParams: { 
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-brand-navy text-white py-12 px-4 sm:px-6 lg:px-8">
       <article className="max-w-2xl mx-auto space-y-6">
         {!valid ? (
           <p className="text-slate-300">This link is missing a DRep or proposal ID.</p>

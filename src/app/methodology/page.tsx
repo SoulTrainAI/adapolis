@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function MethodologyPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-brand-navy text-slate-100 py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-12">
         {/* Header */}
         <div className="space-y-4">
