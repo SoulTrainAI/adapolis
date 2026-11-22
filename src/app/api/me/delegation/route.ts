@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { currentStakeAddress } from '@/lib/auth/current';
-import { koiosFetch } from '@/lib/koios/client';
+import { lookupDelegation } from '@/lib/koios/delegation';
 
 export const dynamic = 'force-dynamic';
-
-const AccountSchema = z.array(z.object({ stake_address: z.string(), delegated_drep: z.string().nullable() }));
 
 // Delegation changes rarely; a short cache keeps page loads from each hitting Koios (1 req/s).
 const cache = new Map<string, { drep: string | null; at: number }>();
@@ -19,12 +16,7 @@ export async function GET() {
   if (hit && Date.now() - hit.at < TTL_MS) return NextResponse.json({ stakeAddress, drepId: hit.drep });
 
   try {
-    const raw = await koiosFetch<unknown>('/account_info', { method: 'POST', body: { _stake_addresses: [stakeAddress] } });
-    const parsed = AccountSchema.safeParse(raw);
-    if (!parsed.success) {
-      throw new Error(`unexpected Koios /account_info shape: ${parsed.error.message}`);
-    }
-    const drep = parsed.data[0]?.delegated_drep ?? null;
+    const drep = await lookupDelegation(stakeAddress);
     cache.set(stakeAddress, { drep, at: Date.now() });
     return NextResponse.json({ stakeAddress, drepId: drep });
   } catch (error) {
