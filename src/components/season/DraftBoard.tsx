@@ -256,7 +256,7 @@ export function DraftBoard() {
                         type="button"
                         disabled={locked || (!isPicked && full)}
                         onClick={() => toggle(d.drep_id)}
-                        className={`w-full rounded-lg py-1.5 text-sm font-semibold disabled:opacity-40 ${
+                        className={`w-full py-1.5 text-sm font-semibold disabled:opacity-40 ${
                           isPicked ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-violet-600 text-white hover:bg-violet-500'
                         }`}
                       >

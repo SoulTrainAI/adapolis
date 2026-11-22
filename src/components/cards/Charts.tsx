@@ -3,9 +3,23 @@
 type Point = { label: string; value: number | null };
 
 /** Tiny trend line for the card front. Gaps (null) are skipped. */
-export function Sparkline({ values, color = '#c4b5fd', width = 120, height = 22 }: { values: Array<number | null>; color?: string; width?: number; height?: number }) {
+export function Sparkline({
+  values,
+  color = '#c4b5fd',
+  width = 120,
+  height = 22,
+  fluid = false,
+}: {
+  values: Array<number | null>;
+  color?: string;
+  width?: number;
+  height?: number;
+  /** Fill the parent box instead of using fixed pixels */
+  fluid?: boolean;
+}) {
+  const size = fluid ? { width: '100%', height: '100%' } : { width, height };
   const nums = values.filter((v): v is number => v !== null);
-  if (nums.length < 2) return <svg width={width} height={height} aria-hidden />;
+  if (nums.length < 2) return <svg {...size} aria-hidden />;
   const min = Math.min(...nums);
   const max = Math.max(...nums);
   const span = max - min || 1;
@@ -15,7 +29,7 @@ export function Sparkline({ values, color = '#c4b5fd', width = 120, height = 22 
     .filter((p): p is string => p !== null);
   const last = pts[pts.length - 1].split(',');
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden>
+    <svg {...size} viewBox={`0 0 ${width} ${height}`} aria-hidden>
       <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
       <circle cx={last[0]} cy={last[1]} r="2.6" fill={color} />
     </svg>
