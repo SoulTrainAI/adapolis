@@ -3,15 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { format, formatDistanceToNowStrict } from 'date-fns';
-import { Loader2, Lock, Plus, Search, X } from 'lucide-react';
+import { LayoutGrid, List, Loader2, Lock, Plus, Search, X } from 'lucide-react';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import type { DraftData, PoolDRep } from '@/lib/season/fantasy';
+import type { CardSummary } from '@/lib/cards/types';
+import { TradingCard } from '@/components/cards/TradingCard';
+import { placeholderCard, useCards } from '@/components/cards/useCards';
 
 type Response = ({ enabled: true } & DraftData) | { enabled: false };
-type Sort = 'points' | 'underdog' | 'smallest' | 'drafted';
+type Sort = 'points' | 'projection' | 'form' | 'underdog' | 'smallest' | 'drafted';
 
 const ROSTER_SIZE = 5;
-const PAGE = 50;
+const PAGE = 24;
 
 function formatAda(ada: number): string {
   if (ada >= 1e9) return `₳${(ada / 1e9).toFixed(1)}B`;
@@ -50,6 +53,8 @@ export function DraftBoard() {
   const [shown, setShown] = useState(PAGE);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [view, setView] = useState<'cards' | 'list'>('cards');
+  const { cards } = useCards();
 
   const load = useCallback(() => {
     fetch('/api/fantasy/draft')
@@ -79,6 +84,15 @@ export function DraftBoard() {
     [data]
   );
 
+  const cardFor = useCallback(
+    (d: PoolDRep): CardSummary => ({
+      ...(cards.get(d.drep_id) ??
+        placeholderCard({ drep_id: d.drep_id, name: d.name, image: d.image, ada: d.ada, delegators: d.delegators, do_not_list: d.do_not_list })),
+      underdog: d.underdog,
+    }),
+    [cards]
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = pool.filter(
@@ -88,12 +102,14 @@ export function DraftBoard() {
     );
     const cmp: Record<Sort, (a: PoolDRep, b: PoolDRep) => number> = {
       points: (a, b) => (b.last_points ?? -1e9) - (a.last_points ?? -1e9),
+      projection: (a, b) => (cards.get(b.drep_id)?.projection ?? -1e9) - (cards.get(a.drep_id)?.projection ?? -1e9),
+      form: (a, b) => (cards.get(b.drep_id)?.form ?? -1e9) - (cards.get(a.drep_id)?.form ?? -1e9),
       underdog: (a, b) => b.underdog - a.underdog || (b.last_points ?? -1e9) - (a.last_points ?? -1e9),
       smallest: (a, b) => a.ada - b.ada,
       drafted: (a, b) => b.drafted_by - a.drafted_by,
     };
     return list.sort(cmp[sort]);
-  }, [pool, query, sort, activeOnly]);
+  }, [pool, query, sort, activeOnly, cards]);
 
   if (loadError) return <p className="text-red-300">{loadError}</p>;
   if (!data) {
@@ -188,6 +204,8 @@ export function DraftBoard() {
               aria-label="Sort DReps"
             >
               <option value="points">Most points last season</option>
+              <option value="projection">Highest projection</option>
+              <option value="form">Best form (last 3)</option>
               <option value="underdog">Biggest underdog multiplier</option>
               <option value="smallest">Smallest by ADA</option>
               <option value="drafted">Most drafted</option>
@@ -196,14 +214,63 @@ export function DraftBoard() {
               <input type="checkbox" checked={activeOnly} onChange={(e) => setActiveOnly(e.target.checked)} />
               Voted last season
             </label>
+            <div className="flex overflow-hidden rounded-lg border border-slate-700" role="group" aria-label="View">
+              {(
+                [
+                  ['cards', LayoutGrid],
+                  ['list', List],
+                ] as const
+              ).map(([v, Icon]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setView(v)}
+                  aria-pressed={view === v}
+                  aria-label={v === 'cards' ? 'Card view' : 'List view'}
+                  className={`px-2.5 py-2 ${view === v ? 'bg-violet-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'}`}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
           </div>
           <p className="text-xs text-slate-500">
             &quot;Last season&quot; is epochs {data.reference_window.start_epoch}–{data.reference_window.end_epoch}; multipliers
             are scaled against the DReps active then. {filtered.length.toLocaleString()} DReps shown.
           </p>
 
-          <ul className="space-y-2">
-            {filtered.slice(0, shown).map((d) => {
+          {view === 'cards' && (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-4">
+              {filtered.slice(0, shown).map((d) => {
+                const isPicked = picked.includes(d.drep_id);
+                return (
+                  <TradingCard
+                    key={d.drep_id}
+                    variant="draft"
+                    card={cardFor(d)}
+                    lockedUnderdog={snapshot.get(d.drep_id)}
+                    draftedBy={d.drafted_by}
+                    selected={isPicked}
+                    action={
+                      <button
+                        type="button"
+                        disabled={locked || (!isPicked && full)}
+                        onClick={() => toggle(d.drep_id)}
+                        className={`w-full rounded-lg py-1.5 text-sm font-semibold disabled:opacity-40 ${
+                          isPicked ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-violet-600 text-white hover:bg-violet-500'
+                        }`}
+                      >
+                        {isPicked ? 'Remove' : 'Pick'}
+                      </button>
+                    }
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          <ul className={view === 'list' ? 'space-y-2' : 'hidden'}>
+            {(view === 'list' ? filtered.slice(0, shown) : []).map((d) => {
               const isPicked = picked.includes(d.drep_id);
               return (
                 <li
@@ -217,7 +284,8 @@ export function DraftBoard() {
                       {displayName(d)} <MyDRepBadge drepId={d.drep_id} className="ml-1 align-middle" />
                     </p>
                     <p className="text-xs text-slate-400">
-                      {d.last_points === null ? 'No votes last season' : `${d.last_points} pts last season`} · {formatAda(d.ada)} ·{' '}
+                      {d.last_points === null ? 'No votes last season' : `${d.last_points} pts last season`}
+                      {cards.get(d.drep_id)?.projection != null && ` · proj ${cards.get(d.drep_id)?.projection}`} · {formatAda(d.ada)} ·{' '}
                       {d.delegators.toLocaleString()} delegators
                       {d.drafted_by > 0 && ` · drafted by ${d.drafted_by} team${d.drafted_by === 1 ? '' : 's'}`}
                     </p>

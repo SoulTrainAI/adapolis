@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { DRepCard } from './DRepCard';
+import { TradingCard } from '@/components/cards/TradingCard';
+import { placeholderCard, useCards } from '@/components/cards/useCards';
+import type { CardSummary } from '@/lib/cards/types';
 import { FilterBar, FilterState } from './FilterBar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -65,6 +67,7 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { cards } = useCards();
 
   // Build query string from current filters and page
   const buildQueryString = useCallback(() => {
@@ -126,8 +129,6 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
     // This callback is kept for interface compatibility
   }, []);
 
-  const truncateDRepId = (id: string) => id.substring(0, 16) + '...';
-
   // Pagination helpers
   const currentEpoch = data?.epoch || initialEpoch;
   const total = data?.total || 0;
@@ -175,34 +176,9 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
       {/* Grid of DRep cards */}
       {!loading && dreps.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 mb-8 w-full">
-          {dreps.map((drep, index) => {
-            const rank = startIndex + index;
-            return (
-              <DRepCard
-                key={drep.drep_id}
-                props={{
-                  rank,
-                  drepId: drep.drep_id,
-                  displayName: drep.profile?.name ?? truncateDRepId(drep.drep_id),
-                  adjustedScore: drep.adjusted_govscore,
-                  rawScore: drep.raw_govscore,
-                  participationRate: drep.participation_rate,
-                  adaAmount: formatADA(drep.amount_lovelace),
-                  delegatorCount: drep.delegator_count,
-                  isRegistered: drep.is_registered,
-                  votingStreak: drep.voting_streak_epochs || 0,
-                  voteSummary: drep.vote_summary ?? { yes: 0, no: 0, abstain: 0 },
-                  recentVotes: [],
-                  bio: drep.profile?.bio ?? null,
-                  profileImage: drep.profile?.image ?? null,
-                  links: drep.profile?.links ?? [],
-                  doNotList: drep.profile?.doNotList ?? false,
-                  votesCast: drep.votes_cast,
-                  votesEligible: drep.votes_eligible,
-                }}
-              />
-            );
-          })}
+          {dreps.map((drep) => (
+            <TradingCard key={drep.drep_id} variant="scoreboard" card={cards.get(drep.drep_id) ?? rowCard(drep)} />
+          ))}
         </div>
       )}
 
@@ -254,16 +230,22 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
   );
 }
 
-function formatADA(lovelace: bigint | null): string {
-  if (!lovelace || lovelace === BigInt(0)) return '0 ADA';
-
-  const ada = Number(lovelace) / 1_000_000;
-
-  if (ada >= 1_000_000) {
-    return `${(ada / 1_000_000).toFixed(1)}M ADA`;
-  }
-  if (ada >= 1_000) {
-    return `${(ada / 1_000).toFixed(1)}K ADA`;
-  }
-  return `${ada.toFixed(1)} ADA`;
+/** Card from the scoreboard row alone, used until card stats load and for DReps they don't cover. */
+function rowCard(d: DRepScore): CardSummary {
+  return {
+    ...placeholderCard({
+      drep_id: d.drep_id,
+      name: d.profile?.name ?? null,
+      image: d.profile?.image ?? null,
+      ada: Number(d.amount_lovelace ?? 0) / 1_000_000,
+      delegators: d.delegator_count ?? 0,
+      registered: d.is_registered,
+      do_not_list: d.profile?.doNotList ?? false,
+    }),
+    govscore: d.adjusted_govscore,
+    participation: d.participation_rate,
+    votes_cast: d.votes_cast ?? 0,
+    votes_eligible: d.votes_eligible ?? 0,
+    streak: d.voting_streak_epochs ?? 0,
+  };
 }

@@ -10,6 +10,7 @@ const LINKS: Array<[string, string]> = [
   ['/hot-topics', 'Hot Topics'],
   ['/season', 'Season'],
   ['/draft', 'Draft'],
+  ['/collection', 'Collection'],
   ['/about', 'About'],
   ['/methodology', 'Methodology'],
 ];
