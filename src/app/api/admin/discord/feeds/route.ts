@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { hasCronSecret } from '@/lib/auth/cron-secret';
+import { cronSecretMismatch, hasCronSecret } from '@/lib/auth/cron-secret';
 import { discordConfigured } from '@/lib/discord/rest';
 import { runFeeds } from '@/lib/discord/feeds';
 
@@ -12,7 +12,7 @@ export const maxDuration = 300;
  * Requires Authorization: Bearer <CRON_SECRET>.
  */
 export async function POST(request: Request) {
-  if (!hasCronSecret(request)) return NextResponse.json({ error: 'Unauthorized: send Authorization: Bearer <CRON_SECRET>.' }, { status: 401 });
+  if (!hasCronSecret(request)) return NextResponse.json({ error: `Unauthorized. ${cronSecretMismatch(request)}` }, { status: 401 });
   if (!discordConfigured())
     return NextResponse.json({ error: 'Discord is not configured: add DISCORD_BOT_TOKEN and DISCORD_GUILD_ID to Railway variables, then redeploy.' }, { status: 503 });
   const apply = new URL(request.url).searchParams.get('apply') === '1';
