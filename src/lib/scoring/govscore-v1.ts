@@ -47,7 +47,7 @@ export interface DRepScoreRow {
 /**
  * Quadratic ADA-power dampener: 1 / (1 + log10(ada_m + 1) / 4), ada_m = ADA in millions.
  */
-function calculateDampener(amountLovelace: number): number {
+export function calculateDampener(amountLovelace: number): number {
   const adaMillions = amountLovelace / 1_000_000_000_000;
   return 1 / (1 + Math.log10(adaMillions + 1) / 4);
 }

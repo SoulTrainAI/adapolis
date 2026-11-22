@@ -18,6 +18,7 @@ import { getSeasonData } from '@/lib/season/data';
 import { isStatementRunActive, runStatementSummaries } from '@/lib/statements/run';
 import { refreshProposalArguments } from '@/lib/statements/proposal-arguments';
 import { getHotTopics } from '@/lib/hot-topics/data';
+import { getCards } from '@/lib/cards/data';
 import { refreshForumDiscussions } from '@/lib/forum/discussions';
 
 const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
@@ -242,6 +243,16 @@ async function runPipeline(): Promise<void> {
       console.error(
         JSON.stringify({ event: 'cron_step_hot_topics_failed', error: error instanceof Error ? error.message : String(error) })
       );
+    }
+
+    try {
+      await step('refresh_cards', async () => {
+        const data = await getCards({ force: true });
+        return { cards: data.cards.length, window: data.current_window };
+      });
+    } catch (error) {
+      demoteError();
+      console.error(JSON.stringify({ event: 'cron_step_cards_failed', error: error instanceof Error ? error.message : String(error) }));
     }
 
     try {
