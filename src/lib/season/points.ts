@@ -25,17 +25,35 @@ export const POINT_RULES = {
   maxUnderdogBonus: 0.5,
 } as const;
 
-// Season 0 is a public preview; Season 1 is the first with drafting.
+// Seasons are 6-epoch windows on a fixed grid. Until a launch epoch is set,
+// every window is a public preview with no drafting.
 export const SEASON_LENGTH_EPOCHS = 6;
-export const SEASON_ONE_START_EPOCH = 672;
+const GRID_START_EPOCH = 666;
 
-export function seasonForEpoch(epoch: number): number {
-  return Math.floor((epoch - SEASON_ONE_START_EPOCH) / SEASON_LENGTH_EPOCHS) + 1;
+export function windowForEpoch(epoch: number): number {
+  return Math.floor((epoch - GRID_START_EPOCH) / SEASON_LENGTH_EPOCHS);
 }
 
-export function seasonEpochs(season: number): { start: number; end: number } {
-  const start = SEASON_ONE_START_EPOCH + (season - 1) * SEASON_LENGTH_EPOCHS;
+export function windowEpochs(window: number): { start: number; end: number } {
+  const start = GRID_START_EPOCH + window * SEASON_LENGTH_EPOCHS;
   return { start, end: start + SEASON_LENGTH_EPOCHS - 1 };
+}
+
+/** Season 1's first epoch, from SEASON_ONE_START_EPOCH; null = not launched. */
+export function seasonOneStartEpoch(): number | null {
+  const raw = process.env.SEASON_ONE_START_EPOCH;
+  if (!raw || !/^\d+$/.test(raw)) return null;
+  const epoch = Number(raw);
+  // Snap to the grid so seasons never straddle two windows.
+  return windowEpochs(windowForEpoch(epoch)).start;
+}
+
+/** Season number for a window, or null while it is a preview. */
+export function seasonNumber(window: number): number | null {
+  const launch = seasonOneStartEpoch();
+  if (launch === null) return null;
+  const n = window - windowForEpoch(launch) + 1;
+  return n >= 1 ? n : null;
 }
 
 export interface SeasonVote {

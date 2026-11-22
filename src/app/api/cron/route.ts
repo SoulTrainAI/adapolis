@@ -185,7 +185,7 @@ async function runPipeline(): Promise<void> {
     try {
       await step('refresh_season', async () => {
         const data = await getSeasonData({ force: true });
-        return { season: data.season, ranked_dreps: data.standings.length };
+        return { window: data.window, season: data.season, ranked_dreps: data.standings.length };
       });
     } catch (error) {
       if (lastRun) lastRun.error = null;

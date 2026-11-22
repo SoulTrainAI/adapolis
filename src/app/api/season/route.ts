@@ -4,10 +4,10 @@ import { getSeasonData } from '@/lib/season/data';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const param = new URL(request.url).searchParams.get('season');
-  const season = param !== null && /^\d{1,3}$/.test(param) ? Number(param) : undefined;
+  const param = new URL(request.url).searchParams.get('window');
+  const window = param !== null && /^\d{1,3}$/.test(param) ? Number(param) : undefined;
   try {
-    return NextResponse.json(await getSeasonData({ season }));
+    return NextResponse.json(await getSeasonData({ window }));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(JSON.stringify({ event: 'season_data_failed', error: message }));

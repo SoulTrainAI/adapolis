@@ -4,8 +4,9 @@ import { fetchCurrentEpoch } from '@/lib/koios';
 import { toDisplayProfile, type DisplayProfile } from '@/lib/metadata/profile-display';
 import {
   computeSeasonPoints,
-  seasonEpochs,
-  seasonForEpoch,
+  seasonNumber,
+  windowEpochs,
+  windowForEpoch,
   underdogMultipliers,
   type PointBreakdown,
 } from './points';
@@ -25,7 +26,9 @@ export interface SeasonStanding {
 
 export interface SeasonData {
   computed_at: string;
-  season: number;
+  window: number;
+  /** null while this window is a preview (Season 1 not launched yet). */
+  season: number | null;
   start_epoch: number;
   end_epoch: number;
   current_epoch: number;
@@ -65,8 +68,8 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
     fetchDRepRegistrationPeriods(),
   ]);
 
-  const season = requested ?? seasonForEpoch(currentEpoch);
-  const { start, end } = seasonEpochs(season);
+  const window = requested ?? windowForEpoch(currentEpoch);
+  const { start, end } = windowEpochs(window);
   const to = Math.min(end, currentEpoch);
 
   const proposals = proposalRows.map((p) => ({ ...proposalWindow(p), expiration: p.voting_ends_epoch }));
@@ -119,7 +122,8 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
 
   return {
     computed_at: new Date().toISOString(),
-    season,
+    window,
+    season: seasonNumber(window),
     start_epoch: start,
     end_epoch: end,
     current_epoch: currentEpoch,
@@ -128,13 +132,13 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
 }
 
 /** Cached per season for 6 hours; the cron pipeline refreshes the current one. */
-export async function getSeasonData(options: { season?: number; force?: boolean } = {}): Promise<SeasonData> {
-  const key = options.season ?? -1;
+export async function getSeasonData(options: { window?: number; force?: boolean } = {}): Promise<SeasonData> {
+  const key = options.window ?? -1;
   const hit = cache.get(key);
   if (!options.force && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.data;
   const running = inflight.get(key);
   if (running) return running;
-  const p = computeSeason(options.season ?? null)
+  const p = computeSeason(options.window ?? null)
     .then((data) => {
       cache.set(key, { data, at: Date.now() });
       return data;

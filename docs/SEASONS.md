@@ -12,16 +12,17 @@ until Jason approves folding these changes into it.
 - **Underdog multiplier is size-based, not rank-based** (Jason, 2026-11-21). Rank-based rewards
   tanking. Size = mean of delegated-ADA percentile and delegator-count percentile among DReps
   active that season; multiplier = 1 + 0.5 × smallness; smooth, fixed at draft time.
-- **Seasons:** 6 epochs. Season 0 = epochs 666–671 (public preview, no drafting).
-  Season 1 starts epoch 672 (~2026-12-05).
+- **Seasons:** 6-epoch windows on a grid from epoch 666. Every window is a public preview
+  until Season 1 launches "when we're ready to go live" (Jason, 2026-11-21): set
+  `SEASON_ONE_START_EPOCH` in Railway; it snaps to the grid.
+- **No delegation bonus** (Jason, 2026-11-21): where someone delegates is personal; the game
+  never rewards delegating to a particular DRep.
+- **Prizes:** winners get NFTs and bragging rights. Season 1 champions form the Genesis set.
 
 ## Assumed (Jason didn't answer; revisit before Season 1)
 
-- **Prizes:** Season 1 is free to play with recognition only (leaderboard, titles, badges,
-  Champion Card art). No ADA prizes or paid entry until a lawyer reviews (Hawaii bans gambling;
-  matches roadmap Gate 4).
-- **Delegation bonus:** undecided; proposed +10% team points if the player delegates to one of
-  their 5. Not built.
+- **Free to play.** No ADA prizes or paid entry until a lawyer reviews (Hawaii bans gambling;
+  roadmap Gate 4).
 
 ## Next to build (Season 1)
 

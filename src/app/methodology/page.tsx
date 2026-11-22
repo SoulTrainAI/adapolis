@@ -502,7 +502,7 @@ and ADA_M = ADA delegated in millions`}
           <h2 className="text-2xl sm:text-3xl font-bold text-white">10. Season Points</h2>
           <p className="text-slate-300 leading-relaxed">
             Season points power the fantasy layer: players will draft 5 DReps and score their points. A season is 6 epochs
-            (about 30 days). Season 1 starts at epoch 672; Season 0 (epochs 666–671) is a public preview of the rules.
+            (about 30 days), on a fixed grid starting at epoch 666. Until Season 1 launches, each season is a public preview of the rules.
           </p>
           <p className="text-slate-300 leading-relaxed">
             <strong>The rule that never bends:</strong> points come only from how a DRep does the job, never from how it

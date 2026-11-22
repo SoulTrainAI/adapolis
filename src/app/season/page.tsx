@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSeasonData, type SeasonData, type SeasonStanding } from '@/lib/season/data';
-import { POINT_RULES, SEASON_ONE_START_EPOCH } from '@/lib/season/points';
+import { POINT_RULES } from '@/lib/season/points';
 import { formatAda } from '@/lib/match/score';
 
 export const dynamic = 'force-dynamic';
@@ -81,7 +81,7 @@ export default async function SeasonPage() {
     data = null;
   }
 
-  const isPreview = data !== null && data.season < 1;
+  const isPreview = data !== null && data.season === null;
   const progress = data ? Math.min(data.current_epoch, data.end_epoch) - data.start_epoch + 1 : 0;
 
   return (
@@ -89,7 +89,7 @@ export default async function SeasonPage() {
       <div className="max-w-3xl mx-auto space-y-8">
         <header className="space-y-3">
           <p className="text-sm uppercase tracking-wider text-violet-300">
-            {isPreview ? 'Season 0 · Preview' : data ? `Season ${data.season}` : 'Season standings'}
+            {isPreview ? 'Preview season' : data ? `Season ${data.season}` : 'Season standings'}
           </p>
           <h1 className="text-4xl font-bold">DRep Season Standings</h1>
           <p className="text-slate-300">
@@ -104,8 +104,7 @@ export default async function SeasonPage() {
           {isPreview && (
             <p className="text-sm bg-violet-950/50 border border-violet-800/60 rounded-lg px-4 py-3 text-violet-100">
               This is a preview season to test the scoring on real data. Fantasy drafting, where you pick 5 DReps and
-              score their points, starts with Season 1 at epoch {SEASON_ONE_START_EPOCH}. Feedback on the point rules is
-              welcome.
+              score their points, starts with Season 1. Feedback on the point rules is welcome.
             </p>
           )}
         </header>
