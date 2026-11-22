@@ -3,6 +3,8 @@
  * Static page with platform information, mission, and principles
  */
 
+import { X_HANDLE, X_URL } from '@/lib/site/social';
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
@@ -121,13 +123,18 @@ export default function AboutPage() {
             ADApolis is an open-source project building the next generation of governance infrastructure.
           </p>
           <div className="mt-6 flex gap-6 text-sm">
-            <a href="/" className="text-slate-400 hover:text-slate-300 transition-colors">
+            <a href="/scoreboard" className="text-slate-400 hover:text-slate-300 transition-colors">
               Scoreboard
             </a>
-            <a href="#" className="text-slate-400 hover:text-slate-300 transition-colors">
-              GitHub
+            <a href={X_URL} target="_blank" rel="noopener noreferrer me" className="text-slate-400 hover:text-slate-300 transition-colors">
+              𝕏 {X_HANDLE}
             </a>
-            <a href="#" className="text-slate-400 hover:text-slate-300 transition-colors">
+            <a
+              href="https://forum.cardano.org/c/governance/140"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 hover:text-slate-300 transition-colors"
+            >
               Governance Forum
             </a>
           </div>
