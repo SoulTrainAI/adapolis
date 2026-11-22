@@ -62,12 +62,22 @@ interface PipelineRun {
   current_step: string;
   completed_steps: Record<string, unknown>;
   error: { step: string; message: string } | null;
+  /** Optional steps that failed without stopping the run */
+  warnings: Array<{ step: string; message: string }>;
 }
 
 // Railway runs a single long-lived replica, so in-memory state is enough to
 // report the most recent run. It resets on redeploy, which is acceptable for a
 // diagnostic: the tables themselves are the durable record.
 let lastRun: PipelineRun | null = null;
+
+/** An optional step failed: keep its error visible as a warning without failing the run. */
+function demoteError(): void {
+  if (lastRun?.error) {
+    lastRun.warnings.push(lastRun.error);
+    lastRun.error = null;
+  }
+}
 
 async function step<T>(name: string, fn: () => Promise<T>): Promise<T> {
   if (lastRun) lastRun.current_step = name;
@@ -126,6 +136,7 @@ async function runPipeline(): Promise<void> {
     current_step: 'starting',
     completed_steps: {},
     error: null,
+    warnings: [],
   };
 
   try {
@@ -138,7 +149,7 @@ async function runPipeline(): Promise<void> {
     try {
       await step('sync_metadata', () => syncDRepMetadata());
     } catch (error) {
-      if (lastRun) lastRun.error = null;
+      demoteError();
       console.error(
         JSON.stringify({
           event: 'cron_step_metadata_failed',
@@ -164,7 +175,7 @@ async function runPipeline(): Promise<void> {
           return { processed: r.processed, positions_found: r.positions_found, spent_usd: r.spent_usd, stopped: r.stopped_reason };
         });
       } catch (error) {
-        if (lastRun) lastRun.error = null;
+        demoteError();
         console.error(
           JSON.stringify({ event: 'cron_step_statements_failed', error: error instanceof Error ? error.message : String(error) })
         );
@@ -179,7 +190,7 @@ async function runPipeline(): Promise<void> {
         return { eligible_dreps: data.eligible_count, real_vote_questions: data.real_votes.length };
       });
     } catch (error) {
-      if (lastRun) lastRun.error = null;
+      demoteError();
       console.error(
         JSON.stringify({ event: 'cron_step_match_failed', error: error instanceof Error ? error.message : String(error) })
       );
@@ -199,7 +210,7 @@ async function runPipeline(): Promise<void> {
           return r;
         });
       } catch (error) {
-        if (lastRun) lastRun.error = null;
+        demoteError();
         console.error(
           JSON.stringify({ event: 'cron_step_proposal_arguments_failed', error: error instanceof Error ? error.message : String(error) })
         );
@@ -214,7 +225,7 @@ async function runPipeline(): Promise<void> {
           return refreshForumDiscussions(hot.topics.map((t) => ({ proposal_id: t.proposal_id, title: t.title })));
         });
       } catch (error) {
-        if (lastRun) lastRun.error = null;
+        demoteError();
         console.error(
           JSON.stringify({ event: 'cron_step_forum_failed', error: error instanceof Error ? error.message : String(error) })
         );
@@ -227,7 +238,7 @@ async function runPipeline(): Promise<void> {
         return { topics: data.topics.length };
       });
     } catch (error) {
-      if (lastRun) lastRun.error = null;
+      demoteError();
       console.error(
         JSON.stringify({ event: 'cron_step_hot_topics_failed', error: error instanceof Error ? error.message : String(error) })
       );
@@ -239,7 +250,7 @@ async function runPipeline(): Promise<void> {
         return { window: data.window, season: data.season, ranked_dreps: data.standings.length };
       });
     } catch (error) {
-      if (lastRun) lastRun.error = null;
+      demoteError();
       console.error(
         JSON.stringify({ event: 'cron_step_season_failed', error: error instanceof Error ? error.message : String(error) })
       );

@@ -81,14 +81,21 @@ export async function syncProposals(): Promise<SyncResult> {
 
     // Koios resolves anchors with a lag, so open proposals can arrive untitled.
     // Only active ones are fetched here, which keeps this to a handful of requests.
+    const anchors = { tried: 0, resolved: 0, failures: [] as string[] };
     for (const record of proposalRecords) {
       if (record.metadata || record.status !== 'active' || !record.metadata_url || !record.metadata_hash) continue;
-      const json = await fetchVerifiedAnchor(record.metadata_url, record.metadata_hash);
-      if (!json) continue;
-      record.metadata = json;
-      record.title = extractTitleFromMetadata(json);
-      record.abstract = extractAbstractFromMetadata(json);
+      anchors.tried++;
+      const got = await fetchVerifiedAnchor(record.metadata_url, record.metadata_hash);
+      if ('failure' in got) {
+        anchors.failures.push(`${record.proposal_id.slice(0, 20)}…: ${got.failure}`);
+        continue;
+      }
+      anchors.resolved++;
+      record.metadata = got.json;
+      record.title = extractTitleFromMetadata(got.json);
+      record.abstract = extractAbstractFromMetadata(got.json);
     }
+    if (anchors.failures.length > 0) console.warn(JSON.stringify({ event: 'proposal_anchor_fallback_failed', ...anchors }));
 
     // Step 3: Upsert into proposals table (conflict on proposal_id)
     firstRecord = proposalRecords[0];
@@ -156,7 +163,7 @@ export async function syncProposals(): Promise<SyncResult> {
       })
     );
 
-    const result: SyncResult = { synced, errors, duration_ms: duration };
+    const result: SyncResult & { anchors: typeof anchors } = { synced, errors, duration_ms: duration, anchors };
     if (upsertError) {
       result.error = {
         message: upsertError.message || 'Unknown error',
