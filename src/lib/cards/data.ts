@@ -100,7 +100,7 @@ async function load(): Promise<Loaded> {
 
   const profiles = new Map<string, { bio: string | null; links: Array<{ label: string; url: string }> }>();
   const cardDreps = dreps.map((d) => {
-    const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status);
+    const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status, d.drep_id);
     profiles.set(d.drep_id, { bio: profile.bio, links: profile.links });
     return {
       drep_id: d.drep_id,

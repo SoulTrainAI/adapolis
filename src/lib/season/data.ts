@@ -109,7 +109,7 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
       return {
         rank: i + 1,
         drep_id: p.drep_id,
-        profile: toDisplayProfile(d?.metadata ?? null, d?.metadata_fetch_status ?? null),
+        profile: toDisplayProfile(d?.metadata ?? null, d?.metadata_fetch_status ?? null, p.drep_id),
         points: p.points,
         breakdown: p.breakdown,
         votes_cast: p.votes_cast,

@@ -176,7 +176,7 @@ export async function getDraftData(stakeAddress: string | null): Promise<DraftDa
   const pool = dreps
     .filter((d) => d.is_registered !== false)
     .map((d) => {
-      const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status);
+      const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status, d.drep_id);
       const size = { amount_lovelace: Number(d.amount_lovelace ?? 0), delegator_count: d.delegator_count ?? 0 };
       const s = standings.get(d.drep_id);
       return {

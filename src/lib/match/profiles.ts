@@ -212,7 +212,7 @@ export function buildMatchData({ dreps, scores, votes, proposals, directions, st
 
   const eligible = dreps.filter((d) => {
     const s = latestScore.get(d.drep_id);
-    const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status);
+    const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status, d.drep_id);
     return (
       d.is_registered &&
       !profile.doNotList &&
@@ -314,7 +314,7 @@ export function buildMatchData({ dreps, scores, votes, proposals, directions, st
     eligible_count: eligible.length,
     real_votes: realVotes,
     dreps: eligible.map((d) => {
-      const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status);
+      const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status, d.drep_id);
       const s = latestScore.get(d.drep_id);
       const real: MatchDRep['real_votes'] = {};
       for (const v of votesByDRep.get(d.drep_id) ?? []) if (realIds.has(v.proposal_id)) real[v.proposal_id] = v.vote;
