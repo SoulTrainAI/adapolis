@@ -498,6 +498,36 @@ and ADA_M = ADA delegated in millions`}
           </p>
         </section>
 
+        <section id="season-points" className="space-y-6 scroll-mt-24">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">10. Season Points</h2>
+          <p className="text-slate-300 leading-relaxed">
+            Season points power the fantasy layer: players will draft 5 DReps and score their points. A season is 6 epochs
+            (about 30 days). Season 1 starts at epoch 672; Season 0 (epochs 666–671) is a public preview of the rules.
+          </p>
+          <p className="text-slate-300 leading-relaxed">
+            <strong>The rule that never bends:</strong> points come only from how a DRep does the job, never from how it
+            votes. Yes, No and Abstain earn the same, and nothing depends on whether a proposal passed. Rewarding the
+            winning side would turn the game into a bet on outcomes and pressure DReps to vote with the crowd.
+          </p>
+          <ul className="space-y-2 text-slate-300">
+            <li>• <strong>Vote</strong> on a governance action: +10, in the epoch the vote is cast. A changed vote counts once, at its latest time.</li>
+            <li>• <strong>Rationale</strong> attached to the vote (CIP-100 anchor): +10. <strong>Fresh rationale</strong>, one this DRep hasn&apos;t attached to an earlier vote: +5 more, so writing for each action beats pasting one text everywhere.</li>
+            <li>• <strong>Early vote</strong>, in the first half of the action&apos;s voting window: +5. Early votes give delegators time to react.</li>
+            <li>• <strong>Missed</strong>: an action closed while the DRep was registered and it never voted: −5, in the epoch it closed.</li>
+            <li>• <strong>Streak</strong>: an epoch where the DRep voted and missed nothing is clean. Each clean epoch in a row adds +5, +10, +15, then +20 per epoch. Epochs with nothing to vote on neither extend nor break a streak.</li>
+          </ul>
+          <p className="text-slate-300 leading-relaxed">
+            <strong>Underdog multiplier.</strong> A fantasy team drafting a small DRep multiplies that DRep&apos;s points by up to
+            1.5×. Size combines two percentiles among DReps active this season: delegated ADA and number of delegators,
+            because a DRep can be small in either sense. It scales smoothly (no cutoff to game) and is fixed at draft time.
+            It is based on size, not rank, so a DRep gains nothing by performing badly on purpose.
+          </p>
+          <p className="text-slate-400 text-sm">
+            Rationale points check that a rationale exists, not how good it is. Judging quality by AI would be contested;
+            community ratings may be added later. Points are computed from on-chain data via Koios and refresh every 6 hours.
+          </p>
+        </section>
+
         {/* Footer */}
         <section className="pt-8 border-t border-slate-800 space-y-4">
           <p className="text-slate-400 text-sm">

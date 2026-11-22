@@ -126,7 +126,7 @@ export function scoreDReps(
   });
 }
 
-async function loadAll<T>(table: string, columns: string): Promise<T[]> {
+export async function loadAll<T>(table: string, columns: string): Promise<T[]> {
   const rows: T[] = [];
   for (let from = 0; ; from += DB_PAGE_SIZE) {
     const { data, error } = await supabaseAdmin

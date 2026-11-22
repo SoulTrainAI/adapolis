@@ -1,0 +1,185 @@
+/**
+ * Season points for the fantasy layer.
+ *
+ * Cardinal Rule (CONCEPT.md 2.4): every point comes from HOW a DRep does the
+ * job — showing up, explaining, voting in time — never from HOW it voted.
+ * Yes, No and Abstain earn exactly the same. Nothing here reads vote outcomes.
+ */
+
+import type { ProposalWindow } from '@/lib/scoring/govscore-v1';
+import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
+
+export const POINT_RULES = {
+  vote: 10,
+  rationale: 10,
+  /** Rationale whose hash this DRep hasn't attached to any earlier vote. */
+  freshRationale: 5,
+  /** Voted in the first half of the action's voting window. */
+  early: 5,
+  /** Action closed while the DRep was registered and it never voted. */
+  missed: -5,
+  /** Per consecutive clean epoch (voted, missed nothing), capped. */
+  streakStep: 5,
+  streakCap: 4,
+  /** Underdog multiplier for the smallest DReps; scales down smoothly with size. */
+  maxUnderdogBonus: 0.5,
+} as const;
+
+// Season 0 is a public preview; Season 1 is the first with drafting.
+export const SEASON_LENGTH_EPOCHS = 6;
+export const SEASON_ONE_START_EPOCH = 672;
+
+export function seasonForEpoch(epoch: number): number {
+  return Math.floor((epoch - SEASON_ONE_START_EPOCH) / SEASON_LENGTH_EPOCHS) + 1;
+}
+
+export function seasonEpochs(season: number): { start: number; end: number } {
+  const start = SEASON_ONE_START_EPOCH + (season - 1) * SEASON_LENGTH_EPOCHS;
+  return { start, end: start + SEASON_LENGTH_EPOCHS - 1 };
+}
+
+export interface SeasonVote {
+  drep_id: string;
+  proposal_id: string;
+  epoch: number;
+  rationale_url: string | null;
+  rationale_hash: string | null;
+}
+
+export interface SeasonProposal extends ProposalWindow {
+  /** Last epoch voting was allowed; used for the early-vote half-way mark. */
+  expiration: number | null;
+}
+
+export interface PointBreakdown {
+  votes: number;
+  rationales: number;
+  fresh: number;
+  early: number;
+  missed: number;
+  streak: number;
+}
+
+export interface DRepSeasonPoints {
+  drep_id: string;
+  points: number;
+  breakdown: PointBreakdown;
+  votes_cast: number;
+  actions_missed: number;
+  by_epoch: Record<number, number>;
+}
+
+function wasRegisteredAt(periods: RegistrationPeriod[], epoch: number): boolean {
+  return periods.some((r) => r.from <= epoch && (r.to === null || r.to >= epoch));
+}
+
+/**
+ * Pure: points every DRep earned in epochs [from, to]. `allVotes` must include
+ * votes before `from` so "fresh rationale" can see earlier reuse, and streaks
+ * are counted from the first epoch of the range.
+ */
+export function computeSeasonPoints(
+  drepIds: string[],
+  proposals: SeasonProposal[],
+  allVotes: SeasonVote[],
+  periods: Map<string, RegistrationPeriod[]>,
+  range: { from: number; to: number }
+): DRepSeasonPoints[] {
+  const proposalById = new Map(proposals.map((p) => [p.proposal_id, p]));
+  const votesByDRep = new Map<string, SeasonVote[]>();
+  for (const v of allVotes) {
+    const list = votesByDRep.get(v.drep_id) ?? [];
+    list.push(v);
+    votesByDRep.set(v.drep_id, list);
+  }
+
+  return drepIds.map((drepId) => {
+    const breakdown: PointBreakdown = { votes: 0, rationales: 0, fresh: 0, early: 0, missed: 0, streak: 0 };
+    const byEpoch: Record<number, number> = {};
+    const add = (epoch: number, key: keyof PointBreakdown, pts: number) => {
+      breakdown[key] += pts;
+      byEpoch[epoch] = (byEpoch[epoch] ?? 0) + pts;
+    };
+    const votedEpochs = new Set<number>();
+    const missedEpochs = new Set<number>();
+
+    const votes = (votesByDRep.get(drepId) ?? []).slice().sort((a, b) => a.epoch - b.epoch);
+    const seenHashes = new Set<string>();
+    const voted = new Set<string>();
+    let votesCast = 0;
+
+    for (const v of votes) {
+      voted.add(v.proposal_id);
+      const isFresh = v.rationale_hash !== null && !seenHashes.has(v.rationale_hash);
+      if (v.rationale_hash) seenHashes.add(v.rationale_hash);
+      if (v.epoch < range.from || v.epoch > range.to) continue;
+      const p = proposalById.get(v.proposal_id);
+      if (!p) continue;
+
+      votesCast++;
+      votedEpochs.add(v.epoch);
+      add(v.epoch, 'votes', POINT_RULES.vote);
+      if (v.rationale_url) {
+        add(v.epoch, 'rationales', POINT_RULES.rationale);
+        if (isFresh) add(v.epoch, 'fresh', POINT_RULES.freshRationale);
+      }
+      const lastEpoch = p.end ?? p.expiration;
+      if (lastEpoch !== null && v.epoch <= p.start + Math.floor((lastEpoch - p.start) / 2)) {
+        add(v.epoch, 'early', POINT_RULES.early);
+      }
+    }
+
+    const drepPeriods = periods.get(drepId) ?? [{ from: 0, to: null }];
+    let actionsMissed = 0;
+    for (const p of proposals) {
+      if (p.end === null || p.end < range.from || p.end > range.to || voted.has(p.proposal_id)) continue;
+      if (!wasRegisteredAt(drepPeriods, p.end)) continue;
+      actionsMissed++;
+      missedEpochs.add(p.end);
+      add(p.end, 'missed', POINT_RULES.missed);
+    }
+
+    // Epochs with nothing to vote on neither extend nor break a streak.
+    let run = 0;
+    for (let e = range.from; e <= range.to; e++) {
+      if (missedEpochs.has(e)) run = 0;
+      else if (votedEpochs.has(e)) {
+        run++;
+        add(e, 'streak', POINT_RULES.streakStep * Math.min(run, POINT_RULES.streakCap));
+      }
+    }
+
+    const points = Object.values(breakdown).reduce((a, b) => a + b, 0);
+    return { drep_id: drepId, points, breakdown, votes_cast: votesCast, actions_missed: actionsMissed, by_epoch: byEpoch };
+  });
+}
+
+/**
+ * Underdog multiplier from both delegated ADA and delegator count, so small in
+ * wallets and small in stake both count. Smooth (no cliff to game) and based on
+ * size only — never on rank, which a DRep could tank on purpose.
+ * 1 + maxBonus × smallness, smallness = 1 − mean(ADA percentile, delegator percentile).
+ */
+export function underdogMultipliers(
+  dreps: Array<{ drep_id: string; amount_lovelace: number; delegator_count: number }>
+): Map<string, number> {
+  const percentile = (values: number[]) => {
+    const sorted = values.slice().sort((a, b) => a - b);
+    return (v: number) => {
+      if (sorted.length <= 1) return 0;
+      let below = 0;
+      while (below < sorted.length && sorted[below] < v) below++;
+      let equal = 0;
+      while (below + equal < sorted.length && sorted[below + equal] === v) equal++;
+      return (below + (equal - 1) / 2) / (sorted.length - 1);
+    };
+  };
+  const adaPct = percentile(dreps.map((d) => d.amount_lovelace));
+  const delPct = percentile(dreps.map((d) => d.delegator_count));
+  return new Map(
+    dreps.map((d) => {
+      const smallness = 1 - (adaPct(d.amount_lovelace) + delPct(d.delegator_count)) / 2;
+      return [d.drep_id, Math.round((1 + POINT_RULES.maxUnderdogBonus * smallness) * 100) / 100];
+    })
+  );
+}

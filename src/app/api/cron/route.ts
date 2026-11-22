@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { fetchCurrentEpoch } from '@/lib/koios';
 import { syncDRepMetadata } from '@/lib/metadata/drep-metadata';
 import { getMatchData } from '@/lib/match/profiles';
+import { getSeasonData } from '@/lib/season/data';
 import { isStatementRunActive, runStatementSummaries } from '@/lib/statements/run';
 
 const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
@@ -178,6 +179,18 @@ async function runPipeline(): Promise<void> {
       if (lastRun) lastRun.error = null;
       console.error(
         JSON.stringify({ event: 'cron_step_match_failed', error: error instanceof Error ? error.message : String(error) })
+      );
+    }
+
+    try {
+      await step('refresh_season', async () => {
+        const data = await getSeasonData({ force: true });
+        return { season: data.season, ranked_dreps: data.standings.length };
+      });
+    } catch (error) {
+      if (lastRun) lastRun.error = null;
+      console.error(
+        JSON.stringify({ event: 'cron_step_season_failed', error: error instanceof Error ? error.message : String(error) })
       );
     }
 
