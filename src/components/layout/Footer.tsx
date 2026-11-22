@@ -2,6 +2,7 @@
 
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import { X_HANDLE, X_URL } from '@/lib/site/social';
 
 const WALLET_ADDRESS = 'addr1q9gajv8k3qvl59z5knpyypecf3s6mhdrpr9xd8jsd5y5fsqpy0t8a58zxqqup43d84ju95m62dqrwvdz7s6t429yx6hs56g2mm';
 
@@ -31,6 +32,14 @@ export function Footer() {
             {copied ? <Check size={16} /> : <Copy size={16} />}
           </button>
         </div>
+        <a
+          href={X_URL}
+          target="_blank"
+          rel="noopener noreferrer me"
+          className="mt-4 inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors"
+        >
+          <span aria-hidden className="text-base font-bold">𝕏</span> Follow {X_HANDLE}
+        </a>
       </div>
     </footer>
   );

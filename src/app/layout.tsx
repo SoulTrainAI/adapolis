@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { SITE_URL, X_HANDLE } from "@/lib/site/social";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -16,8 +17,21 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "ADApolis",
   description: "The civic engine for Cardano governance",
+  openGraph: {
+    siteName: "ADApolis",
+    title: "ADApolis",
+    description: "The civic engine for Cardano governance",
+    url: SITE_URL,
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    site: X_HANDLE,
+    creator: X_HANDLE,
+  },
 };
 
 export default function RootLayout({
