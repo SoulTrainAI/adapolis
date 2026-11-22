@@ -10,7 +10,8 @@ export interface FilterState {
   minParticipation: number;
   minAda: number;
   maxAda: number;
-  registered: boolean;
+  /** active: registered, has voted, holds delegation. registered: all registered. all: retired too. */
+  pool: 'active' | 'registered' | 'all';
 }
 
 interface FilterBarProps {
@@ -36,7 +37,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
     filters.minParticipation > 0 ? 1 : 0,
     filters.minAda > 0 ? 1 : 0,
     filters.maxAda < 999999999 ? 1 : 0,
-    filters.registered === false ? 1 : 0,
+    filters.pool !== 'active' ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -57,8 +58,8 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
     onFiltersChange({ ...filters, minAda, maxAda });
   };
 
-  const handleRegisteredChange = (value: boolean) => {
-    onFiltersChange({ ...filters, registered: value });
+  const handlePoolChange = (value: FilterState['pool']) => {
+    onFiltersChange({ ...filters, pool: value });
   };
 
   const handleOrderToggle = () => {
@@ -73,7 +74,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
       minParticipation: 0,
       minAda: 0,
       maxAda: 999999999,
-      registered: true,
+      pool: 'active',
     };
     onFiltersChange(resetFilters);
     onSearch('');
@@ -234,11 +235,11 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
               </button>
             </div>
           )}
-          {filters.registered === false && (
+          {filters.pool !== 'active' && (
             <div className="px-3 py-1 bg-slate-700 text-slate-200 text-xs rounded-full flex items-center gap-2">
-              <span>Show All</span>
+              <span>{filters.pool === 'all' ? 'Including retired' : 'All registered'}</span>
               <button
-                onClick={() => handleRegisteredChange(true)}
+                onClick={() => handlePoolChange('active')}
                 className="text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <X size={14} />
@@ -298,17 +299,19 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
             </div>
           </div>
 
-          {/* Registered toggle */}
+          {/* Which DReps count */}
           <div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={filters.registered}
-                onChange={(e) => handleRegisteredChange(e.target.checked)}
-                className="w-4 h-4 rounded bg-slate-700 border-slate-600 cursor-pointer"
-              />
-              <span className="text-sm text-slate-200">Registered DReps only</span>
-            </label>
+            <label htmlFor="pool" className="block text-sm font-semibold text-slate-200 mb-2">Show</label>
+            <select
+              id="pool"
+              value={filters.pool}
+              onChange={(e) => handlePoolChange(e.target.value as FilterState['pool'])}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-slate-200 text-sm"
+            >
+              <option value="active">Active DReps (have voted and hold delegation)</option>
+              <option value="registered">All registered DReps</option>
+              <option value="all">Everyone, including retired</option>
+            </select>
           </div>
 
           {/* Sort order toggle */}

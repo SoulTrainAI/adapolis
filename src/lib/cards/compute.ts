@@ -131,9 +131,10 @@ export function computeCards(input: CardInputs): CardComputation {
       .map((r, i) => [r.drep_id, i + 1])
   );
 
-  // Scoreboard rank by current GovScore among registered DReps.
+  // Scoreboard rank by current GovScore among active DReps: registered, has voted, holds delegation
+  // (the scoreboard's default pool, so "#7 of N" matches it).
   const ranked = dreps
-    .filter((d) => d.registered && latest.get(d.drep_id)?.govscore != null)
+    .filter((d) => d.registered && d.ada > 0 && (latest.get(d.drep_id)?.votes_cast ?? 0) > 0 && latest.get(d.drep_id)?.govscore != null)
     .sort((a, b) => (latest.get(b.drep_id)!.govscore ?? 0) - (latest.get(a.drep_id)!.govscore ?? 0));
   const rankOf = new Map(ranked.map((d, i) => [d.drep_id, i + 1]));
 

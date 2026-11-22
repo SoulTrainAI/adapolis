@@ -11,7 +11,7 @@ interface DRepScore {
   drep_id: string;
   hex_id: string | null;
   is_registered: boolean;
-  amount_lovelace: bigint | null;
+  amount_lovelace: string | null;
   delegator_count: number | null;
   raw_govscore: number | null;
   adjusted_govscore: number | null;
@@ -60,7 +60,7 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
     minParticipation: 0,
     minAda: 0,
     maxAda: 999999999,
-    registered: true,
+    pool: 'active',
   });
 
   const [page, setPage] = useState(1);
@@ -79,7 +79,7 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
       min_participation: filters.minParticipation.toString(),
       min_ada: filters.minAda.toString(),
       max_ada: filters.maxAda.toString(),
-      registered: filters.registered.toString(),
+      pool: filters.pool,
     });
 
     if (filters.search) {
@@ -145,7 +145,7 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
       {/* Results info */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
         <p className="text-slate-400 text-sm">
-          {total > 0 ? `Showing ${startIndex}–${endIndex} of ${total.toLocaleString()} DReps` : 'No DReps found'}
+          {total > 0 ? `Showing ${startIndex}–${endIndex} of ${total.toLocaleString()} ${filters.pool === 'active' ? 'active ' : ''}DReps` : 'No DReps found'}
         </p>
         <p className="text-slate-500 text-sm">Epoch {currentEpoch}</p>
       </div>
@@ -224,7 +224,7 @@ export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
 
       {/* Total DReps info */}
       <div className="mt-6 text-center text-slate-500 text-sm">
-        {total.toLocaleString()} DReps ranked
+        {total.toLocaleString()} DReps ranked{filters.pool === 'active' ? ' · active means registered, has voted, and holds delegated ADA' : ''}
       </div>
     </div>
   );
