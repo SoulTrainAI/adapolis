@@ -309,7 +309,7 @@ function CardFront(props: TradingCardProps) {
             ) : (
               <span className="text-[9px] font-semibold uppercase tracking-widest text-white/80">DRep</span>
             )}
-            <MyDRepBadge drepId={c.drep_id} className="!py-0 text-[10px]" />
+            <MyDRepBadge drepId={c.drep_id} className="!py-0 whitespace-nowrap text-[10px]" />
           </div>
         </div>
 

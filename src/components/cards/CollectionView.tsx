@@ -106,7 +106,7 @@ export function CollectionView() {
         ) : (
           <>
             {roster.team_name && <p className="text-slate-300">{roster.team_name}</p>}
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {roster.picks.map((p) => {
                 const d = pool.get(p.drep_id);
                 const card =
@@ -121,7 +121,7 @@ export function CollectionView() {
 
       {myDRep && (
         <Section title="Your DRep" icon={<span className="text-sky-300">●</span>}>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {mine ? (
               <TradingCard variant="scoreboard" card={mine} />
             ) : loaded ? (
