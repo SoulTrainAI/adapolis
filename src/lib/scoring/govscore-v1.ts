@@ -1,15 +1,23 @@
 /**
- * GovScore v1 — Participation Rate
+ * GovScore v1 — Participation Rate (confidence-adjusted)
  *
  * A DRep is judged only on governance actions it had the chance to vote on:
  * those whose voting window overlapped a period when the DRep was registered.
- * A DRep that joined last month and voted on everything since scores 100%.
+ *
+ * The score uses the Wilson lower bound of the participation rate: the rate
+ * we can be 95% confident the DRep is at or above, given how many chances it
+ * had. 5 of 5 scores 56.6; 159 of 164 scores 93.1. A short perfect record is
+ * promising but not yet proven, so a long consistent record ranks higher,
+ * and newcomers climb as their record grows.
  *
  * Proposals still open for voting count only if the DRep has already voted on
  * them: a DRep can't have "missed" a vote whose window hasn't closed.
  */
 
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
+import { wilsonLowerBound } from './confidence';
+
+export { PROVISIONAL_BELOW_ELIGIBLE, wilsonLowerBound } from './confidence';
 import { fetchDRepRegistrationPeriods, type RegistrationPeriod } from '@/lib/koios/drep-registrations';
 
 const DB_PAGE_SIZE = 1000;
@@ -106,7 +114,7 @@ export function scoreDReps(
     const votesCast = Array.from(voted).filter((id) => eligible.has(id)).length;
     const votesEligible = eligible.size;
     const participation = votesEligible > 0 ? votesCast / votesEligible : null;
-    const raw = participation === null ? null : participation * 100;
+    const raw = participation === null ? null : Math.round(wilsonLowerBound(votesCast, votesEligible) * 1000) / 10;
 
     const epochs = new Set<number>();
     for (const id of Array.from(voted)) {

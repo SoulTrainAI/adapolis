@@ -52,7 +52,10 @@ export default function MethodologyPage() {
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
             <h3 className="text-xl font-semibold text-slate-100">Formula</h3>
             <pre className="bg-slate-950 border border-slate-700 rounded p-4 overflow-x-auto text-sm font-mono text-slate-200">
-{`Raw GovScore = (Votes Cast / Eligible Proposals) × 100`}
+{`Participation  p = Votes Cast / Eligible Proposals   (n = Eligible Proposals)
+
+Raw GovScore = 100 × Wilson lower bound of p at 95% confidence
+             = 100 × ( p + z²/2n − z·√( p(1−p)/n + z²/4n² ) ) / ( 1 + z²/n ),  z = 1.96`}
             </pre>
           </div>
 
@@ -71,7 +74,7 @@ export default function MethodologyPage() {
                 <span>
                   <strong>Eligible Proposals:</strong> Any governance action that was active during an epoch
                   where the DRep was registered on-chain. A DRep that registered recently is measured only
-                  against proposals since it joined, so a new DRep that has voted on everything scores 100.
+                  against proposals since it joined.
                 </span>
               </li>
               <li className="flex gap-3">
@@ -84,7 +87,25 @@ export default function MethodologyPage() {
               <li className="flex gap-3">
                 <span className="text-violet-400 flex-shrink-0">•</span>
                 <span>
-                  <strong>Raw GovScore:</strong> Participation rate scaled to 0–100.
+                  <strong>Raw GovScore:</strong> The participation rate we can be 95% confident the DRep is at or
+                  above, given how many chances it has had, on a 0–100 scale.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-violet-400 flex-shrink-0">•</span>
+                <span>
+                  <strong>Why the confidence adjustment:</strong> a perfect 5 of 5 is promising but tells us far less
+                  than 159 of 164. Without it, DReps with a handful of votes outranked DReps with years of
+                  consistent participation. With it, a long, steady record ranks highest, and newcomers who keep
+                  voting climb as their record grows. There is no tuning constant: it is the standard Wilson score
+                  interval.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-violet-400 flex-shrink-0">•</span>
+                <span>
+                  <strong>Provisional:</strong> DReps with fewer than 10 eligible proposals are marked provisional on
+                  their card.
                 </span>
               </li>
             </ul>
@@ -106,16 +127,20 @@ export default function MethodologyPage() {
             <h3 className="text-lg font-semibold text-slate-100">Worked Example</h3>
             <div className="bg-slate-900/30 border border-slate-700 rounded p-4">
               <p className="text-slate-300 font-mono text-sm">
-                DRep registered in epochs 550–600<br />
-                Eligible proposals during this period: 100<br />
-                Proposals DRep voted on: 93<br />
-                <br />
-                <strong className="text-slate-100">Raw GovScore = (93 / 100) × 100 = 93.0</strong>
+                DRep A: voted on 93 of 100 eligible proposals (93%)<br />
+                <strong className="text-slate-100">Raw GovScore = 86.3</strong>
+                <br /><br />
+                DRep B: voted on 5 of 5 eligible proposals (100%)<br />
+                <strong className="text-slate-100">Raw GovScore = 56.6 (provisional)</strong>
+                <br /><br />
+                DRep C: voted on 159 of 164 eligible proposals (97%)<br />
+                <strong className="text-slate-100">Raw GovScore = 93.1</strong>
               </p>
             </div>
             <p className="text-slate-300">
-              This DRep voted on 93% of governance actions they were eligible to vote on, earning a
-              Raw GovScore of 93.0.
+              DRep B has the highest rate, but on only five votes. DRep C has both a high rate and a long record,
+              so it ranks first. If DRep B keeps voting on everything, its score rises toward its rate: 50 of 50
+              scores 92.9.
             </p>
           </div>
         </section>

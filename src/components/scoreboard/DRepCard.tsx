@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ExternalLink, Flame, Globe, Sparkles, X } from 'lucide-react';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
+import { PROVISIONAL_BELOW_ELIGIBLE } from '@/lib/scoring/confidence';
 
 interface DRepCardProps {
   rank: number;
@@ -91,6 +92,10 @@ function Avatar({ props, size, ring }: { props: DRepCardProps; size: number; rin
   );
 }
 
+function isProvisional(props: DRepCardProps): boolean {
+  return props.votesEligible !== null && props.votesEligible !== undefined && props.votesEligible > 0 && props.votesEligible < PROVISIONAL_BELOW_ELIGIBLE;
+}
+
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-lg bg-white/5 px-1.5 py-1.5 text-center">
@@ -105,6 +110,7 @@ function CardFront({ props }: { props: DRepCardProps }) {
   const tier = tierFor(props.rank);
   const streak = props.votingStreak ?? 0;
   const ring = props.rank <= 3 ? 'ring-white/80' : 'ring-white/30';
+  const provisional = isProvisional(props);
   return (
     <div className={`group relative w-full aspect-[5/7] rounded-2xl bg-gradient-to-br ${tier.frame} p-[3px] shadow-xl ${tier.glow}`}>
       <div className="relative flex h-full flex-col overflow-hidden rounded-[14px] bg-gradient-to-b from-slate-900 via-slate-950 to-black">
@@ -144,8 +150,11 @@ function CardFront({ props }: { props: DRepCardProps }) {
           <p className={`text-4xl font-black leading-none drop-shadow ${props.rank <= 3 ? tier.accent : 'text-white'}`}>
             {props.adjustedScore !== null ? props.adjustedScore.toFixed(1) : '—'}
           </p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-slate-500" title="Participation rate × 100, dampened for large ADA holdings">
-            GovScore
+          <p
+            className="text-[9px] font-bold uppercase tracking-[0.25em] text-slate-500"
+            title="Participation, adjusted for how long the record is, then dampened for large ADA holdings"
+          >
+            GovScore{provisional && <span className="ml-1 text-amber-400">· Provisional</span>}
           </p>
         </div>
 
@@ -183,6 +192,12 @@ function CardBack({ props, onClose }: { props: DRepCardProps; onClose: () => voi
             <h3 className="text-xl font-extrabold text-white break-words">{props.displayName}</h3>
             <p className="font-mono text-[11px] text-slate-500 break-all">{props.drepId}</p>
             <MyDRepBadge drepId={props.drepId} className="mt-1" />
+            {isProvisional(props) && (
+              <p className="mt-1 text-xs text-amber-300">
+                Provisional: fewer than {PROVISIONAL_BELOW_ELIGIBLE} votes to judge so far, so the score is held back until
+                the record grows.
+              </p>
+            )}
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-white">
             <X className="h-5 w-5" />
