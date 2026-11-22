@@ -41,8 +41,12 @@ export interface MatchDRep {
   name: string | null;
   image: string | null;
   ada: number;
+  delegators: number;
   participation: number;
   votes_cast: number;
+  votes_eligible: number;
+  /** Confidence-adjusted, ADA-dampened GovScore (0-100) */
+  govscore: number;
   positions: Record<string, TopicPosition>;
   /** proposal_id -> 'yes' | 'no' | 'abstain' for the real-vote questions */
   real_votes: Record<string, 'yes' | 'no' | 'abstain'>;
@@ -160,8 +164,22 @@ function percentileRanks(values: Map<string, number>): Map<string, number> {
 }
 
 export interface MatchInputs {
-  dreps: Array<{ drep_id: string; amount_lovelace: number | string | null; is_registered: boolean; metadata: unknown; metadata_fetch_status: string | null }>;
-  scores: Array<{ drep_id: string; epoch: number; participation_rate: number | null; votes_cast: number | null }>;
+  dreps: Array<{
+    drep_id: string;
+    amount_lovelace: number | string | null;
+    delegator_count?: number | null;
+    is_registered: boolean;
+    metadata: unknown;
+    metadata_fetch_status: string | null;
+  }>;
+  scores: Array<{
+    drep_id: string;
+    epoch: number;
+    participation_rate: number | null;
+    votes_cast: number | null;
+    votes_eligible?: number | null;
+    adjusted_govscore?: number | null;
+  }>;
   votes: Vote[];
   proposals: Proposal[];
   directions: Map<string, Record<string, 1 | -1>>;
@@ -170,11 +188,11 @@ export interface MatchInputs {
 
 async function computeMatchData(): Promise<MatchData> {
   const [dreps, scores, votes, proposals, directions] = await Promise.all([
-    loadAll<{ drep_id: string; amount_lovelace: number | string | null; is_registered: boolean; metadata: unknown; metadata_fetch_status: string | null }>(
-      'dreps', 'drep_id, amount_lovelace, is_registered, metadata, metadata_fetch_status', 'drep_id'
+    loadAll<MatchInputs['dreps'][number]>(
+      'dreps', 'drep_id, amount_lovelace, delegator_count, is_registered, metadata, metadata_fetch_status', 'drep_id'
     ),
-    loadAll<{ drep_id: string; epoch: number; participation_rate: number | null; votes_cast: number | null }>(
-      'drep_scores', 'drep_id, epoch, participation_rate, votes_cast', 'drep_id'
+    loadAll<MatchInputs['scores'][number]>(
+      'drep_scores', 'drep_id, epoch, participation_rate, votes_cast, votes_eligible, adjusted_govscore', 'drep_id'
     ),
     loadAll<Vote>('votes', 'drep_id, proposal_id, vote, rationale_url', 'vote_id'),
     loadAll<Proposal>('proposals', 'proposal_id, action_type, proposed_epoch, title, abstract', 'proposal_id'),
@@ -305,8 +323,11 @@ export function buildMatchData({ dreps, scores, votes, proposals, directions, st
         name: profile.name,
         image: profile.image,
         ada: Number(d.amount_lovelace ?? 0) / 1_000_000,
+        delegators: d.delegator_count ?? 0,
         participation: s?.participation_rate ?? 0,
         votes_cast: s?.votes_cast ?? 0,
+        votes_eligible: s?.votes_eligible ?? 0,
+        govscore: s?.adjusted_govscore ?? 0,
         positions: positions.get(d.drep_id) ?? {},
         real_votes: real,
         stated: statedByDRep.get(d.drep_id) ?? {},

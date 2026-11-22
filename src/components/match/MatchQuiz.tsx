@@ -1,17 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { AlertTriangle, ExternalLink, MessageSquareQuote, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
-import { TOPICS, IMPORTANCE_LEVELS, MATCH_RULES, type Topic } from '@/lib/match/topics';
-import { scoreMatches, formatAda, type Answers, type MatchResult, type RankMode } from '@/lib/match/score';
+import { ExternalLink, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { TOPICS, IMPORTANCE_LEVELS, type Topic } from '@/lib/match/topics';
+import { scoreMatches, type Answers, type RankMode } from '@/lib/match/score';
 import type { MatchData, RealVoteQuestion } from '@/lib/match/profiles';
-import { getAvatarDataUri } from '@/lib/utils/avatar';
-import { publicUrl } from '@/lib/utils/links';
-import { rationaleHref } from '@/lib/rationale/href';
-import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import { ArgumentsPanel, toArgument } from '@/components/governance/ArgumentsPanel';
+import { ExploreDReps } from './ExploreDReps';
 
 type Step =
   | { kind: 'intro' }
@@ -19,6 +15,15 @@ type Step =
   | { kind: 'real'; question: RealVoteQuestion; index: number }
   | { kind: 'deeper-offer' }
   | { kind: 'results' };
+
+const SAVED_KEY = 'adapolis.quiz.v1';
+
+interface SavedQuiz {
+  v: 1;
+  answers: Answers;
+  includeDeeper: boolean;
+  savedAt: string;
+}
 
 const CORE_TOPICS = TOPICS.filter((t) => t.group !== 'deeper');
 const DEEPER_TOPICS = TOPICS.filter((t) => t.group === 'deeper');
@@ -62,159 +67,58 @@ function AgreeScale({ value, onChange, left, right }: { value: number; onChange:
   );
 }
 
-function DRepAvatar({ result }: { result: MatchResult }) {
-  const [failed, setFailed] = useState(false);
-  const label = result.drep.name ?? 'DRep';
-  if (result.drep.image && !failed) {
-    return (
-      // DRep images come from arbitrary self-chosen hosts, which next/image would need allow-listed.
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={result.drep.image}
-        alt={`${label} profile photo`}
-        width={56}
-        height={56}
-        loading="lazy"
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-        className="w-14 h-14 rounded-full object-cover border-2 border-slate-600"
-      />
-    );
-  }
-  return <Image src={getAvatarDataUri(result.drep.drep_id)} alt={`${label} avatar`} width={56} height={56} className="rounded-full border-2 border-slate-600" />;
-}
-
-function ResultCard({ result, rank }: { result: MatchResult; rank: number }) {
-  const [copied, setCopied] = useState(false);
-  const name = result.drep.name ?? `${result.drep.drep_id.slice(0, 18)}…`;
-  return (
-    <div className="bg-slate-900/70 border border-slate-700 rounded-xl p-5">
-      <div className="flex items-start gap-4">
-        <DRepAvatar result={result} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-lg font-semibold text-white truncate">
-              #{rank} {name}
-            </p>
-            <p className="text-2xl font-bold text-violet-300 flex-shrink-0">{Math.round(result.matchPercent)}%</p>
-          </div>
-          <MyDRepBadge drepId={result.drep.drep_id} className="mt-1" />
-          <p className="text-xs text-slate-500 font-mono truncate">{result.drep.drep_id}</p>
-          <div className="flex flex-wrap gap-2 mt-2 text-xs">
-            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-              {Math.round(result.drep.participation * 100)}% participation
-            </span>
-            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">{formatAda(result.drep.ada)} delegated</span>
-            {result.earlyProfile && (
-              <span className="px-2 py-0.5 rounded bg-amber-900/40 text-amber-300" title="Few votes so far; this match will firm up as they vote more.">
-                Early profile · {result.drep.votes_cast} votes
-              </span>
-            )}
-            {result.boost >= 0.5 && (
-              <span className="px-2 py-0.5 rounded bg-emerald-900/40 text-emerald-300" title="Smaller DReps get a ranking boost to spread voting power.">
-                +{result.boost.toFixed(1)} decentralization boost
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <ul className="mt-4 space-y-1 text-sm">
-        {result.reasons.map((r) => (
-          <li key={r.text} className={r.kind === 'agree' ? 'text-slate-200' : 'text-slate-400'}>
-            {r.kind === 'agree' ? '✓ ' : '≠ '}
-            {r.text}
-          </li>
-        ))}
-        {result.realVoteAgreement.compared > 0 && (
-          <li className="text-slate-200">
-            ✓ Voted with you on {result.realVoteAgreement.agreed} of {result.realVoteAgreement.compared} real proposals you rated.
-          </li>
-        )}
-      </ul>
-
-      {(result.statedHighlights.length > 0 || result.saysVsDoes.length > 0) && (
-        <div className="mt-4 border-t border-slate-800 pt-3 space-y-2">
-          <p className="text-xs uppercase tracking-wider text-slate-500 flex items-center gap-1">
-            <MessageSquareQuote size={12} /> In their own words · AI-summarized from their published statements
-          </p>
-          {result.statedPercent !== null && (
-            <p className="text-sm text-slate-300">
-              {Math.round(result.statedPercent)}% agreement with what they&apos;ve said, across {result.statedTopics} topics.
-            </p>
-          )}
-          {result.statedHighlights.map(({ topicId, statement, stated }) => (
-            <div key={topicId} className="text-sm">
-              <p className="text-slate-400">
-                “{statement.replace(/\.$/, '')}”: says <span className="text-slate-200 font-semibold">{stated.stance}/10</span>
-                {stated.origin === 'pledge' ? ' (signed by the DRep)' : ''}
-              </p>
-              <blockquote className="border-l-2 border-slate-700 pl-3 text-slate-300 italic">
-                “{stated.quote}”
-                {stated.source_kind === 'rationale' && stated.proposal_id ? (
-                  <a
-                    href={rationaleHref(result.drep.drep_id, stated.proposal_id)}
-                    className="not-italic text-xs text-violet-300 hover:text-violet-200 ml-2"
-                  >
-                    read vote rationale →
-                  </a>
-                ) : (
-                  publicUrl(stated.source_url) && (
-                    <a
-                      href={publicUrl(stated.source_url) ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer nofollow"
-                      className="not-italic text-xs text-violet-300 hover:text-violet-200 ml-2"
-                    >
-                      profile ↗
-                    </a>
-                  )
-                )}
-              </blockquote>
-            </div>
-          ))}
-          {result.saysVsDoes.map((d) => (
-            <p key={d.statement} className="text-sm text-amber-300 flex gap-2">
-              <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
-              <span>
-                Says vs. does: says {d.says}/10 on “{d.statement.replace(/\.$/, '')}”, but {d.does}.
-              </span>
-            </p>
-          ))}
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 mt-4">
-        <a
-          href={`https://gov.tools/connected/drep_directory/${result.drep.drep_id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-2 px-3 rounded-lg"
-        >
-          Delegate via GovTool <ExternalLink size={14} />
-        </a>
-        <button
-          type="button"
-          onClick={() => {
-            navigator.clipboard?.writeText(result.drep.drep_id).then(() => setCopied(true)).catch(() => setCopied(false));
-          }}
-          className="text-sm py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
-        >
-          {copied ? 'Copied' : 'Copy DRep ID'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function MatchQuiz() {
   const [data, setData] = useState<MatchData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Answers>({ topics: {}, realVotes: {} });
   const [includeDeeper, setIncludeDeeper] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const [showAll, setShowAll] = useState(false);
   const [rankMode, setRankMode] = useState<RankMode>('votes');
+  const [quickPick, setQuickPick] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+
+  // Answers live only in this browser (localStorage) until the user retakes or clears them.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as SavedQuiz;
+      if (saved.v !== 1 || !saved.answers) return;
+      setAnswers(saved.answers);
+      setIncludeDeeper(saved.includeDeeper);
+      setSavedAt(saved.savedAt);
+    } catch {
+      // Unreadable or blocked storage: start fresh.
+    }
+  }, []);
+
+  const hasAnswers = Object.values(answers.topics).some((a) => a.agree > 0 && a.importance > 0) || Object.keys(answers.realVotes).length > 0;
+
+  useEffect(() => {
+    if (!hasAnswers) return;
+    try {
+      const previous = JSON.parse(localStorage.getItem(SAVED_KEY) ?? 'null') as SavedQuiz | null;
+      if (previous && JSON.stringify(previous.answers) === JSON.stringify(answers) && previous.includeDeeper === includeDeeper) return;
+      const savedAtNow = new Date().toISOString();
+      localStorage.setItem(SAVED_KEY, JSON.stringify({ v: 1, answers, includeDeeper, savedAt: savedAtNow } satisfies SavedQuiz));
+      setSavedAt(savedAtNow);
+    } catch {
+      // Storage unavailable (private mode): answers still work for this visit.
+    }
+  }, [answers, includeDeeper, hasAnswers]);
+
+  const clearSaved = () => {
+    try {
+      localStorage.removeItem(SAVED_KEY);
+    } catch {
+      // Nothing stored.
+    }
+    setAnswers({ topics: {}, realVotes: {} });
+    setIncludeDeeper(false);
+    setSavedAt(null);
+    setQuickPick(false);
+    setRankMode('votes');
+  };
 
   useEffect(() => {
     fetch('/api/match')
@@ -280,24 +184,76 @@ export function MatchQuiz() {
             Answer a few questions about the Cardano you want. We compare your answers with how DReps have actually voted
             on-chain, and show you who matches best and why.
           </p>
+          {savedAt && hasAnswers && data && (
+            <div className="rounded-xl border border-violet-700/60 bg-violet-950/40 p-4 space-y-3">
+              <p className="text-sm text-slate-200">
+                Welcome back. Your answers from {new Date(savedAt).toLocaleDateString()} are saved in this browser.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickPick(false);
+                    setStepIndex(steps.length - 1);
+                  }}
+                  className="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-5 rounded-lg"
+                >
+                  See my matches
+                </button>
+                <button type="button" onClick={next} className="bg-slate-800 hover:bg-slate-700 text-white py-2 px-5 rounded-lg">
+                  Update my answers
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearSaved();
+                    next();
+                  }}
+                  className="text-sm text-slate-400 hover:text-slate-200 underline underline-offset-2 px-2"
+                >
+                  Retake from scratch
+                </button>
+              </div>
+            </div>
+          )}
           <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 text-left text-sm text-slate-300 space-y-2">
             <p className="flex gap-2">
               <ShieldCheck size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-              Your answers stay in your browser. Nothing is sent or stored.
+              Your answers stay in your browser, saved on this device until you retake or clear them. Nothing is sent to us.
             </p>
             <p className="flex gap-2">
               <Sparkles size={16} className="text-violet-300 flex-shrink-0 mt-0.5" />
               No right answers. For each statement, say how much you agree and how much it matters to you.
             </p>
           </div>
-          <button
-            type="button"
-            disabled={!data}
-            onClick={next}
-            className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold py-3 px-8 rounded-lg"
-          >
-            {data ? 'Start (about 2 minutes)' : 'Loading DRep voting records…'}
-          </button>
+          {!(savedAt && hasAnswers) && (
+            <button
+              type="button"
+              disabled={!data}
+              onClick={next}
+              className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold py-3 px-8 rounded-lg"
+            >
+              {data ? 'Start (about 2 minutes)' : 'Loading DRep voting records…'}
+            </button>
+          )}
+          {data && (
+            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-4">
+              <p className="text-sm text-slate-300">Not into the details? Skip the questions.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuickPick(true);
+                  setStepIndex(steps.length - 1);
+                }}
+                className="mt-2 bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2 px-5 rounded-lg"
+              >
+                Just show me reliable, thoughtful DReps
+              </button>
+              <p className="mt-2 text-xs text-slate-500">
+                Ranked on showing up, explaining their votes and a long track record, with a nudge toward smaller DReps.
+              </p>
+            </div>
+          )}
           {data && (
             <p className="text-xs text-slate-500">
               Matching against {data.eligible_count} active DReps as of epoch {data.epoch}.
@@ -413,15 +369,18 @@ export function MatchQuiz() {
 
       {step.kind === 'results' && data && (
         <div className="space-y-5">
-          <h2 className="text-3xl font-bold text-white">Your best-matched DReps</h2>
+          <h2 className="text-3xl font-bold text-white">{quickPick || !hasAnswers ? 'Reliable, thoughtful DReps' : 'Your best-matched DReps'}</h2>
           <p className="text-sm text-slate-400">
-            Match % compares your answers with each DRep&apos;s on-chain voting record, weighted by how much each topic
-            matters to you. Smaller DReps get up to +{MATCH_RULES.maxDecentralizationBoost} points in the ranking to help
-            spread voting power. <Link href="/methodology#find-my-drep" className="text-violet-300 hover:text-violet-200">How matching works</Link>
+            {quickPick || !hasAnswers
+              ? 'Ranked on track record, showing up, and explaining their votes. Switch presets or fine-tune the weights to change what counts.'
+              : "Values match compares your answers with each DRep's on-chain voting record, weighted by how much each topic matters to you. Your score blends that with the other weights below."}{' '}
+            <Link href="/methodology#find-my-drep" className="text-violet-300 hover:text-violet-200">
+              How matching works
+            </Link>
           </p>
-          {drepsWithStatements > 0 && (
+          {hasAnswers && !quickPick && drepsWithStatements > 0 && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-slate-400">Rank by:</span>
+              <span className="text-slate-400">Values from:</span>
               {(
                 [
                   ['votes', 'How they vote'],
@@ -431,10 +390,7 @@ export function MatchQuiz() {
                 <button
                   key={mode}
                   type="button"
-                  onClick={() => {
-                    setRankMode(mode);
-                    setShowAll(false);
-                  }}
+                  onClick={() => setRankMode(mode)}
                   aria-pressed={rankMode === mode}
                   className={`px-3 py-1.5 rounded-md ${rankMode === mode ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
                 >
@@ -443,51 +399,55 @@ export function MatchQuiz() {
               ))}
               {rankMode === 'statements' && (
                 <span className="text-xs text-slate-500 w-full">
-                  Ranked by agreement with AI summaries of DReps&apos; own published words ({drepsWithStatements} DReps have
-                  statements on file). Match % still shows their voting record.
+                  Values match uses AI summaries of DReps&apos; own published words ({drepsWithStatements} DReps have statements on
+                  file).
                 </span>
               )}
             </div>
           )}
-          {results.length === 0 ? (
-            <p className="text-slate-300">
-              {rankMode === 'statements'
-                ? 'No DRep has published statements on at least two of the topics you marked as important. Try "How they vote".'
-                : 'We couldn\'t compute matches. Try marking at least one topic as mattering to you.'}
-            </p>
-          ) : (
-            (showAll ? results.slice(0, 10) : results.slice(0, 3)).map((r, i) => (
-              <ResultCard key={r.drep.drep_id} result={r} rank={i + 1} />
-            ))
-          )}
-          {!showAll && results.length > 3 && (
-            <button type="button" onClick={() => setShowAll(true)} className="text-sm text-violet-300 hover:text-violet-200">
-              Show 7 more matches
-            </button>
-          )}
-          {statedAnswered.length > 0 && rankMode === 'votes' && (
+
+          <ExploreDReps
+            key={`${quickPick}-${hasAnswers}`}
+            dreps={data.dreps}
+            results={hasAnswers && !quickPick ? results : []}
+            hasAnswers={hasAnswers && !quickPick}
+            quickPick={quickPick}
+          />
+
+          {hasAnswers && !quickPick && statedAnswered.length > 0 && rankMode === 'votes' && (
             <p className="text-xs text-slate-500 border-t border-slate-800 pt-4">
               {statedAnswered.length} of your answers (
               {statedAnswered.map((t) => t.statement.replace(/\.$/, '').toLowerCase()).join('; ')}) are on topics DReps
-              haven&apos;t voted on, so they don&apos;t affect this ranking.{' '}
+              haven&apos;t voted on, so they don&apos;t affect the values match.{' '}
               {drepsWithStatements > 0
                 ? 'Switch to "What they say" to match on them using DReps\' published statements.'
                 : 'They will count once DRep statements are summarized.'}
             </p>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              setAnswers({ topics: {}, realVotes: {} });
-              setIncludeDeeper(false);
-              setShowAll(false);
-              setRankMode('votes');
-              setStepIndex(0);
-            }}
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
-          >
-            <RotateCcw size={14} /> Start over
-          </button>
+          <div className="flex flex-wrap gap-4 border-t border-slate-800 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setQuickPick(false);
+                setStepIndex(1);
+              }}
+              className="inline-flex items-center gap-2 text-sm text-violet-300 hover:text-violet-200"
+            >
+              {hasAnswers ? 'Update my answers' : 'Take the quiz to match on values'}
+            </button>
+            {hasAnswers && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearSaved();
+                  setStepIndex(0);
+                }}
+                className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
+              >
+                <RotateCcw size={14} /> Clear my answers
+              </button>
+            )}
+          </div>
         </div>
       )}
 
