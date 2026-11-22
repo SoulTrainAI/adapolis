@@ -8,9 +8,9 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
 import { ExternalLink, Flame, Globe, Sparkles, X } from 'lucide-react';
-import { getAvatarGradient, hashDRepId } from '@/lib/utils/avatar';
+import { hashDRepId } from '@/lib/utils/avatar';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import { PROVISIONAL_BELOW_ELIGIBLE } from '@/lib/scoring/confidence';
 
@@ -65,7 +65,10 @@ const LETTER = new RegExp('[\\p{L}\\p{N}]', 'u');
 // Deterministic art for DReps without a photo, so every card is one of a kind.
 function GeneratedArt({ drepId, name }: { drepId: string; name: string }) {
   const h = hashDRepId(drepId);
-  const { from, to } = getAvatarGradient(drepId);
+  // Two hues from the id: thousands of combinations instead of a fixed palette.
+  const hue = h % 360;
+  const from = `hsl(${hue} 85% 55%)`;
+  const to = `hsl(${(hue + 40 + ((h >>> 9) % 140)) % 360} 80% ${42 + ((h >>> 5) % 16)}%)`;
   const rnd = (i: number) => (Math.abs((h >>> (i % 24)) ^ Math.imul(h, i + 7)) % 1000) / 1000;
   const initials = name.startsWith('drep1')
     ? drepId.slice(-2).toUpperCase()
@@ -154,6 +157,23 @@ function isProvisional(props: DRepCardProps): boolean {
   return props.votesEligible !== null && props.votesEligible !== undefined && props.votesEligible > 0 && props.votesEligible < PROVISIONAL_BELOW_ELIGIBLE;
 }
 
+function percent(rate: number | null): string {
+  return rate !== null ? `${Math.round(rate * 100)}%` : '—';
+}
+
+/** Front-of-card attribute: game-style name, value, and what it really measures. */
+function AttrStat({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-md bg-white/5 px-2 py-1 text-left">
+      <div className="flex items-baseline justify-between gap-1">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{label}</span>
+        <span className="truncate text-sm font-extrabold leading-tight text-white">{value}</span>
+      </div>
+      <p className="truncate text-right text-[9px] leading-tight text-slate-500">{sub}</p>
+    </div>
+  );
+}
+
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-lg bg-white/5 px-1.5 py-1.5 text-center">
@@ -171,21 +191,15 @@ function CardFront({ props }: { props: DRepCardProps }) {
   return (
     <div className={`group relative w-full aspect-[5/7] rounded-2xl bg-gradient-to-br ${tier.frame} p-[3px] shadow-xl ${tier.glow}`}>
       <div className="relative flex h-full flex-col overflow-hidden rounded-[14px] bg-gradient-to-b from-slate-900 via-slate-950 to-black">
-        <div className="flex items-center gap-2 px-3 pt-2.5">
-          <span
-            className={`flex h-8 min-w-8 items-center justify-center rounded-full bg-gradient-to-br ${tier.frame} px-1.5 text-sm font-black text-slate-950 shadow`}
-          >
-            {props.rank}
-          </span>
-          <p className="min-w-0 flex-1 truncate text-left text-base font-extrabold text-white">{props.displayName}</p>
-          <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-bold text-slate-100">{props.adaAmount}</span>
-        </div>
+        <p className="truncate px-3 pt-2 text-left text-sm font-extrabold leading-tight text-white" title={props.displayName}>
+          {props.displayName}
+        </p>
 
-        <div className="relative mx-2.5 mt-2 flex-1 overflow-hidden rounded-xl border border-white/15 bg-slate-900">
+        <div className="relative mx-2.5 mt-1.5 flex-1 overflow-hidden rounded-xl border border-white/15 bg-slate-900">
           <CardArt props={props} />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/70 to-transparent" />
           <span className={`absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${tier.accent}`}>
-            <Sparkles size={10} /> {tier.label}
+            <Sparkles size={10} /> {tier.label} · #{props.rank}
           </span>
           {streak > 1 && (
             <span className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-orange-300">
@@ -199,7 +213,7 @@ function CardFront({ props }: { props: DRepCardProps }) {
         </div>
 
         <div className="px-3 pt-1 text-center">
-          <p className={`text-4xl font-black leading-none drop-shadow ${props.rank <= 3 ? tier.accent : 'text-white'}`}>
+          <p className={`text-3xl font-black leading-none drop-shadow ${props.rank <= 3 ? tier.accent : 'text-white'}`}>
             {props.adjustedScore !== null ? props.adjustedScore.toFixed(1) : '—'}
           </p>
           <p
@@ -210,19 +224,32 @@ function CardFront({ props }: { props: DRepCardProps }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5">
-          <Stat label="Part." value={props.participationRate !== null ? `${Math.round(props.participationRate * 100)}%` : '—'} />
-          <Stat label="Votes" value={`${props.votesCast ?? 0}`} sub={props.votesEligible ? `of ${props.votesEligible}` : undefined} />
-          <Stat label="Fans" value={props.delegatorCount ? props.delegatorCount.toLocaleString() : '—'} sub="delegators" />
+        <div className="grid grid-cols-2 gap-1 px-2.5 pt-1">
+          <AttrStat label="Power" value={props.adaAmount.replace(/\s*ADA$/i, '')} sub="ADA delegated" />
+          <AttrStat label="Stamina" value={percent(props.participationRate)} sub="participation" />
+          <AttrStat label="XP" value={`${props.votesCast ?? 0}`} sub={`votes of ${props.votesEligible ?? 0}`} />
+          <AttrStat label="Charisma" value={props.delegatorCount ? props.delegatorCount.toLocaleString() : '0'} sub="delegators" />
         </div>
 
-        <div className="mt-auto flex items-center justify-between px-3 pb-2 pt-1.5 text-[10px] text-slate-500">
+        <div className="mt-auto flex items-center justify-between px-3 pb-1.5 pt-1 text-[10px] text-slate-500">
           <span className={props.isRegistered ? 'text-emerald-400' : 'text-red-400'}>{props.isRegistered ? '● Active' : '● Retired'}</span>
           {props.doNotList ? <span>Not seeking delegation</span> : <span>Tap to flip</span>}
           <span className="font-mono">No. {String(props.rank).padStart(3, '0')}</span>
         </div>
 
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.18)_50%,transparent_65%)] bg-[length:250%_100%] opacity-0 transition-opacity duration-300 group-hover:animate-shimmer group-hover:opacity-100" />
+        {props.rank <= 10 ? (
+          <div
+            className="pointer-events-none absolute inset-0 opacity-25 mix-blend-color-dodge transition-opacity duration-300 group-hover:opacity-70"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.55), transparent 45%), linear-gradient(125deg, #ff008080, #ffd60080 20%, #00ff9580 40%, #00c8ff80 60%, #b400ff80 80%, #ff008080)',
+              backgroundSize: '100% 100%, 300% 300%',
+              backgroundPosition: 'center, var(--mx, 50%) var(--my, 50%)',
+            }}
+          />
+        ) : (
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.18)_50%,transparent_65%)] bg-[length:250%_100%] opacity-0 transition-opacity duration-300 group-hover:animate-shimmer group-hover:opacity-100" />
+        )}
       </div>
     </div>
   );
@@ -270,16 +297,12 @@ function CardBack({ props, onClose }: { props: DRepCardProps; onClose: () => voi
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Stat label="GovScore" value={props.adjustedScore !== null ? props.adjustedScore.toFixed(1) : '—'} />
           <Stat label="Raw" value={props.rawScore !== null ? props.rawScore.toFixed(1) : '—'} sub="before ADA dampening" />
-          <Stat
-            label="Participation"
-            value={props.participationRate !== null ? `${Math.round(props.participationRate * 100)}%` : '—'}
-            sub={props.votesEligible ? `${props.votesCast ?? 0} of ${props.votesEligible}` : undefined}
-          />
           <Stat label="Streak" value={`${props.votingStreak ?? 0}`} sub="epochs" />
-          <Stat label="Delegated" value={props.adaAmount} />
-          <Stat label="Delegators" value={props.delegatorCount ? props.delegatorCount.toLocaleString() : '—'} />
           <Stat label="Status" value={props.isRegistered ? 'Active' : 'Retired'} />
-          <Stat label="Card" value={`No. ${String(props.rank).padStart(3, '0')}`} />
+          <Stat label="Power" value={props.adaAmount.replace(/\s*ADA$/i, '')} sub="ADA delegated" />
+          <Stat label="Stamina" value={percent(props.participationRate)} sub="participation" />
+          <Stat label="XP" value={`${props.votesCast ?? 0}`} sub={`votes of ${props.votesEligible ?? 0}`} />
+          <Stat label="Charisma" value={props.delegatorCount ? props.delegatorCount.toLocaleString() : '0'} sub="delegators" />
         </div>
 
         <div className="mt-4">
@@ -342,6 +365,26 @@ function CardBack({ props, onClose }: { props: DRepCardProps; onClose: () => voi
 export function DRepCard({ props }: { props: DRepCardProps }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const tiltX = useSpring(useMotionValue(0), { stiffness: 200, damping: 20 });
+  const tiltY = useSpring(useMotionValue(0), { stiffness: 200, damping: 20 });
+
+  // Tilt toward the pointer and move the foil highlight with it, like turning a holo card in the light.
+  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.pointerType !== 'mouse') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    e.currentTarget.style.setProperty('--mx', `${Math.round(x * 100)}%`);
+    e.currentTarget.style.setProperty('--my', `${Math.round(y * 100)}%`);
+    if (reduceMotion) return;
+    tiltX.set((0.5 - y) * 14);
+    tiltY.set((x - 0.5) * 14);
+  };
+  const onPointerLeave = () => {
+    tiltX.set(0);
+    tiltY.set(0);
+  };
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
@@ -361,8 +404,11 @@ export function DRepCard({ props }: { props: DRepCardProps }) {
       <motion.button
         type="button"
         onClick={() => setOpen(true)}
+        onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
         className="block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
-        whileHover={{ y: -6, rotate: -0.6 }}
+        style={{ rotateX: tiltX, rotateY: tiltY, transformPerspective: 900 }}
+        whileHover={{ y: -6 }}
         whileTap={{ scale: 0.97 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         aria-label={`${props.displayName}, rank ${props.rank}, GovScore ${props.adjustedScore?.toFixed(1) ?? 'none'}. Open card details`}
