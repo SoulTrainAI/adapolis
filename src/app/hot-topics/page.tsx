@@ -139,7 +139,8 @@ export default async function HotTopicsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
+    <div className="min-h-screen bg-slate-950 text-white py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto space-y-6">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-wider text-violet-300">Open for voting now</p>
         <h1 className="text-4xl font-bold text-white">Hot Topics</h1>
@@ -160,6 +161,7 @@ export default async function HotTopicsPage() {
       ) : (
         data.topics.map((t) => <TopicCard key={t.proposal_id} t={t} currentEpoch={data.current_epoch} />)
       )}
+      </div>
     </div>
   );
 }
