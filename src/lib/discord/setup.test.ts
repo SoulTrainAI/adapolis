@@ -18,7 +18,8 @@ const state = {
   automod: [] as Array<{ id: string; name: string }>,
   onboarding: null as unknown,
   webhooks: [] as Array<{ id: string; name: string; token: string; channel_id: string }>,
-  posts: [] as Array<{ channel: string; body: Record<string, unknown> }>,
+  posts: [] as Array<{ id: string; channel: string; thread: string; body: Record<string, unknown> }>,
+  edits: 0,
   calls: [] as string[],
 };
 let seq = 1000;
@@ -80,17 +81,27 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit) => {
     state.webhooks.push(w);
     return reply(w);
   }
+  if ((m = path.match(/^\/webhooks\/(\d+)\/tok\/messages\/(\d+)$/))) {
+    const post = state.posts.find((p) => p.id === m![2])!;
+    if (method === 'PATCH') {
+      post.body = { ...post.body, ...body };
+      state.edits++;
+    }
+    return reply({ id: post.id, content: post.body.content ?? '', embeds: post.body.embeds ?? [] });
+  }
   if ((m = path.match(/^\/webhooks\/(\d+)\/tok$/))) {
     const w = state.webhooks.find((x) => x.id === m![1])!;
-    state.posts.push({ channel: w.channel_id, body });
-    return reply({ id: id(), channel_id: body.thread_name ? id() : w.channel_id });
+    const msgId = id();
+    const threadId = body.thread_name ? id() : w.channel_id;
+    state.posts.push({ id: msgId, channel: w.channel_id, thread: threadId, body });
+    return reply({ id: msgId, channel_id: threadId });
   }
   if (method === 'PUT' && path.includes('/pins/')) return reply(null, 204);
   return reply({ message: `unhandled ${method} ${path}` }, 404);
 });
 
 // Supabase-backed dedupe, replaced with a Set.
-const posted = new Set<string>();
+const posted = new Map<string, { channel_id: string; message_id: string }>();
 vi.mock('./posts', async () => {
   const rest = await import('./rest');
   return {
@@ -98,8 +109,21 @@ vi.mock('./posts', async () => {
     postOnce: async (key: string, channelId: string, message: Parameters<typeof rest.postViaWebhook>[1]) => {
       if (posted.has(key)) return null;
       const sent = await rest.postViaWebhook(channelId, message);
-      posted.add(key);
+      posted.set(key, { channel_id: sent.channel_id, message_id: sent.id });
       return sent;
+    },
+    refreshPosted: async (key: string, channelId: string, message: Parameters<typeof rest.postViaWebhook>[1]) => {
+      const row = posted.get(key);
+      if (!row) return false;
+      const hook = await rest.ensureWebhook(channelId);
+      const path = `/webhooks/${hook.id}/${hook.token}/messages/${row.message_id}`;
+      const current = (await rest.discord('GET', path, undefined, { auth: false })) as { content: string; embeds: Array<{ description?: string }> };
+      const same =
+        (current.content ?? '') === (message.content ?? '') &&
+        JSON.stringify((current.embeds ?? []).map((e) => e.description)) === JSON.stringify((message.embeds ?? []).map((e) => e.description));
+      if (same) return false;
+      await rest.discord('PATCH', path, message, { auth: false });
+      return true;
     },
   };
 });
@@ -142,6 +166,14 @@ describe('Discord setup', () => {
     expect(state.posts).toHaveLength(8);
     const second = await setupServer({ apply: true });
     expect(second.actions).toEqual([]);
+    expect(state.posts).toHaveLength(8);
+    expect(state.edits).toBe(0);
+
+    // A changed message is edited in place, not reposted.
+    const welcome = state.posts.find((p) => p.body.embeds)!;
+    welcome.body = { ...welcome.body, embeds: [{ description: 'old text' }] };
+    const third = await setupServer({ apply: true });
+    expect(third.actions).toEqual(['Update the welcome message']);
     expect(state.posts).toHaveLength(8);
   });
 });

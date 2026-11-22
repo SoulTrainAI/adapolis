@@ -54,12 +54,11 @@ export const DREP_VERIFY: Embed[] = [
     description: [
       'Verified DReps get the gold role, their answers stand out in **#ask-a-drep**, and they get access to **#drep-lounge**.',
       '',
-      '**How to verify (takes a minute):**',
-      '1. Post your DRep ID (`drep1…`) in this channel.',
-      '2. Add this Discord username to your DRep profile links (CIP-119 metadata), **or** post from the X account already listed in your DRep profile, mentioning your Discord username.',
-      '3. A Moderator checks it against the chain and gives you the role.',
+      '**Automatic (one minute):**',
+      '1. Go to https://adapolis.net/drep and sign with your DRep key (Eternl, Lace, Yoroi or NuFi).',
+      '2. Then open https://adapolis.net/discord and sign in with Discord. The role is added straight away.',
       '',
-      'One-click wallet verification on adapolis.net is coming: you will sign a message with your DRep key and get the role automatically.',
+      '**Manual (script-based DReps, or if your wallet can\'t sign with the DRep key):** post your DRep ID (`drep1…`) here and add this Discord username to your DRep profile links. A Moderator checks it against the chain.',
     ].join('\n'),
   },
 ];

@@ -32,7 +32,7 @@ import {
   type RoleKey,
 } from "./server-config";
 import { DREP_VERIFY, GUIDES, RULES, WELCOME } from "./content";
-import { alreadyPosted, postOnce } from "./posts";
+import { alreadyPosted, postOnce, refreshPosted } from "./posts";
 
 // BigInt() calls, not literals: the TS target predates ES2020.
 const B = (n: number) => BigInt(n);
@@ -634,6 +634,8 @@ export async function setupServer(options: {
               `Couldn't pin the #${name} message; pin it by hand.`,
             ),
           );
+      } else if (await refreshPosted(key, c.id, message)) {
+        report.actions.push(`Update the ${name} message`);
       }
     }
     const guides = byName.get("governance-guides");
@@ -647,6 +649,8 @@ export async function setupServer(options: {
           applied_tags: tag ? [tag.id] : [],
         });
         if (sent) report.actions.push(`Post guide "${g.title}"`);
+        else if (await refreshPosted(`seed:guide:${g.slug}`, guides.id, { content: g.body }))
+          report.actions.push(`Update guide "${g.title}"`);
       }
     }
   } else {
