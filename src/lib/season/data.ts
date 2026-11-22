@@ -36,8 +36,8 @@ export interface SeasonData {
 }
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const cache = new Map<number, { data: SeasonData; at: number }>();
-const inflight = new Map<number, Promise<SeasonData>>();
+const cache = new Map<string, { data: SeasonData; at: number }>();
+const inflight = new Map<string, Promise<SeasonData>>();
 
 async function computeSeason(requested: number | null): Promise<SeasonData> {
   const [currentEpoch, dreps, proposalRows, voteRows, periods] = await Promise.all([
@@ -133,7 +133,8 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
 
 /** Cached per season for 6 hours; the cron pipeline refreshes the current one. */
 export async function getSeasonData(options: { window?: number; force?: boolean } = {}): Promise<SeasonData> {
-  const key = options.window ?? -1;
+  // Windows can be negative (before the grid start), so "current" gets its own key.
+  const key = options.window === undefined ? 'current' : String(options.window);
   const hit = cache.get(key);
   if (!options.force && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.data;
   const running = inflight.get(key);

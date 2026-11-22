@@ -56,19 +56,31 @@ function seasonFor(seasonNumber: number, launchWindow: number): DraftSeason {
  * The season people can draft for now: the earliest season whose lock is
  * still ahead. Null only when SEASON_ONE_START_EPOCH is "off".
  */
-export async function draftSeason(now = new Date()): Promise<DraftSeason | null> {
+export async function draftSeason(now = new Date()): Promise<(DraftSeason & { reference_window: number }) | null> {
   const launch = seasonOneStartEpoch();
   if (launch === null) return null;
   const launchWindow = windowForEpoch(launch);
   const currentWindow = windowForEpoch(await fetchCurrentEpoch());
   let n = Math.max(1, currentWindow - launchWindow + 1);
   while (new Date(seasonFor(n, launchWindow).draft_locks_at) <= now) n++;
-  return seasonFor(n, launchWindow);
+  const season = seasonFor(n, launchWindow);
+  // Multipliers are scaled on the latest finished window, so they hold still while people
+  // draft, even when drafting opens weeks before the season.
+  return { ...season, reference_window: Math.min(season.grid_window, currentWindow) - 1 };
 }
 
 /** Creates the season row on first use; rosters reference it. */
 async function ensureSeasonRow(season: DraftSeason): Promise<void> {
-  const { error } = await supabaseAdmin.from('seasons').upsert(season, { onConflict: 'season_number', ignoreDuplicates: true });
+  const row: DraftSeason = {
+    season_number: season.season_number,
+    grid_window: season.grid_window,
+    start_epoch: season.start_epoch,
+    end_epoch: season.end_epoch,
+    starts_at: season.starts_at,
+    draft_locks_at: season.draft_locks_at,
+    ends_at: season.ends_at,
+  };
+  const { error } = await supabaseAdmin.from('seasons').upsert(row, { onConflict: 'season_number', ignoreDuplicates: true });
   if (error) {
     throw new Error(`Couldn't create season ${season.season_number}: ${error.message}. Run supabase/migrations/010_fantasy_seasons.sql if the table is missing.`);
   }
@@ -102,7 +114,7 @@ export interface Roster {
 }
 
 export interface DraftData {
-  season: DraftSeason;
+  season: DraftSeason & { reference_window: number };
   reference_window: { start_epoch: number; end_epoch: number };
   pool: PoolDRep[];
   roster: Roster | null;
@@ -135,9 +147,8 @@ async function draftCounts(seasonNumber: number): Promise<Map<string, number>> {
 }
 
 /** Multiplier scale for a draft season, plus the reference window's standings. */
-async function draftScale(season: DraftSeason) {
-  const referenceWindow = season.grid_window - 1;
-  const reference = await getSeasonData({ window: referenceWindow });
+async function draftScale(season: { reference_window: number }) {
+  const reference = await getSeasonData({ window: season.reference_window });
   const scale = underdogScale(
     reference.standings.map((s) => ({ drep_id: s.drep_id, amount_lovelace: s.amount_lovelace, delegator_count: s.delegator_count }))
   );
