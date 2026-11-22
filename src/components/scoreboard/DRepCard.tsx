@@ -8,10 +8,9 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ExternalLink, Flame, Globe, Sparkles, X } from 'lucide-react';
-import { getAvatarDataUri } from '@/lib/utils/avatar';
+import { getAvatarGradient, hashDRepId } from '@/lib/utils/avatar';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import { PROVISIONAL_BELOW_ELIGIBLE } from '@/lib/scoring/confidence';
 
@@ -60,35 +59,94 @@ function tierFor(rank: number): Tier {
   return { label: 'Common', frame: 'from-slate-500 via-slate-700 to-slate-500', glow: '', art: 'rgba(100,116,139,0.3)', accent: 'text-slate-300' };
 }
 
-function Avatar({ props, size, ring }: { props: DRepCardProps; size: number; ring: string }) {
+// Any letter or digit in any script (constructor form: the TS target predates the u flag).
+const LETTER = new RegExp('[\\p{L}\\p{N}]', 'u');
+
+// Deterministic art for DReps without a photo, so every card is one of a kind.
+function GeneratedArt({ drepId, name }: { drepId: string; name: string }) {
+  const h = hashDRepId(drepId);
+  const { from, to } = getAvatarGradient(drepId);
+  const rnd = (i: number) => (Math.abs((h >>> (i % 24)) ^ Math.imul(h, i + 7)) % 1000) / 1000;
+  const initials = name.startsWith('drep1')
+    ? drepId.slice(-2).toUpperCase()
+    : name
+        .split(/\s+/)
+        .filter((w) => LETTER.test(w))
+        .slice(0, 2)
+        .map((w) => (w.match(LETTER)?.[0] ?? '').toUpperCase())
+        .join('') || drepId.slice(-2).toUpperCase();
+  const shapes = Array.from({ length: 7 }, (_, i) => ({
+    cx: 20 + rnd(i) * 160,
+    cy: 15 + rnd(i + 11) * 110,
+    r: 12 + rnd(i + 23) * 55,
+    o: 0.12 + rnd(i + 5) * 0.25,
+  }));
+  const rays = 10 + (h % 8);
+  return (
+    <svg viewBox="0 0 200 140" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" aria-hidden>
+      <defs>
+        <linearGradient id={`g-${drepId}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={from} />
+          <stop offset="1" stopColor={to} />
+        </linearGradient>
+      </defs>
+      <rect width="200" height="140" fill={`url(#g-${drepId})`} />
+      {Array.from({ length: rays }, (_, i) => (
+        <line
+          key={i}
+          x1="100"
+          y1="70"
+          x2={100 + Math.cos((i / rays) * Math.PI * 2) * 160}
+          y2={70 + Math.sin((i / rays) * Math.PI * 2) * 160}
+          stroke="white"
+          strokeOpacity="0.08"
+          strokeWidth="6"
+        />
+      ))}
+      {shapes.map((c, i) => (
+        <circle key={i} cx={c.cx} cy={c.cy} r={c.r} fill="white" fillOpacity={c.o * 0.5} stroke="white" strokeOpacity={c.o} strokeWidth="1.5" />
+      ))}
+      <text
+        x="100"
+        y="72"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={initials.length > 1 ? 54 : 64}
+        fontWeight="900"
+        fill="white"
+        fillOpacity="0.92"
+        style={{ fontFamily: 'system-ui, sans-serif', letterSpacing: '-2px' }}
+      >
+        {initials}
+      </text>
+    </svg>
+  );
+}
+
+/** Card artwork: the DRep's photo filling the frame (blurred copy behind for odd shapes), else generated art. */
+function CardArt({ props }: { props: DRepCardProps }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const className = `rounded-full flex-shrink-0 object-cover ring-4 ${ring} shadow-xl`;
-  if (props.profileImage && !imageFailed) {
-    return (
-      // next/image needs every host allow-listed; DRep images come from arbitrary self-chosen hosts.
-      // eslint-disable-next-line @next/next/no-img-element
+  if (!props.profileImage || imageFailed) return <GeneratedArt drepId={props.drepId} name={props.displayName} />;
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element -- DRep images come from arbitrary self-chosen hosts */}
       <img
         src={props.profileImage}
-        alt={`${props.displayName} profile photo`}
-        width={size}
-        height={size}
-        style={{ width: size, height: size }}
+        alt=""
+        aria-hidden
+        referrerPolicy="no-referrer"
+        className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-xl"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={props.profileImage}
+        alt={`${props.displayName} profile image`}
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => setImageFailed(true)}
-        className={className}
+        className="absolute inset-0 h-full w-full object-contain drop-shadow-2xl"
       />
-    );
-  }
-  return (
-    <Image
-      src={getAvatarDataUri(props.drepId)}
-      alt={`${props.displayName} avatar`}
-      width={size}
-      height={size}
-      style={{ width: size, height: size }}
-      className={className}
-    />
+    </>
   );
 }
 
@@ -109,7 +167,6 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 function CardFront({ props }: { props: DRepCardProps }) {
   const tier = tierFor(props.rank);
   const streak = props.votingStreak ?? 0;
-  const ring = props.rank <= 3 ? 'ring-white/80' : 'ring-white/30';
   const provisional = isProvisional(props);
   return (
     <div className={`group relative w-full aspect-[5/7] rounded-2xl bg-gradient-to-br ${tier.frame} p-[3px] shadow-xl ${tier.glow}`}>
@@ -124,26 +181,21 @@ function CardFront({ props }: { props: DRepCardProps }) {
           <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-bold text-slate-100">{props.adaAmount}</span>
         </div>
 
-        <div
-          className="relative mx-3 mt-2 flex flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/10"
-          style={{
-            backgroundImage: `radial-gradient(circle at 50% 45%, ${tier.art}, transparent 65%), repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 12px)`,
-          }}
-        >
-          <span className={`absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${tier.accent}`}>
+        <div className="relative mx-2.5 mt-2 flex-1 overflow-hidden rounded-xl border border-white/15 bg-slate-900">
+          <CardArt props={props} />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/70 to-transparent" />
+          <span className={`absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${tier.accent}`}>
             <Sparkles size={10} /> {tier.label}
           </span>
           {streak > 1 && (
-            <span className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-orange-300">
+            <span className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-orange-300">
               <Flame size={11} /> {streak}
             </span>
           )}
-          <Avatar props={props} size={96} ring={ring} />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-1 px-3 pt-1.5 text-[10px] uppercase tracking-widest text-slate-400">
-          <span>Delegated Representative</span>
-          <MyDRepBadge drepId={props.drepId} className="normal-case tracking-normal" />
+          <div className="absolute inset-x-2 bottom-1.5 flex items-center justify-between gap-1">
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-white/80">Delegated Representative</span>
+            <MyDRepBadge drepId={props.drepId} className="!py-0 text-[10px]" />
+          </div>
         </div>
 
         <div className="px-3 pt-1 text-center">
@@ -183,25 +235,31 @@ function CardBack({ props, onClose }: { props: DRepCardProps; onClose: () => voi
   return (
     <div className={`rounded-2xl bg-gradient-to-br ${tier.frame} p-[3px] shadow-2xl ${tier.glow}`}>
       <div className="max-h-[85vh] overflow-y-auto rounded-[14px] bg-gradient-to-b from-slate-900 to-slate-950 p-5 text-left">
-        <div className="flex items-start gap-4">
-          <Avatar props={props} size={72} ring="ring-white/30" />
-          <div className="min-w-0 flex-1">
-            <p className={`text-[11px] font-bold uppercase tracking-widest ${tier.accent}`}>
-              #{props.rank} · {tier.label}
-            </p>
-            <h3 className="text-xl font-extrabold text-white break-words">{props.displayName}</h3>
-            <p className="font-mono text-[11px] text-slate-500 break-all">{props.drepId}</p>
-            <MyDRepBadge drepId={props.drepId} className="mt-1" />
-            {isProvisional(props) && (
-              <p className="mt-1 text-xs text-amber-300">
-                Provisional: fewer than {PROVISIONAL_BELOW_ELIGIBLE} votes to judge so far, so the score is held back until
-                the record grows.
-              </p>
-            )}
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-white">
+        <div className="relative -mx-5 -mt-5 mb-4 h-56 overflow-hidden rounded-t-[14px] sm:h-64">
+          <CardArt props={props} />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="absolute right-3 top-3 rounded-full bg-black/60 p-1.5 text-slate-200 hover:bg-black/80 hover:text-white"
+          >
             <X className="h-5 w-5" />
           </button>
+        </div>
+        <div className="min-w-0">
+          <p className={`text-[11px] font-bold uppercase tracking-widest ${tier.accent}`}>
+            #{props.rank} · {tier.label}
+          </p>
+          <h3 className="text-2xl font-extrabold text-white break-words">{props.displayName}</h3>
+          <p className="font-mono text-[11px] text-slate-500 break-all">{props.drepId}</p>
+          <MyDRepBadge drepId={props.drepId} className="mt-1" />
+          {isProvisional(props) && (
+            <p className="mt-1 text-xs text-amber-300">
+              Provisional: fewer than {PROVISIONAL_BELOW_ELIGIBLE} votes to judge so far, so the score is held back until the
+              record grows.
+            </p>
+          )}
         </div>
 
         <div className="mt-4">
