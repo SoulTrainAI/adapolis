@@ -181,7 +181,7 @@ export function cardMetadata(s: CardSummary, seasonLabel: string): Record<string
     lifetime_points: s.lifetime.points,
     seasons_played: s.lifetime.seasons,
     best_season_points: s.best_points,
-    rationale_rate: s.lifetime.rationale_rate === null ? 0 : Math.round(s.lifetime.rationale_rate * 100),
+    rationale_pct: s.lifetime.rationale_rate === null ? 0 : Math.round(s.lifetime.rationale_rate * 100),
     archetype: s.archetype?.label ?? 'None',
     abilities: s.abilities.map((a) => a.label).join(', ') || 'None',
     rookie: s.rookie ? 'Yes' : 'No',

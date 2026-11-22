@@ -425,6 +425,12 @@ function SeasonTable({ seasons }: { seasons: SeasonLine[] }) {
   );
 }
 
+/** Windows from the DRep's first appearance on, so charts don't open with years of empty space. */
+function activeSeasons(seasons: SeasonLine[]): SeasonLine[] {
+  const first = seasons.findIndex((s) => s.played || s.govscore_end !== null);
+  return first === -1 ? seasons.slice(-1) : seasons.slice(first);
+}
+
 function CardBack({ card, onClose }: { card: CardSummary; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>('profile');
   const { detail, error } = useCardDetail(card.drep_id, true);
@@ -577,9 +583,9 @@ function CardBack({ card, onClose }: { card: CardSummary; onClose: () => void })
         {tab === 'trends' && detail && (
           <div>
             <SectionTitle>GovScore at the end of each window</SectionTitle>
-            <LineChart points={detail.seasons.map((s) => ({ label: s.label, value: s.govscore_end }))} />
+            <LineChart points={activeSeasons(detail.seasons).map((s) => ({ label: s.label, value: s.govscore_end }))} />
             <SectionTitle>Fantasy points per window</SectionTitle>
-            <BarChart points={detail.seasons.map((s) => ({ label: s.label, value: s.played || s.in_progress ? s.points : null }))} />
+            <BarChart points={activeSeasons(detail.seasons).map((s) => ({ label: s.label, value: s.played || s.in_progress ? s.points : null }))} />
             <p className="mt-2 text-xs text-slate-500">
               Points come only from voting, explaining votes and voting on time. Which way a DRep votes never counts.
             </p>

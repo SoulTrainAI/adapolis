@@ -193,9 +193,13 @@ export function computeCards(input: CardInputs): CardComputation {
     if (totalVotes >= workhorseCut && totalVotes > 0)
       abilities.push({ id: 'workhorse', label: 'Workhorse', detail: `${totalVotes} career votes, top 10% of DReps.` });
     if ((l?.streak ?? 0) >= 5) abilities.push({ id: 'on_fire', label: 'On Fire', detail: `${l?.streak} epochs in a row.` });
-    if (completed.length >= 10)
-      abilities.push({ id: 'veteran', label: 'Veteran', detail: `Played ${completed.length} windows.` });
-    if (underdog >= 1.35) abilities.push({ id: 'underdog', label: 'Underdog', detail: `${underdog.toFixed(2)}× draft multiplier.` });
+    // Windows with at least one vote: being registered while idle isn't experience.
+    const votedWindows = completed.filter((c) => c.votes > 0).length;
+    if (votedWindows >= 10) abilities.push({ id: 'veteran', label: 'Veteran', detail: `Voted in ${votedWindows} windows.` });
+    // Only small DReps that are actually voting: a big multiplier on an idle DRep is a trap, not a sleeper.
+    const lastDone = completed[completed.length - 1];
+    if (underdog >= 1.35 && lastDone !== undefined && lastDone.window >= currentWindow - 1 && lastDone.votes > 0)
+      abilities.push({ id: 'underdog', label: 'Underdog', detail: `Active small DRep: ${underdog.toFixed(2)}× draft multiplier.` });
     if (rookie) abilities.push({ id: 'rookie', label: 'Rookie', detail: 'First votes in the last two windows.' });
 
     summaries.set(d.drep_id, {
@@ -249,5 +253,14 @@ export function computeCards(input: CardInputs): CardComputation {
       abilities,
     });
   }
+  // Archetype is the DRep's rarest ability, so the headline trait sets it apart instead of repeating the most common one.
+  const abilityCount = new Map<string, number>();
+  summaries.forEach((c) => c.abilities.forEach((a) => abilityCount.set(a.id, (abilityCount.get(a.id) ?? 0) + 1)));
+  summaries.forEach((c) => {
+    const traits = c.abilities.filter((a) => a.id !== 'underdog' && a.id !== 'rookie');
+    const pool = traits.length ? traits : c.abilities;
+    c.archetype = pool.slice().sort((a, b) => (abilityCount.get(a.id) ?? 0) - (abilityCount.get(b.id) ?? 0))[0] ?? null;
+  });
+
   return { currentWindow, summaries, lines };
 }
