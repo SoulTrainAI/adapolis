@@ -6,7 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { TOPICS } from '@/lib/match/topics';
+import { TOPICS, quoteFitsTopic } from '@/lib/match/topics';
 import type { StatementSource } from './sources';
 
 export const DEFAULT_STATEMENTS_MODEL = 'claude-haiku-5-5';
@@ -147,7 +147,8 @@ export async function summarizeStatements(sources: StatementSource[], model: str
       (p.confidence === 'high' || p.confidence === 'medium') &&
       typeof p.quote === 'string' &&
       source !== undefined &&
-      quoteIsVerbatim(p.quote, source.text);
+      quoteIsVerbatim(p.quote, source.text) &&
+      quoteFitsTopic(p.topic_id as string, p.quote);
     if (!valid) {
       rejected++;
       continue;

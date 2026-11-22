@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { koiosFetch } from '@/lib/koios/client';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
-import { TOPICS, MATCH_RULES, type Topic } from './topics';
+import { TOPICS, MATCH_RULES, quoteFitsTopic, type Topic } from './topics';
 
 const DB_PAGE_SIZE = 1000;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
@@ -315,11 +315,12 @@ export function buildMatchData({ dreps, scores, votes, proposals, directions, st
  */
 async function loadStated(): Promise<NonNullable<MatchInputs['stated']>> {
   try {
-    return await loadAll<NonNullable<MatchInputs['stated']>[number]>(
+    const rows = await loadAll<NonNullable<MatchInputs['stated']>[number]>(
       'drep_stated_positions',
       'drep_id, topic_id, stance, confidence, quote, source_kind, source_url, proposal_id, origin',
       'drep_id'
     );
+    return rows.filter((r) => quoteFitsTopic(r.topic_id, r.quote));
   } catch (error) {
     console.warn(JSON.stringify({ event: 'stated_positions_unavailable', error: error instanceof Error ? error.message : String(error) }));
     return [];

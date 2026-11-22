@@ -198,3 +198,15 @@ export const MATCH_RULES = {
   realVoteWindowEpochs: 146,
   minVotersForRealVote: 20,
 } as const;
+
+// Haiku kept filing Constitutional Committee pay under DRep pay despite explicit
+// prompt rules, so some topics get a deterministic check: the quote itself must
+// name the subject. Applied when saving and again when loading older rows.
+const QUOTE_MUST_MENTION: Partial<Record<string, RegExp>> = {
+  drep_compensation: /\bdreps?\b|delegated representative/i,
+};
+
+export function quoteFitsTopic(topicId: string, quote: string): boolean {
+  const pattern = QUOTE_MUST_MENTION[topicId];
+  return pattern === undefined || pattern.test(quote);
+}
