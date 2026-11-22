@@ -1,15 +1,16 @@
 'use client';
 
 /**
- * DRep Flip Card Component
- * Displays DRep info on front, flips to back on click
- * Uses framer-motion for smooth flip animation
+ * DRep trading card. The front is a collectible-style card whose foil tier
+ * follows scoreboard rank; clicking it lifts the card out, enlarged and
+ * flipped, so the full bio, record and links are readable.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { Award, ExternalLink, Globe } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ExternalLink, Flame, Globe, Sparkles, X } from 'lucide-react';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 
@@ -35,12 +36,32 @@ interface DRepCardProps {
   recentVotes?: Array<{ proposal_title: string; vote: string; proposal_id: string }>;
 }
 
-function Avatar({ props, ringClass }: { props: DRepCardProps; ringClass: string }) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const className = `w-12 h-12 rounded-full flex-shrink-0 object-cover border-2 ${
-    props.rank <= 3 ? `ring-2 ${ringClass}` : 'border-slate-600'
-  }`;
+interface Tier {
+  label: string;
+  frame: string;
+  glow: string;
+  art: string;
+  accent: string;
+}
 
+// Foil tiers follow scoreboard rank, like rarity on a trading card.
+function tierFor(rank: number): Tier {
+  if (rank === 1)
+    return { label: 'Legend', frame: 'from-yellow-200 via-amber-500 to-yellow-300', glow: 'shadow-amber-500/40', art: 'rgba(245,158,11,0.45)', accent: 'text-amber-300' };
+  if (rank === 2)
+    return { label: 'Silver', frame: 'from-slate-100 via-slate-400 to-slate-200', glow: 'shadow-slate-300/30', art: 'rgba(203,213,225,0.35)', accent: 'text-slate-200' };
+  if (rank === 3)
+    return { label: 'Bronze', frame: 'from-orange-300 via-orange-700 to-amber-400', glow: 'shadow-orange-600/30', art: 'rgba(234,88,12,0.4)', accent: 'text-orange-300' };
+  if (rank <= 10)
+    return { label: 'Holo', frame: 'from-fuchsia-400 via-violet-500 to-cyan-400', glow: 'shadow-violet-500/30', art: 'rgba(139,92,246,0.45)', accent: 'text-fuchsia-300' };
+  if (rank <= 50)
+    return { label: 'Rare', frame: 'from-sky-300 via-blue-600 to-sky-400', glow: 'shadow-sky-500/20', art: 'rgba(14,165,233,0.35)', accent: 'text-sky-300' };
+  return { label: 'Common', frame: 'from-slate-500 via-slate-700 to-slate-500', glow: '', art: 'rgba(100,116,139,0.3)', accent: 'text-slate-300' };
+}
+
+function Avatar({ props, size, ring }: { props: DRepCardProps; size: number; ring: string }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const className = `rounded-full flex-shrink-0 object-cover ring-4 ${ring} shadow-xl`;
   if (props.profileImage && !imageFailed) {
     return (
       // next/image needs every host allow-listed; DRep images come from arbitrary self-chosen hosts.
@@ -48,8 +69,9 @@ function Avatar({ props, ringClass }: { props: DRepCardProps; ringClass: string 
       <img
         src={props.profileImage}
         alt={`${props.displayName} profile photo`}
-        width={48}
-        height={48}
+        width={size}
+        height={size}
+        style={{ width: size, height: size }}
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => setImageFailed(true)}
@@ -61,307 +83,251 @@ function Avatar({ props, ringClass }: { props: DRepCardProps; ringClass: string 
     <Image
       src={getAvatarDataUri(props.drepId)}
       alt={`${props.displayName} avatar`}
-      width={48}
-      height={48}
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
       className={className}
     />
   );
 }
 
-function getMetalBadgeColor(rank: number): { label: string; ringClass: string } {
-  if (rank === 1) return { label: 'Gold', ringClass: 'ring-yellow-500' };
-  if (rank === 2) return { label: 'Silver', ringClass: 'ring-gray-300' };
-  if (rank === 3) return { label: 'Bronze', ringClass: 'ring-orange-600' };
-  return { label: '', ringClass: '' };
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-lg bg-white/5 px-1.5 py-1.5 text-center">
+      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="text-sm font-extrabold text-white leading-tight">{value}</p>
+      {sub && <p className="text-[9px] text-slate-500 leading-tight">{sub}</p>}
+    </div>
+  );
 }
 
 function CardFront({ props }: { props: DRepCardProps }) {
-  const metalBadge = getMetalBadgeColor(props.rank);
-
+  const tier = tierFor(props.rank);
+  const streak = props.votingStreak ?? 0;
+  const ring = props.rank <= 3 ? 'ring-white/80' : 'ring-white/30';
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/50 p-4 justify-between">
-      {/* Header: Avatar + Rank + Metal Badge */}
-      <div className="flex items-start justify-between mb-4">
-        <Avatar props={props} ringClass={metalBadge.ringClass} />
-
-        {/* Rank badge + Metal badge */}
-        <div className="flex flex-col items-end gap-1">
-          <div className="bg-slate-700/50 px-2 py-1 rounded text-sm font-bold text-slate-100">
-            #{props.rank}
-          </div>
-          {props.rank <= 3 && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded text-xs font-semibold text-yellow-300">
-              <Award size={12} />
-              {metalBadge.label}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* DRep Name */}
-      <div className="mb-4">
-        <p className="text-sm font-semibold text-slate-300 truncate">{props.displayName}</p>
-        <p className="text-xs text-slate-500 font-mono truncate">{props.drepId.substring(0, 12)}...</p>
-        <MyDRepBadge drepId={props.drepId} className="mt-1" />
-      </div>
-
-      {/* Adjusted Score (prominent) */}
-      <div className="mb-6 text-center group relative">
-        <div className="relative inline-block">
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1 cursor-help">Adjusted Score</p>
-          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-40 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
-            GovScore adjusted for ADA-power dampening. Rewards high participation from under-delegated DReps.
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
-          </div>
-        </div>
-        <p className="text-5xl font-bold text-white drop-shadow-lg">
-          {props.adjustedScore !== null ? props.adjustedScore.toFixed(1) : '—'}
-        </p>
-      </div>
-
-      {/* Voting Streak */}
-      {(props.votingStreak ?? 0) > 1 ? (
-        <div className="mb-4 text-center">
-          <p className="text-lg font-semibold text-orange-400">🔥 {props.votingStreak} epoch streak</p>
-        </div>
-      ) : null}
-
-      {/* Metrics grid */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
-        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
-          <p className="text-xs text-slate-500 cursor-help">Participation</p>
-          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
-            % of eligible governance proposals voted on.
-          </div>
-          <p className="text-sm font-semibold text-slate-100">
-            {props.participationRate !== null ? `${(props.participationRate * 100).toFixed(0)}%` : '—'}
-          </p>
-          {props.votesEligible ? (
-            <p className="text-[10px] text-slate-500">
-              {props.votesCast ?? 0} of {props.votesEligible} votes
-            </p>
-          ) : null}
-        </div>
-        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
-          <p className="text-xs text-slate-500 cursor-help">Raw Score</p>
-          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
-            Participation rate × 100, before ADA dampening.
-          </div>
-          <p className="text-sm font-semibold text-slate-100">
-            {props.rawScore !== null ? props.rawScore.toFixed(1) : '—'}
-          </p>
-        </div>
-        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
-          <p className="text-xs text-slate-500 cursor-help">Delegated</p>
-          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
-            Total ADA delegated to this DRep.
-          </div>
-          <p className="text-sm font-semibold text-slate-100">{props.adaAmount}</p>
-        </div>
-        <div className="bg-slate-700/30 rounded p-2 text-center group relative">
-          <p className="text-xs text-slate-500 cursor-help">Delegators</p>
-          <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-xs rounded p-2 z-10 whitespace-normal">
-            Number of wallets delegating to this DRep.
-          </div>
-          <p className="text-sm font-semibold text-slate-100">{props.delegatorCount || '—'}</p>
-        </div>
-      </div>
-
-      {/* Footer: Status + Hint */}
-      <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-700/50">
-        <span
-          className={`px-2 py-1 rounded ${
-            props.isRegistered ? 'bg-green-900/30 text-green-300' : 'bg-red-900/30 text-red-300'
-          }`}
-        >
-          {props.isRegistered ? 'Registered' : 'Inactive'}
-        </span>
-        {props.doNotList ? (
+    <div className={`group relative w-full aspect-[5/7] rounded-2xl bg-gradient-to-br ${tier.frame} p-[3px] shadow-xl ${tier.glow}`}>
+      <div className="relative flex h-full flex-col overflow-hidden rounded-[14px] bg-gradient-to-b from-slate-900 via-slate-950 to-black">
+        <div className="flex items-center gap-2 px-3 pt-2.5">
           <span
-            className="px-2 py-1 rounded bg-slate-700/50 text-slate-300"
-            title="This DRep has asked tools not to promote it for delegation (CIP-119 doNotList)."
+            className={`flex h-8 min-w-8 items-center justify-center rounded-full bg-gradient-to-br ${tier.frame} px-1.5 text-sm font-black text-slate-950 shadow`}
           >
-            Not seeking delegation
+            {props.rank}
           </span>
-        ) : (
-          <span className="text-slate-500 italic">Click to view</span>
-        )}
+          <p className="min-w-0 flex-1 truncate text-left text-base font-extrabold text-white">{props.displayName}</p>
+          <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-bold text-slate-100">{props.adaAmount}</span>
+        </div>
+
+        <div
+          className="relative mx-3 mt-2 flex flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 50% 45%, ${tier.art}, transparent 65%), repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 12px)`,
+          }}
+        >
+          <span className={`absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${tier.accent}`}>
+            <Sparkles size={10} /> {tier.label}
+          </span>
+          {streak > 1 && (
+            <span className="absolute right-2 top-2 flex items-center gap-0.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-orange-300">
+              <Flame size={11} /> {streak}
+            </span>
+          )}
+          <Avatar props={props} size={96} ring={ring} />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-1 px-3 pt-1.5 text-[10px] uppercase tracking-widest text-slate-400">
+          <span>Delegated Representative</span>
+          <MyDRepBadge drepId={props.drepId} className="normal-case tracking-normal" />
+        </div>
+
+        <div className="px-3 pt-1 text-center">
+          <p className={`text-4xl font-black leading-none drop-shadow ${props.rank <= 3 ? tier.accent : 'text-white'}`}>
+            {props.adjustedScore !== null ? props.adjustedScore.toFixed(1) : '—'}
+          </p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-slate-500" title="Participation rate × 100, dampened for large ADA holdings">
+            GovScore
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5">
+          <Stat label="Part." value={props.participationRate !== null ? `${Math.round(props.participationRate * 100)}%` : '—'} />
+          <Stat label="Votes" value={`${props.votesCast ?? 0}`} sub={props.votesEligible ? `of ${props.votesEligible}` : undefined} />
+          <Stat label="Fans" value={props.delegatorCount ? props.delegatorCount.toLocaleString() : '—'} sub="delegators" />
+        </div>
+
+        <div className="mt-auto flex items-center justify-between px-3 pb-2 pt-1.5 text-[10px] text-slate-500">
+          <span className={props.isRegistered ? 'text-emerald-400' : 'text-red-400'}>{props.isRegistered ? '● Active' : '● Retired'}</span>
+          {props.doNotList ? <span>Not seeking delegation</span> : <span>Tap to flip</span>}
+          <span className="font-mono">No. {String(props.rank).padStart(3, '0')}</span>
+        </div>
+
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.18)_50%,transparent_65%)] bg-[length:250%_100%] opacity-0 transition-opacity duration-300 group-hover:animate-shimmer group-hover:opacity-100" />
       </div>
     </div>
   );
 }
 
-function CardBack({ props }: { props: DRepCardProps }) {
-  const voteSummary = props.voteSummary || { yes: 0, no: 0, abstain: 0 };
-  const recentVotes = props.recentVotes || [];
+function CardBack({ props, onClose }: { props: DRepCardProps; onClose: () => void }) {
+  const tier = tierFor(props.rank);
+  const votes = props.voteSummary || { yes: 0, no: 0, abstain: 0 };
   const links = props.links || [];
-  const bio = props.bio || 'No bio provided';
-
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border border-slate-700/50 p-4 overflow-y-auto">
-      {/* Bio Section */}
-      <div className="mb-4 pb-3 border-b border-slate-700/50">
-        <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Bio</p>
-        <p className="text-sm text-slate-300 line-clamp-3">{bio}</p>
-      </div>
+    <div className={`rounded-2xl bg-gradient-to-br ${tier.frame} p-[3px] shadow-2xl ${tier.glow}`}>
+      <div className="max-h-[85vh] overflow-y-auto rounded-[14px] bg-gradient-to-b from-slate-900 to-slate-950 p-5 text-left">
+        <div className="flex items-start gap-4">
+          <Avatar props={props} size={72} ring="ring-white/30" />
+          <div className="min-w-0 flex-1">
+            <p className={`text-[11px] font-bold uppercase tracking-widest ${tier.accent}`}>
+              #{props.rank} · {tier.label}
+            </p>
+            <h3 className="text-xl font-extrabold text-white break-words">{props.displayName}</h3>
+            <p className="font-mono text-[11px] text-slate-500 break-all">{props.drepId}</p>
+            <MyDRepBadge drepId={props.drepId} className="mt-1" />
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-white">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-      {/* Voting History Summary */}
-      <div className="mb-4 pb-3 border-b border-slate-700/50">
-        <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Voting History</p>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-slate-700/30 rounded p-2 text-center">
-            <p className="text-xs text-slate-500">Yes</p>
-            <p className="text-lg font-bold text-green-400">{voteSummary.yes}</p>
-          </div>
-          <div className="bg-slate-700/30 rounded p-2 text-center">
-            <p className="text-xs text-slate-500">No</p>
-            <p className="text-lg font-bold text-red-400">{voteSummary.no}</p>
-          </div>
-          <div className="bg-slate-700/30 rounded p-2 text-center">
-            <p className="text-xs text-slate-500">Abstain</p>
-            <p className="text-lg font-bold text-yellow-400">{voteSummary.abstain}</p>
+        <div className="mt-4">
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-500">Bio</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-300">{props.bio || 'No bio provided.'}</p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Stat label="GovScore" value={props.adjustedScore !== null ? props.adjustedScore.toFixed(1) : '—'} />
+          <Stat label="Raw" value={props.rawScore !== null ? props.rawScore.toFixed(1) : '—'} sub="before ADA dampening" />
+          <Stat
+            label="Participation"
+            value={props.participationRate !== null ? `${Math.round(props.participationRate * 100)}%` : '—'}
+            sub={props.votesEligible ? `${props.votesCast ?? 0} of ${props.votesEligible}` : undefined}
+          />
+          <Stat label="Streak" value={`${props.votingStreak ?? 0}`} sub="epochs" />
+          <Stat label="Delegated" value={props.adaAmount} />
+          <Stat label="Delegators" value={props.delegatorCount ? props.delegatorCount.toLocaleString() : '—'} />
+          <Stat label="Status" value={props.isRegistered ? 'Active' : 'Retired'} />
+          <Stat label="Card" value={`No. ${String(props.rank).padStart(3, '0')}`} />
+        </div>
+
+        <div className="mt-4">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">Voting record</p>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-lg bg-emerald-900/30 p-2 text-center">
+              <p className="text-xl font-black text-emerald-300">{votes.yes}</p>
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Yes</p>
+            </div>
+            <div className="rounded-lg bg-red-900/30 p-2 text-center">
+              <p className="text-xl font-black text-red-300">{votes.no}</p>
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">No</p>
+            </div>
+            <div className="rounded-lg bg-slate-700/40 p-2 text-center">
+              <p className="text-xl font-black text-slate-200">{votes.abstain}</p>
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Abstain</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Recent Votes */}
-      {recentVotes.length > 0 && (
-        <div className="mb-4 pb-3 border-b border-slate-700/50">
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Recent Votes</p>
-          <div className="space-y-1">
-            {recentVotes.map((vote, idx) => (
-              <a
-                key={idx}
-                href={`https://gov.tools/governance_actions/${vote.proposal_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                <span className={`font-semibold ${
-                  vote.vote === 'yes' ? 'text-green-400' :
-                  vote.vote === 'no' ? 'text-red-400' :
-                  'text-yellow-400'
-                }`}>
-                  {vote.vote.toUpperCase()}
-                </span>
-                <span className="truncate underline-offset-2 hover:underline">
-                  {vote.proposal_title || `Proposal ${vote.proposal_id.substring(0, 8)}`}
-                </span>
-              </a>
-            ))}
+        {links.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">Links</p>
+            <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
+              {links.map((link) => (
+                <a
+                  key={link.url}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="flex min-w-0 items-center gap-2 text-sm text-slate-300 hover:text-white"
+                >
+                  <Globe size={14} className="flex-shrink-0 text-slate-500" />
+                  <span className="truncate">{link.label}</span>
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Career Legacy Score */}
-      <div className="mb-4 pb-3 border-b border-slate-700/50">
-        <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Career Legacy Score</p>
-        <p className="text-sm font-semibold text-slate-300">—</p>
-      </div>
-
-      {links.length > 0 && (
-        <div className="mb-4 pb-3 border-b border-slate-700/50">
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Links</p>
-          <div className="flex flex-col gap-1">
-            {links.map((link) => (
-              <a
-                key={link.url}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-2 text-xs text-slate-300 hover:text-white truncate"
-              >
-                <Globe size={12} className="flex-shrink-0 text-slate-500" />
-                <span className="truncate">{link.label}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-auto pt-3">
-        {props.doNotList ? (
-          <p className="text-xs text-slate-400 text-center">
-            This DRep has asked not to be promoted for delegation.
-          </p>
-        ) : (
-          <a
-            href={`https://gov.tools/connected/drep_directory/${props.drepId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm"
-          >
-            Delegate via GovTool
-            <ExternalLink size={14} />
-          </a>
         )}
-      </div>
 
-      <p className="text-xs text-slate-600 text-center mt-3">Click to flip back</p>
+        <div className="mt-5">
+          {props.doNotList ? (
+            <p className="text-center text-sm text-slate-400">This DRep has asked not to be promoted for delegation.</p>
+          ) : (
+            <a
+              href={`https://gov.tools/connected/drep_directory/${props.drepId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-2.5 font-semibold text-white transition-colors hover:bg-violet-700"
+            >
+              Delegate via GovTool <ExternalLink size={14} />
+            </a>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 export function DRepCard({ props }: { props: DRepCardProps }) {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setIsFlipped(!isFlipped);
-    }
-  };
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = overflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <motion.button
-      onClick={() => setIsFlipped(!isFlipped)}
-      onKeyDown={handleKeyDown}
-      className="w-full focus:outline-none focus:ring-2 focus:ring-violet-500 rounded-xl transition-all"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      aria-label={`${props.displayName} - Rank ${props.rank} - Score ${props.adjustedScore?.toFixed(1) || '-'} - Click to view profile`}
-      aria-pressed={isFlipped}
-    >
-      <motion.div
-        initial={false}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{
-          duration: 0.6,
-          type: 'spring',
-          stiffness: 80,
-          damping: 15,
-        }}
-        style={{
-          transformStyle: 'preserve-3d',
-          perspective: 1200,
-        }}
-        className="w-full h-full"
+    <>
+      <motion.button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+        whileHover={{ y: -6, rotate: -0.6 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        aria-label={`${props.displayName}, rank ${props.rank}, GovScore ${props.adjustedScore?.toFixed(1) ?? 'none'}. Open card details`}
+        aria-haspopup="dialog"
       >
-        {/* Front */}
-        <motion.div
-          style={{
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-          }}
-          className="w-full h-full"
-        >
-          <CardFront props={props} />
-        </motion.div>
+        <CardFront props={props} />
+      </motion.button>
 
-        {/* Back */}
-        <motion.div
-          style={{
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            rotateY: 180,
-          }}
-          className="w-full h-full absolute inset-0"
-        >
-          <CardBack props={props} />
-        </motion.div>
-      </motion.div>
-    </motion.button>
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setOpen(false)}
+              >
+                <motion.div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`${props.displayName} card details`}
+                  className="w-full max-w-xl"
+                  style={{ perspective: 1400 }}
+                  initial={{ scale: 0.5, rotateY: -180, opacity: 0 }}
+                  animate={{ scale: 1, rotateY: 0, opacity: 1 }}
+                  exit={{ scale: 0.6, rotateY: 90, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 16 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <CardBack props={props} onClose={() => setOpen(false)} />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+    </>
   );
 }

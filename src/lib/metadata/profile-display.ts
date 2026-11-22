@@ -7,8 +7,8 @@
  * links and mixed-content images.
  */
 
-const MAX_LINKS = 5;
-const MAX_BIO_CHARS = 600;
+const MAX_LINKS = 8;
+const MAX_BIO_CHARS = 1500;
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 
 export interface DisplayProfile {
