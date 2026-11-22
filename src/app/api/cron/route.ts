@@ -17,6 +17,7 @@ import { getMatchData } from '@/lib/match/profiles';
 import { getSeasonData } from '@/lib/season/data';
 import { isStatementRunActive, runStatementSummaries } from '@/lib/statements/run';
 import { refreshProposalArguments } from '@/lib/statements/proposal-arguments';
+import { getHotTopics } from '@/lib/hot-topics/data';
 
 const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
 
@@ -183,14 +184,17 @@ async function runPipeline(): Promise<void> {
       );
     }
 
-    // Quiz proposals get for/against summaries from Yes and No voters' rationales.
+    // Quiz proposals and Hot Topics get for/against summaries from Yes and No voters' rationales.
     // Only proposals whose rationales changed are re-sent to the AI, so most runs cost nothing.
     if (STATEMENT_INTERVAL_HOURS[process.env.STATEMENT_SUMMARIES ?? ''] !== undefined) {
       try {
         await step('summarize_proposal_arguments', async () => {
-          const { real_votes } = await getMatchData();
-          const r = await refreshProposalArguments(real_votes.map((q) => ({ proposal_id: q.proposal_id, title: q.title })));
-          if (r.generated > 0) await getMatchData({ force: true });
+          const [{ real_votes }, hot] = await Promise.all([getMatchData(), getHotTopics({ force: true })]);
+          const targets = new Map<string, string>();
+          for (const q of real_votes) targets.set(q.proposal_id, q.title);
+          for (const t of hot.topics) targets.set(t.proposal_id, t.title);
+          const r = await refreshProposalArguments(Array.from(targets, ([proposal_id, title]) => ({ proposal_id, title })));
+          if (r.generated > 0) await Promise.all([getMatchData({ force: true }), getHotTopics({ force: true })]);
           return r;
         });
       } catch (error) {
@@ -199,6 +203,18 @@ async function runPipeline(): Promise<void> {
           JSON.stringify({ event: 'cron_step_proposal_arguments_failed', error: error instanceof Error ? error.message : String(error) })
         );
       }
+    }
+
+    try {
+      await step('refresh_hot_topics', async () => {
+        const data = await getHotTopics({ force: true });
+        return { topics: data.topics.length };
+      });
+    } catch (error) {
+      if (lastRun) lastRun.error = null;
+      console.error(
+        JSON.stringify({ event: 'cron_step_hot_topics_failed', error: error instanceof Error ? error.message : String(error) })
+      );
     }
 
     try {

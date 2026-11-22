@@ -10,6 +10,7 @@ export function Navbar() {
         <div className="flex items-center gap-8 mx-auto">
           <Link href="/scoreboard" className="text-slate-200 hover:text-white text-base transition-colors">Scoreboard</Link>
           <Link href="/match" className="text-slate-200 hover:text-white text-base transition-colors">Find My DRep</Link>
+          <Link href="/hot-topics" className="text-slate-200 hover:text-white text-base transition-colors">Hot Topics</Link>
           <Link href="/season" className="text-slate-200 hover:text-white text-base transition-colors">Season</Link>
           <Link href="/about" className="text-slate-200 hover:text-white text-base transition-colors">About</Link>
           <Link href="/methodology" className="text-slate-200 hover:text-white text-base transition-colors">Methodology</Link>
