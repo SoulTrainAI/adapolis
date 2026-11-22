@@ -18,6 +18,14 @@ until Jason approves folding these changes into it.
 - **No delegation bonus** (Jason, 2026-11-21): where someone delegates is personal; the game
   never rewards delegating to a particular DRep.
 - **Prizes:** winners get NFTs and bragging rights. Season 1 champions form the Genesis set.
+- **Cards are pure collectibles** (Jason, 2026-11-21): no holder votes or governance of any kind,
+  no royalty share for collectors.
+- **No DRep fee** (Jason, 2026-11-21): every registered DRep is in the league automatically.
+- **Royalty:** a single 5% CIP-27 royalty to Jason's project wallet, for Genesis and all seasons
+  until he decides otherwise. DReps earn via their 5 copies of their own card.
+- **Minting cost:** claimers pay their own network fee/min-ADA. Mainnet minting is a hard
+  checkpoint: Jason signs.
+- **Other revenue to explore:** season sponsors (name/art only, no scoring influence), Catalyst grant.
 
 ## Assumed (Jason didn't answer; revisit before Season 1)
 
@@ -30,4 +38,7 @@ until Jason approves folding these changes into it.
 2. Tables: `seasons`, `fantasy_rosters` (stake address, season, 5 DRep ids, underdog snapshot).
 3. Draft UI: pick 5 DReps, lock 24h after the season starts.
 4. Player leaderboard: sum of drafted DReps' season points × underdog multiplier.
-5. Later: delegator consistency points, Champion Cards (testnet first), prizes after legal review.
+5. Social: private leagues with invite links, shareable team images, "drafted by N teams"
+   counter on DRep cards, weekly recap.
+6. Later: delegator consistency points, Champion Cards (testnet first, living stats),
+   lawyer review before any mainnet mint (Gate 4).
