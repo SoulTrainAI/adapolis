@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { WalletSignIn } from '@/components/auth/WalletSignIn';
 import { Logo } from '@/components/brand/Logo';
+import { ThemeToggle } from './ThemeToggle';
 
 const LINKS: Array<[string, string]> = [
   ['/scoreboard', 'Scoreboard'],
@@ -19,7 +20,7 @@ export function Navbar() {
   const pathname = usePathname();
   return (
     <nav className="sticky top-0 z-50 w-full bg-brand-navy/85 backdrop-blur-md">
-      <div className="flex items-center gap-6 px-4 py-3 sm:px-6">
+      <div className="flex items-center gap-4 px-4 py-3 sm:px-6">
         <Link href="/" aria-label="ADApolis home" className="flex-shrink-0">
           <Logo size={38} />
         </Link>
@@ -41,6 +42,7 @@ export function Navbar() {
             );
           })}
         </div>
+        <ThemeToggle />
         <WalletSignIn />
       </div>
       <div className="brand-hairline h-px w-full opacity-70" />

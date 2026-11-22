@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { THEME_BOOT_SCRIPT } from "@/components/layout/ThemeToggle";
 import { SITE_URL, X_HANDLE } from "@/lib/site/social";
 
 const geistSans = localFont({
@@ -47,7 +48,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* eslint-disable-next-line react/no-danger -- fixed inline script, no user input */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${display.variable} antialiased flex flex-col min-h-screen bg-brand-navy`}
       >

@@ -1,4 +1,7 @@
 import type { Config } from "tailwindcss";
+// Palette as CSS variables so light mode can swap it (see scripts/generate-theme.cjs).
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const themeColors = require("./src/lib/theme/colors.cjs");
 
 const config: Config = {
   content: [
@@ -11,14 +14,7 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        brand: {
-          navy: "#0b1020",
-          ink: "#141c38",
-          violet: "#8b5cf6",
-          lilac: "#c4b5fd",
-          gold: "#f5b301",
-          "gold-light": "#fcd34d",
-        },
+        ...themeColors,
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],

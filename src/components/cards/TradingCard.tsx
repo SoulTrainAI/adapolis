@@ -678,7 +678,7 @@ export function TradingCard(props: TradingCardProps) {
 
   const h = headlineFor(props);
   return (
-    <div className="flex flex-col gap-2">
+    <div className="theme-dark flex flex-col gap-2">
       <motion.button
         type="button"
         onClick={() => setOpen(true)}
@@ -701,7 +701,7 @@ export function TradingCard(props: TradingCardProps) {
           <AnimatePresence>
             {open && (
               <motion.div
-                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+                className="theme-dark fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
