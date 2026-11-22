@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ExternalLink, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { Cloud, CloudOff, ExternalLink, Loader2, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
 import { TOPICS, IMPORTANCE_LEVELS, type Topic } from '@/lib/match/topics';
 import { scoreMatches, type Answers, type RankMode } from '@/lib/match/score';
 import type { MatchData, RealVoteQuestion } from '@/lib/match/profiles';
@@ -120,6 +120,91 @@ export function MatchQuiz() {
     setRankMode('votes');
   };
 
+  // Opt-in: answers saved to the signed-in wallet follow the player to other devices.
+  const [signedIn, setSignedIn] = useState(false);
+  const [walletSavedAt, setWalletSavedAt] = useState<string | null>(null);
+  const [walletBusy, setWalletBusy] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const lastSynced = useRef<string | null>(null);
+
+  const loadWallet = useCallback(async () => {
+    try {
+      const me = (await fetch('/api/auth/me').then((r) => r.json())) as { stakeAddress: string | null };
+      setSignedIn(!!me.stakeAddress);
+      if (!me.stakeAddress) {
+        setWalletSavedAt(null);
+        return;
+      }
+      const res = await fetch('/api/me/quiz');
+      const body = (await res.json()) as { saved: { answers: Answers; include_deeper: boolean; updated_at: string } | null; error?: string };
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      if (!body.saved) {
+        setWalletSavedAt(null);
+        return;
+      }
+      setWalletSavedAt(body.saved.updated_at);
+      lastSynced.current = JSON.stringify([body.saved.answers, body.saved.include_deeper]);
+      const local = JSON.parse(localStorage.getItem(SAVED_KEY) ?? 'null') as SavedQuiz | null;
+      // The newer copy wins, so answers updated on another device show up here.
+      if (!local || new Date(body.saved.updated_at) > new Date(local.savedAt)) {
+        setAnswers(body.saved.answers);
+        setIncludeDeeper(body.saved.include_deeper);
+        setSavedAt(body.saved.updated_at);
+      }
+    } catch (e) {
+      setWalletError(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWallet();
+    window.addEventListener('adapolis:auth', loadWallet);
+    return () => window.removeEventListener('adapolis:auth', loadWallet);
+  }, [loadWallet]);
+
+  const pushToWallet = useCallback(async (a: Answers, deeper: boolean) => {
+    setWalletBusy(true);
+    setWalletError(null);
+    try {
+      const res = await fetch('/api/me/quiz', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: a, include_deeper: deeper }),
+      });
+      const body = (await res.json()) as { saved?: { updated_at: string }; error?: string };
+      if (!res.ok || !body.saved) throw new Error(body.error ?? `HTTP ${res.status}`);
+      lastSynced.current = JSON.stringify([a, deeper]);
+      setWalletSavedAt(body.saved.updated_at);
+    } catch (e) {
+      setWalletError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setWalletBusy(false);
+    }
+  }, []);
+
+  const removeFromWallet = async () => {
+    setWalletBusy(true);
+    setWalletError(null);
+    try {
+      const res = await fetch('/api/me/quiz', { method: 'DELETE', headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? `HTTP ${res.status}`);
+      setWalletSavedAt(null);
+      lastSynced.current = null;
+    } catch (e) {
+      setWalletError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setWalletBusy(false);
+    }
+  };
+
+  // Once saved to the wallet, later edits sync automatically.
+  useEffect(() => {
+    if (!walletSavedAt || !hasAnswers) return;
+    if (JSON.stringify([answers, includeDeeper]) === lastSynced.current) return;
+    const t = setTimeout(() => pushToWallet(answers, includeDeeper), 1000);
+    return () => clearTimeout(t);
+  }, [answers, includeDeeper, walletSavedAt, hasAnswers, pushToWallet]);
+
   useEffect(() => {
     fetch('/api/match')
       .then(async (res) => {
@@ -219,7 +304,8 @@ export function MatchQuiz() {
           <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 text-left text-sm text-slate-300 space-y-2">
             <p className="flex gap-2">
               <ShieldCheck size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-              Your answers stay in your browser, saved on this device until you retake or clear them. Nothing is sent to us.
+              Your answers stay on this device until you retake or clear them. Nothing is sent to us unless you choose to
+              save them to your wallet to use on other devices.
             </p>
             <p className="flex gap-2">
               <Sparkles size={16} className="text-violet-300 flex-shrink-0 mt-0.5" />
@@ -424,6 +510,45 @@ export function MatchQuiz() {
                 : 'They will count once DRep statements are summarized.'}
             </p>
           )}
+          {hasAnswers && !quickPick && (
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-sm">
+              {!signedIn ? (
+                <p className="flex items-center gap-2 text-slate-300">
+                  <CloudOff size={16} className="text-slate-500" /> Saved on this device only. Connect your wallet (top right) to save
+                  your answers to it and use them on other devices.
+                </p>
+              ) : walletSavedAt ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="flex items-center gap-2 text-emerald-300">
+                    <Cloud size={16} /> Saved to your wallet
+                    {walletBusy ? ' · syncing…' : ` · ${new Date(walletSavedAt).toLocaleString()}`}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={removeFromWallet}
+                    disabled={walletBusy}
+                    className="text-slate-400 hover:text-slate-200 underline underline-offset-2 disabled:opacity-50"
+                  >
+                    Remove from wallet
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-slate-300">Saved on this device only.</p>
+                  <button
+                    type="button"
+                    onClick={() => pushToWallet(answers, includeDeeper)}
+                    disabled={walletBusy}
+                    className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-1.5 font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+                  >
+                    {walletBusy ? <Loader2 size={14} className="animate-spin" /> : <Cloud size={14} />} Save to my wallet
+                  </button>
+                  <span className="text-xs text-slate-500">Use your answers on any device you sign in from. Private to you.</span>
+                </div>
+              )}
+              {walletError && <p className="mt-2 text-red-300">{walletError}</p>}
+            </div>
+          )}
           <div className="flex flex-wrap gap-4 border-t border-slate-800 pt-4">
             <button
               type="button"
@@ -439,12 +564,13 @@ export function MatchQuiz() {
               <button
                 type="button"
                 onClick={() => {
+                  if (walletSavedAt) removeFromWallet();
                   clearSaved();
                   setStepIndex(0);
                 }}
                 className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
               >
-                <RotateCcw size={14} /> Clear my answers
+                <RotateCcw size={14} /> Clear my answers{walletSavedAt ? ' (here and from my wallet)' : ''}
               </button>
             )}
           </div>
