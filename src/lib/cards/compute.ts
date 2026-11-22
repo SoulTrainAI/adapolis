@@ -21,12 +21,13 @@ import {
   type SeasonVote,
 } from '@/lib/season/points';
 import type { CardAbility, CardSummary, SeasonLine } from './types';
+import { ABILITY_RULES, TIER_NAMES, tierFor } from './abilities';
 
 const TREND_WINDOWS = 12;
 
 export interface CardInputs {
   currentEpoch: number;
-  dreps: Array<{ drep_id: string; registered: boolean; ada: number; delegators: number; name: string | null; image: string | null; do_not_list: boolean }>;
+  dreps: Array<{ drep_id: string; registered: boolean; ada: number; delegators: number; name: string | null; image: string | null; do_not_list: boolean; profile_complete: boolean }>;
   proposals: Array<SeasonProposal & ProposalWindow>;
   votes: SeasonVote[];
   periods: Map<string, RegistrationPeriod[]>;
@@ -135,8 +136,7 @@ export function computeCards(input: CardInputs): CardComputation {
     .filter((d) => d.registered && latest.get(d.drep_id)?.govscore != null)
     .sort((a, b) => (latest.get(b.drep_id)!.govscore ?? 0) - (latest.get(a.drep_id)!.govscore ?? 0));
   const rankOf = new Map(ranked.map((d, i) => [d.drep_id, i + 1]));
-  const votesTotal = new Map(dreps.map((d) => [d.drep_id, (votesByDRep.get(d.drep_id) ?? []).length]));
-  const workhorseCut = Array.from(votesTotal.values()).sort((a, b) => b - a)[Math.max(0, Math.floor(dreps.length * 0.1) - 1)] ?? Infinity;
+
 
   const summaries = new Map<string, CardSummary>();
   const lines = new Map<string, SeasonLine[]>();
@@ -183,24 +183,35 @@ export function computeCards(input: CardInputs): CardComputation {
     const earlyRate = totalVotes ? early / totalVotes : null;
     const cur = myLines[myLines.length - 1];
 
-    const abilities: CardAbility[] = [];
-    if (rationaleRate !== null && totalVotes >= 5 && rationaleRate >= 0.8)
-      abilities.push({ id: 'scholar', label: 'Scholar', detail: `Explains ${Math.round(rationaleRate * 100)}% of votes.` });
-    if (earlyRate !== null && totalVotes >= 5 && earlyRate >= 0.5)
-      abilities.push({ id: 'early_bird', label: 'Early Bird', detail: `Votes early on ${Math.round(earlyRate * 100)}% of actions.` });
-    if (completed.length >= 3 && completed.every((c) => c.missed === 0))
-      abilities.push({ id: 'ironclad', label: 'Ironclad', detail: `No missed votes in ${completed.length} windows.` });
-    if (totalVotes >= workhorseCut && totalVotes > 0)
-      abilities.push({ id: 'workhorse', label: 'Workhorse', detail: `${totalVotes} career votes, top 10% of DReps.` });
-    if ((l?.streak ?? 0) >= 5) abilities.push({ id: 'on_fire', label: 'On Fire', detail: `${l?.streak} epochs in a row.` });
-    // Windows with at least one vote: being registered while idle isn't experience.
     const votedWindows = completed.filter((c) => c.votes > 0).length;
-    if (votedWindows >= 10) abilities.push({ id: 'veteran', label: 'Veteran', detail: `Voted in ${votedWindows} windows.` });
-    // Only small DReps that are actually voting: a big multiplier on an idle DRep is a trap, not a sleeper.
+    let cleanRun = 0;
+    for (let i = completed.length - 1; i >= 0 && completed[i].votes > 0 && completed[i].missed === 0; i--) cleanRun++;
     const lastDone = completed[completed.length - 1];
-    if (underdog >= 1.35 && lastDone !== undefined && lastDone.window >= currentWindow - 1 && lastDone.votes > 0)
-      abilities.push({ id: 'underdog', label: 'Underdog', detail: `Active small DRep: ${underdog.toFixed(2)}× draft multiplier.` });
-    if (rookie) abilities.push({ id: 'rookie', label: 'Rookie', detail: 'First votes in the last two windows.' });
+    const activeLately = lastDone !== undefined && lastDone.window >= currentWindow - 1 && lastDone.votes > 0;
+    const streak = l?.streak ?? 0;
+
+    const abilities: CardAbility[] = [];
+    const tiered: Record<string, [number, (n: number) => string]> = {
+      scholar: [rationales, (n) => `${n} votes explained with a rationale.`],
+      early_bird: [early, (n) => `${n} votes cast in the first half of the window.`],
+      workhorse: [totalVotes, (n) => `${n} career votes.`],
+      veteran: [votedWindows, (n) => `Voted in ${n} six-epoch windows.`],
+      ironclad: [cleanRun, (n) => `${n} windows in a row with no missed votes.`],
+      on_fire: [streak, (n) => `${n} epochs in a row without a miss.`],
+    };
+    for (const rule of ABILITY_RULES) {
+      if (!rule.tiers) continue;
+      const [value, describe] = tiered[rule.id];
+      const tier = tierFor(value, rule.tiers);
+      if (tier) abilities.push({ id: rule.id, label: `${rule.label} · ${TIER_NAMES[tier]}`, detail: describe(value), tier });
+    }
+    if (d.profile_complete) abilities.push({ id: 'identified', label: 'Identified', detail: 'Complete public profile: name, bio, image and links.', tier: null });
+    // Only small DReps that are actually voting: a big multiplier on an idle DRep is a trap, not a sleeper.
+    if (underdog >= 1.35 && activeLately)
+      abilities.push({ id: 'underdog', label: 'Underdog', detail: `Active small DRep: ${underdog.toFixed(2)}× draft multiplier.`, tier: null });
+    if (rookie) abilities.push({ id: 'rookie', label: 'Rookie', detail: 'First votes in the last two windows.', tier: null });
+    const lastVote = (votesByDRep.get(d.drep_id) ?? []).reduce((m, v) => Math.max(m, v.epoch), -Infinity);
+    const recentLines = myLines.filter((x) => x.window >= currentWindow - 1);
 
     summaries.set(d.drep_id, {
       drep_id: d.drep_id,
@@ -246,6 +257,8 @@ export function computeCards(input: CardInputs): CardComputation {
         first_epoch: firstEpochOf,
         tenure_epochs: firstEpochOf === null ? 0 : currentEpoch - firstEpochOf,
       },
+      last_vote_epoch: Number.isFinite(lastVote) ? lastVote : null,
+      recent: { votes: recentLines.reduce((t, x) => t + x.votes, 0), missed: recentLines.reduce((t, x) => t + x.missed, 0) },
       rookie,
       underdog,
       ownership: input.ownership.rosters > 0 ? (input.ownership.picks.get(d.drep_id) ?? 0) / input.ownership.rosters : null,
@@ -253,13 +266,16 @@ export function computeCards(input: CardInputs): CardComputation {
       abilities,
     });
   }
-  // Archetype is the DRep's rarest ability, so the headline trait sets it apart instead of repeating the most common one.
+  // Archetype is the DRep's rarest ability (ability and tier together), so the headline trait sets it apart.
+  const key = (a: CardAbility) => `${a.id}:${a.tier ?? 0}`;
   const abilityCount = new Map<string, number>();
-  summaries.forEach((c) => c.abilities.forEach((a) => abilityCount.set(a.id, (abilityCount.get(a.id) ?? 0) + 1)));
+  summaries.forEach((c) => c.abilities.forEach((a) => abilityCount.set(key(a), (abilityCount.get(key(a)) ?? 0) + 1)));
+  const background = new Set(['underdog', 'rookie', 'identified']);
   summaries.forEach((c) => {
-    const traits = c.abilities.filter((a) => a.id !== 'underdog' && a.id !== 'rookie');
+    const traits = c.abilities.filter((a) => !background.has(a.id));
     const pool = traits.length ? traits : c.abilities;
-    c.archetype = pool.slice().sort((a, b) => (abilityCount.get(a.id) ?? 0) - (abilityCount.get(b.id) ?? 0))[0] ?? null;
+    c.archetype =
+      pool.slice().sort((a, b) => (abilityCount.get(key(a)) ?? 0) - (abilityCount.get(key(b)) ?? 0) || (b.tier ?? 0) - (a.tier ?? 0))[0] ?? null;
   });
 
   return { currentWindow, summaries, lines };

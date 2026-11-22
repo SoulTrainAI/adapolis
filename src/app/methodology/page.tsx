@@ -4,6 +4,8 @@
  * Target: DReps, researchers, delegators
  */
 
+import { ABILITY_RULES, TIER_NAMES } from '@/lib/cards/abilities';
+
 export const metadata = {
   title: 'Methodology — ADApolis',
   description: 'How ADApolis scores DReps: participation rates, quadratic ADA dampening, and scoring formulas.',
@@ -551,6 +553,47 @@ and ADA_M = ADA delegated in millions`}
             Rationale points check that a rationale exists, not how good it is. Judging quality by AI would be contested;
             community ratings may be added later. Points are computed from on-chain data via Koios and refresh every 6 hours.
           </p>
+        </section>
+
+        <section id="card-abilities" className="space-y-6 scroll-mt-24">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">11. Card Abilities</h2>
+          <p className="text-slate-300 leading-relaxed">
+            Every DRep card lists the abilities it has earned. Most come in {TIER_NAMES[1]}, {TIER_NAMES[2]} and {TIER_NAMES[3]}{' '}
+            tiers. Like season points, they only count how a DRep does the job: none depends on which way it voted or whether
+            a proposal passed. The headline ability on the front of a card is the rarest one that DRep holds.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="text-xs uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="py-2 pr-4 font-semibold">Ability</th>
+                  <th className="py-2 pr-4 font-semibold">Counts</th>
+                  <th className="py-2 pr-4 font-semibold">{TIER_NAMES[1]}</th>
+                  <th className="py-2 pr-4 font-semibold">{TIER_NAMES[2]}</th>
+                  <th className="py-2 font-semibold">{TIER_NAMES[3]}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ABILITY_RULES.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-800 align-top">
+                    <td className="py-2 pr-4 font-semibold text-white">{r.label}</td>
+                    <td className="py-2 pr-4">{r.measures}</td>
+                    {r.tiers ? (
+                      r.tiers.map((t, i) => (
+                        <td key={i} className="py-2 pr-4">
+                          {t}
+                        </td>
+                      ))
+                    ) : (
+                      <td colSpan={3} className="py-2 text-slate-500">
+                        One level
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         {/* Footer */}

@@ -110,6 +110,7 @@ async function load(): Promise<Loaded> {
       name: profile.name,
       image: profile.image,
       do_not_list: profile.doNotList,
+      profile_complete: Boolean(profile.name && profile.bio && profile.image && profile.links.length > 0),
     };
   });
 

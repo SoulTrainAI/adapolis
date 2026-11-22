@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
 import {
+  BadgeCheck,
   BookOpen,
   Dog,
   ExternalLink,
@@ -56,6 +57,7 @@ const ABILITY_ICONS: Record<string, LucideIcon> = {
   veteran: Medal,
   underdog: Dog,
   rookie: Sprout,
+  identified: BadgeCheck,
 };
 
 // Any letter or digit in any script (constructor form: the TS target predates the u flag).
@@ -303,8 +305,11 @@ function CardFront(props: TradingCardProps) {
           )}
           <div className="absolute inset-x-2 bottom-1.5 flex items-center justify-between gap-1">
             {c.archetype && ArchIcon ? (
-              <span className="flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-brand-gold-light" title={c.archetype.detail}>
-                <ArchIcon size={11} /> {c.archetype.label}
+              <span
+                className={`flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold ${TIER_STYLE[c.archetype.tier ?? 0].text}`}
+                title={`${c.archetype.label}: ${c.archetype.detail}`}
+              >
+                <ArchIcon size={11} /> {abilityName(c.archetype)}
               </span>
             ) : (
               <span className="text-[9px] font-semibold uppercase tracking-widest text-white/80">DRep</span>
@@ -381,13 +386,25 @@ function SectionTitle({ children }: { children: ReactNode }) {
   return <p className="mb-2 mt-5 text-[11px] font-bold uppercase tracking-widest text-slate-500">{children}</p>;
 }
 
+const TIER_STYLE: Record<number, { box: string; text: string }> = {
+  0: { box: 'border-violet-400/30 bg-violet-500/5', text: 'text-violet-200' },
+  1: { box: 'border-orange-400/40 bg-orange-500/5', text: 'text-orange-300' },
+  2: { box: 'border-slate-300/40 bg-slate-200/5', text: 'text-slate-100' },
+  3: { box: 'border-brand-gold/50 bg-brand-gold/10', text: 'text-brand-gold-light' },
+};
+
+function abilityName(a: CardAbility): string {
+  return a.label.split(' · ')[0];
+}
+
 function AbilityBox({ a }: { a: CardAbility }) {
   const Icon = ABILITY_ICONS[a.id] ?? Sparkles;
+  const style = TIER_STYLE[a.tier ?? 0];
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-brand-gold/25 bg-brand-gold/5 px-3 py-2">
-      <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-gold-light" />
+    <div className={`flex items-start gap-2 rounded-lg border px-3 py-2 ${style.box}`}>
+      <Icon className={`mt-0.5 h-4 w-4 flex-shrink-0 ${style.text}`} />
       <div>
-        <p className="text-sm font-bold text-brand-gold-light">{a.label}</p>
+        <p className={`text-sm font-bold ${style.text}`}>{a.label}</p>
         <p className="text-xs text-slate-300">{a.detail}</p>
       </div>
     </div>

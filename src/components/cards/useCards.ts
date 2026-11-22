@@ -4,16 +4,20 @@ import { useEffect, useState } from 'react';
 import type { CardDetail, CardsPayload, CardSummary } from '@/lib/cards/types';
 
 // One fetch per page load, shared by every card on the page.
-let cardsPromise: Promise<Map<string, CardSummary>> | null = null;
+interface Loaded {
+  cards: Map<string, CardSummary>;
+  currentEpoch: number | null;
+}
+let cardsPromise: Promise<Loaded> | null = null;
 const detailCache = new Map<string, Promise<CardDetail>>();
 
-function loadCards(): Promise<Map<string, CardSummary>> {
+function loadCards(): Promise<Loaded> {
   if (!cardsPromise) {
     cardsPromise = fetch('/api/cards')
       .then(async (r) => {
         if (!r.ok) throw new Error(`Card stats unavailable (HTTP ${r.status})`);
         const body = (await r.json()) as CardsPayload;
-        return new Map(body.cards.map((c) => [c.drep_id, c]));
+        return { cards: new Map(body.cards.map((c) => [c.drep_id, c])), currentEpoch: body.current_epoch };
       })
       .catch((e: unknown) => {
         cardsPromise = null;
@@ -24,20 +28,25 @@ function loadCards(): Promise<Map<string, CardSummary>> {
 }
 
 /** Card stats for every registered DRep, keyed by id. Empty map until loaded or if loading fails. */
-export function useCards(): { cards: Map<string, CardSummary>; loaded: boolean } {
+export function useCards(): { cards: Map<string, CardSummary>; loaded: boolean; currentEpoch: number | null } {
   const [cards, setCards] = useState<Map<string, CardSummary>>(new Map());
+  const [currentEpoch, setCurrentEpoch] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let live = true;
     loadCards()
-      .then((m) => live && setCards(m))
+      .then((m) => {
+        if (!live) return;
+        setCards(m.cards);
+        setCurrentEpoch(m.currentEpoch);
+      })
       .catch(() => undefined)
       .finally(() => live && setLoaded(true));
     return () => {
       live = false;
     };
   }, []);
-  return { cards, loaded };
+  return { cards, loaded, currentEpoch };
 }
 
 export function useCardDetail(drepId: string, enabled: boolean): { detail: CardDetail | null; error: string | null } {
@@ -92,6 +101,8 @@ export function placeholderCard(p: { drep_id: string; name: string | null; image
     form: null,
     projection: null,
     lifetime: { votes: 0, points: 0, seasons: 0, rationale_rate: null, early_rate: null, missed: 0, first_epoch: null, tenure_epochs: 0 },
+    last_vote_epoch: null,
+    recent: { votes: 0, missed: 0 },
     rookie: false,
     underdog: 1,
     ownership: null,

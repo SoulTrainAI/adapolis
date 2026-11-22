@@ -8,6 +8,8 @@ export interface CardAbility {
   id: string;
   label: string;
   detail: string;
+  /** 1 Bronze, 2 Silver, 3 Gold; null for one-level abilities */
+  tier: 1 | 2 | 3 | null;
 }
 
 export interface CardSummary {
@@ -52,6 +54,10 @@ export interface CardSummary {
     first_epoch: number | null;
     tenure_epochs: number;
   };
+  /** Epoch of the DRep's latest vote */
+  last_vote_epoch: number | null;
+  /** Votes and missed actions across the current and previous windows (about 6–12 epochs) */
+  recent: { votes: number; missed: number };
   rookie: boolean;
   /** Size-based draft multiplier against the latest finished window */
   underdog: number;
