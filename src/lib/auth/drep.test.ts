@@ -58,10 +58,12 @@ describe('DRep sign-in', () => {
     expect(verifyDrepChallenge({ token: ch.token, ...forged }).ok).toBe(false);
 
     // Flipped signature byte
-    const bad = { ...good, signature: good.signature.slice(0, -2) + (good.signature.endsWith('00') ? '01' : '00') };
+    const last = parseInt(good.signature.slice(-2), 16);
+    const bad = { ...good, signature: good.signature.slice(0, -2) + (last ^ 1).toString(16).padStart(2, '0') };
     expect(verifyDrepChallenge({ token: ch.token, ...bad }).ok).toBe(false);
 
     // Tampered token
-    expect(verifyDrepChallenge({ token: ch.token.replace(/.$/, 'A'), ...good }).ok).toBe(false);
+    const tampered = ch.token.slice(0, -1) + (ch.token.endsWith('A') ? 'B' : 'A');
+    expect(verifyDrepChallenge({ token: tampered, ...good }).ok).toBe(false);
   });
 });
