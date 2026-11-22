@@ -7,6 +7,7 @@ import type { DraftData } from '@/lib/season/fantasy';
 import { useMyDRep } from '@/components/auth/MyDRepBadge';
 import { TradingCard } from './TradingCard';
 import { placeholderCard, useCards } from './useCards';
+import { DRepCheckup } from './DRepCheckup';
 
 type DraftResponse = (({ enabled: true } & DraftData) | { enabled: false }) & { signed_in?: boolean };
 
@@ -24,7 +25,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 export function CollectionView() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [draft, setDraft] = useState<DraftResponse | null>(null);
-  const { cards, loaded } = useCards();
+  const { cards } = useCards();
   const myDRep = useMyDRep();
 
   const load = useCallback(() => {
@@ -119,14 +120,11 @@ export function CollectionView() {
         )}
       </Section>
 
-      {myDRep && (
+      {signedIn && (
         <Section title="Your DRep" icon={<span className="text-sky-300">●</span>}>
+          <DRepCheckup />
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {mine ? (
-              <TradingCard variant="scoreboard" card={mine} />
-            ) : loaded ? (
-              <p className="col-span-full text-sm text-slate-400">Your DRep isn&apos;t on the active scoreboard.</p>
-            ) : null}
+            {mine && <TradingCard variant="scoreboard" card={mine} />}
           </div>
         </Section>
       )}
