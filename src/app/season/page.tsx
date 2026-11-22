@@ -117,7 +117,7 @@ export default async function SeasonPage() {
           <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1">
             <li>Vote on a governance action: +{POINT_RULES.vote}</li>
             <li>Publish a rationale with it: +{POINT_RULES.rationale}</li>
-            <li>…a new one, not reused: +{POINT_RULES.freshRationale}</li>
+            <li>Unique rationale, not reused: +{POINT_RULES.freshRationale}</li>
             <li>Vote in the first half of the window: +{POINT_RULES.early}</li>
             <li>Let an action close without voting: {POINT_RULES.missed}</li>
             <li>
