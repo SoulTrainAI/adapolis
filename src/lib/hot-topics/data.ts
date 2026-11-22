@@ -1,8 +1,8 @@
 /**
  * Hot Topics: governance actions open for voting right now, with how DReps
  * are splitting, who has published reasons on each side, and the arguments
- * they made. Everything comes from on-chain votes and DRep-published
- * rationales; nothing is scraped from forums or social media.
+ * they made, from on-chain votes and DRep-published rationales. Cardano Forum
+ * discussion is shown separately, so on-chain and off-chain views never mix.
  */
 
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
@@ -10,6 +10,7 @@ import { fetchCurrentEpoch } from '@/lib/koios';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
 import { publicUrl } from '@/lib/utils/links';
 import { loadProposalArguments, type ProposalArguments } from '@/lib/statements/proposal-arguments';
+import { loadForumDiscussions, type ForumDiscussion } from '@/lib/forum/discussions';
 
 const DB_PAGE_SIZE = 1000;
 const MAX_TOPICS = 12;
@@ -45,6 +46,7 @@ export interface HotTopic {
   rationales: number;
   vocal: Record<'yes' | 'no', VocalDRep[]>;
   arguments: ProposalArguments | null;
+  forum: ForumDiscussion | null;
 }
 
 export interface HotTopicsData {
@@ -157,14 +159,19 @@ async function computeHotTopics(): Promise<HotTopicsData> {
       rationales,
       vocal,
       arguments: null,
+      forum: null,
     };
   });
 
   const top = topics
     .sort((a, b) => b.recent_votes + b.rationales - (a.recent_votes + a.rationales))
     .slice(0, MAX_TOPICS);
-  const args = await loadProposalArguments(top.map((t) => t.proposal_id));
-  for (const t of top) t.arguments = args.get(t.proposal_id) ?? null;
+  const ids = top.map((t) => t.proposal_id);
+  const [args, forum] = await Promise.all([loadProposalArguments(ids), loadForumDiscussions(ids)]);
+  for (const t of top) {
+    t.arguments = args.get(t.proposal_id) ?? null;
+    t.forum = forum.get(t.proposal_id) ?? null;
+  }
 
   return { computed_at: new Date().toISOString(), current_epoch: currentEpoch, topics: top };
 }

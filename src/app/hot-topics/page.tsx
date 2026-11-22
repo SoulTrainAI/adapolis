@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, MessagesSquare } from 'lucide-react';
 import { getHotTopics, type HotTopic, type Tally, type VocalDRep } from '@/lib/hot-topics/data';
+import type { ForumDiscussion } from '@/lib/forum/discussions';
 import { ArgumentsPanel, toArgument } from '@/components/governance/ArgumentsPanel';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import { formatAda } from '@/lib/match/score';
@@ -76,6 +77,64 @@ function VocalList({ title, dreps, tone }: { title: string; dreps: VocalDRep[]; 
   );
 }
 
+const MATCH_LABELS: Record<string, string> = {
+  reference: 'linked by the proposal',
+  gov_action_id: 'mentions this action',
+  title: 'title match',
+};
+
+function ForumSection({ forum }: { forum: ForumDiscussion }) {
+  const { support, oppose, neutral } = forum.sentiment;
+  const total = support + oppose + neutral;
+  const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
+  return (
+    <div className="border-t border-slate-800 pt-4 space-y-4">
+      <p className="text-sm font-medium text-slate-200 flex items-center gap-2">
+        <MessagesSquare size={16} className="text-sky-300" /> On the Cardano Forum
+      </p>
+      <ul className="space-y-1 text-sm">
+        {forum.threads.map((t) => (
+          <li key={t.id}>
+            <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-sky-300 hover:text-sky-200">
+              {t.title} ↗
+            </a>
+            <span className="text-xs text-slate-500 ml-2">
+              {t.posts_count} posts · {MATCH_LABELS[t.match]}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {total > 0 && (
+        <div>
+          <div className="flex justify-between text-xs text-slate-400 mb-1">
+            <span>Forum sentiment · {forum.participants} participants</span>
+            <span>
+              <span className="text-emerald-300">Support {support}</span> · <span className="text-red-300">Oppose {oppose}</span> ·{' '}
+              <span className="text-slate-400">Neutral {neutral}</span>
+            </span>
+          </div>
+          <div className="flex h-2.5 overflow-hidden rounded-full bg-slate-800">
+            <div className="bg-emerald-500" style={{ width: `${pct(support)}%` }} />
+            <div className="bg-red-500" style={{ width: `${pct(oppose)}%` }} />
+            <div className="bg-slate-500" style={{ width: `${pct(neutral)}%` }} />
+          </div>
+        </div>
+      )}
+      {forum.for.length + forum.against.length > 0 && (
+        <ArgumentsPanel
+          argsFor={forum.for.map((a) => ({ text: a.text, quote: a.quote, url: a.url, author: `@${a.author}`, linkLabel: 'Read post ↗' }))}
+          argsAgainst={forum.against.map((a) => ({ text: a.text, quote: a.quote, url: a.url, author: `@${a.author}`, linkLabel: 'Read post ↗' }))}
+        />
+      )}
+      <p className="text-[11px] text-slate-500">
+        AI-classified from {forum.posts_analyzed} forum posts; each person counts once, by their latest post. A small,
+        self-selected sample: it reflects who is talking, not how ADA holders or DReps will vote. Forum users aren&apos;t
+        matched to DReps.
+      </p>
+    </div>
+  );
+}
+
 function TopicCard({ t, currentEpoch }: { t: HotTopic; currentEpoch: number }) {
   const left = t.voting_ends_epoch !== null ? t.voting_ends_epoch - currentEpoch : null;
   return (
@@ -126,6 +185,8 @@ function TopicCard({ t, currentEpoch }: { t: HotTopic; currentEpoch: number }) {
         <VocalList title="Explained a Yes vote" dreps={t.vocal.yes} tone="text-emerald-300" />
         <VocalList title="Explained a No vote" dreps={t.vocal.no} tone="text-red-300" />
       </div>
+
+      {t.forum && <ForumSection forum={t.forum} />}
     </article>
   );
 }
@@ -149,8 +210,9 @@ export default async function HotTopicsPage() {
           published reasons for their vote, and the main arguments on each side, with links to their own words.
         </p>
         <p className="text-xs text-slate-500">
-          Based only on on-chain votes and DRep-published rationales. Voting power uses each DRep&apos;s current
-          delegation, which can differ from the stake counted at ratification.
+          Vote splits, rationales and arguments come from on-chain votes and DRep-published rationales. Cardano Forum
+          discussion is shown separately below each. Voting power uses each DRep&apos;s current delegation, which can
+          differ from the stake counted at ratification.
         </p>
       </header>
 

@@ -7,6 +7,9 @@ export interface Argument {
   url?: string | null;
   drepId?: string | null;
   drepName?: string | null;
+  /** Non-DRep author, e.g. a forum username */
+  author?: string;
+  linkLabel?: string;
 }
 
 export function ArgumentsPanel({ argsFor, argsAgainst, footnote }: { argsFor: Argument[]; argsAgainst: Argument[]; footnote?: string }) {
@@ -24,11 +27,11 @@ export function ArgumentsPanel({ argsFor, argsAgainst, footnote }: { argsFor: Ar
                 <blockquote className="mt-1 border-l-2 border-slate-700 pl-2 text-xs italic text-slate-400">
                   “{a.quote}”
                   <span className="not-italic block mt-0.5 text-slate-500">
-                    {a.drepName ?? (a.drepId ? `${a.drepId.slice(0, 14)}…` : 'A DRep')}
+                    {a.drepName ?? a.author ?? (a.drepId ? `${a.drepId.slice(0, 14)}…` : 'A DRep')}
                     {a.drepId && <MyDRepBadge drepId={a.drepId} className="ml-1 align-middle" />}
                     {a.url && (
                       <a href={a.url} target="_blank" rel="noopener noreferrer nofollow" className="ml-2 text-violet-300 hover:text-violet-200">
-                        Read full rationale ↗
+                        {a.linkLabel ?? 'Read full rationale ↗'}
                       </a>
                     )}
                   </span>

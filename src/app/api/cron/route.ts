@@ -18,6 +18,7 @@ import { getSeasonData } from '@/lib/season/data';
 import { isStatementRunActive, runStatementSummaries } from '@/lib/statements/run';
 import { refreshProposalArguments } from '@/lib/statements/proposal-arguments';
 import { getHotTopics } from '@/lib/hot-topics/data';
+import { refreshForumDiscussions } from '@/lib/forum/discussions';
 
 const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
 
@@ -201,6 +202,21 @@ async function runPipeline(): Promise<void> {
         if (lastRun) lastRun.error = null;
         console.error(
           JSON.stringify({ event: 'cron_step_proposal_arguments_failed', error: error instanceof Error ? error.message : String(error) })
+        );
+      }
+    }
+
+    // Cardano Forum threads for open proposals. Re-analyzed only when their posts change.
+    if (STATEMENT_INTERVAL_HOURS[process.env.STATEMENT_SUMMARIES ?? ''] !== undefined) {
+      try {
+        await step('summarize_forum_discussions', async () => {
+          const hot = await getHotTopics();
+          return refreshForumDiscussions(hot.topics.map((t) => ({ proposal_id: t.proposal_id, title: t.title })));
+        });
+      } catch (error) {
+        if (lastRun) lastRun.error = null;
+        console.error(
+          JSON.stringify({ event: 'cron_step_forum_failed', error: error instanceof Error ? error.message : String(error) })
         );
       }
     }
