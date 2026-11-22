@@ -13,6 +13,8 @@ import { z } from 'zod';
 import { koiosFetch } from '@/lib/koios/client';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { rationaleText } from './sources';
+import { publicUrl } from '@/lib/utils/links';
+import { toDisplayProfile } from '@/lib/metadata/profile-display';
 import { DEFAULT_STATEMENTS_MODEL, priceFor, quoteIsVerbatim } from './summarize';
 
 const MAX_RATIONALES_PER_SIDE = 30;
@@ -21,8 +23,13 @@ const MAX_POINTS_PER_SIDE = 3;
 
 export interface ProposalArgument {
   text: string;
+  /** Verbatim words from the cited rationale */
   quote: string;
+  /** Browser-openable link to the full rationale */
   url: string | null;
+  drep_id: string | null;
+  /** Resolved when loaded, so renamed DReps show their current name */
+  drep_name?: string | null;
 }
 
 export interface ProposalArguments {
@@ -34,6 +41,7 @@ export interface ProposalArguments {
 
 interface Rationale {
   index: number;
+  drep_id: string;
   side: 'yes' | 'no';
   text: string;
   url: string | null;
@@ -75,7 +83,7 @@ async function loadRationales(proposalId: string): Promise<Rationale[]> {
     if (seenTexts.has(key)) continue;
     seenTexts.add(key);
     count[side]++;
-    out.push({ index: out.length, side, text: text.slice(0, MAX_CHARS_PER_RATIONALE), url: row.meta_url });
+    out.push({ index: out.length, drep_id: row.voter_id, side, text: text.slice(0, MAX_CHARS_PER_RATIONALE), url: row.meta_url });
   }
   return out;
 }
@@ -132,7 +140,7 @@ function validPoints(raw: unknown[], side: 'yes' | 'no', rationales: Rationale[]
     const source = rationales.find((r) => r.index === p.data.source_index);
     if (!source || source.side !== side || !quoteIsVerbatim(p.data.quote, source.text)) continue;
     if (points.some((x) => x.text === p.data.text.trim())) continue;
-    points.push({ text: p.data.text.trim(), quote: p.data.quote.trim(), url: source.url });
+    points.push({ text: p.data.text.trim(), quote: p.data.quote.trim(), url: publicUrl(source.url), drep_id: source.drep_id });
     if (points.length >= MAX_POINTS_PER_SIDE) break;
   }
   return points;
@@ -235,15 +243,32 @@ export async function refreshProposalArguments(proposals: Array<{ proposal_id: s
   return result;
 }
 
+const StoredPointSchema = z.object({
+  text: z.string(),
+  quote: z.string(),
+  url: z.string().nullable(),
+  drep_id: z.string().nullable().default(null),
+});
 const StoredSchema = z.object({
   proposal_id: z.string(),
-  args_for: z.array(z.object({ text: z.string(), quote: z.string(), url: z.string().nullable() })),
-  args_against: z.array(z.object({ text: z.string(), quote: z.string(), url: z.string().nullable() })),
+  args_for: z.array(StoredPointSchema),
+  args_against: z.array(StoredPointSchema),
   for_sources: z.number(),
   against_sources: z.number(),
 });
 
-/** Stored arguments by proposal id. Empty if the table doesn't exist yet. */
+async function drepNames(ids: string[]): Promise<Map<string, string | null>> {
+  const names = new Map<string, string | null>();
+  if (ids.length === 0) return names;
+  const { data, error } = await supabaseAdmin.from('dreps').select('drep_id, metadata, metadata_fetch_status').in('drep_id', ids);
+  if (error) return names;
+  for (const d of data ?? []) {
+    names.set(d.drep_id as string, toDisplayProfile(d.metadata, (d.metadata_fetch_status as string | null) ?? null).name);
+  }
+  return names;
+}
+
+/** Stored arguments by proposal id, with author names. Empty if the table doesn't exist yet. */
 export async function loadProposalArguments(ids: string[]): Promise<Map<string, ProposalArguments>> {
   const out = new Map<string, ProposalArguments>();
   if (ids.length === 0) return out;
@@ -255,15 +280,18 @@ export async function loadProposalArguments(ids: string[]): Promise<Map<string, 
     console.warn(JSON.stringify({ event: 'proposal_arguments_unavailable', error: error.message }));
     return out;
   }
-  for (const row of data ?? []) {
-    const r = StoredSchema.safeParse(row);
-    if (!r.success) continue;
-    if (r.data.args_for.length + r.data.args_against.length === 0) continue;
-    out.set(r.data.proposal_id, {
-      for: r.data.args_for,
-      against: r.data.args_against,
-      for_sources: r.data.for_sources,
-      against_sources: r.data.against_sources,
+  const rows = (data ?? []).map((row) => StoredSchema.safeParse(row)).flatMap((r) => (r.success ? [r.data] : []));
+  const authorIds = new Set(rows.flatMap((r) => [...r.args_for, ...r.args_against]).flatMap((p) => (p.drep_id ? [p.drep_id] : [])));
+  const names = await drepNames(Array.from(authorIds));
+  const named = (points: z.infer<typeof StoredPointSchema>[]): ProposalArgument[] =>
+    points.map((p) => ({ ...p, url: publicUrl(p.url), drep_name: p.drep_id ? (names.get(p.drep_id) ?? null) : null }));
+  for (const r of rows) {
+    if (r.args_for.length + r.args_against.length === 0) continue;
+    out.set(r.proposal_id, {
+      for: named(r.args_for),
+      against: named(r.args_against),
+      for_sources: r.for_sources,
+      against_sources: r.against_sources,
     });
   }
   return out;

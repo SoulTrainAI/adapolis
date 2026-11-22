@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getSeasonData, type SeasonData, type SeasonStanding } from '@/lib/season/data';
 import { POINT_RULES } from '@/lib/season/points';
 import { formatAda } from '@/lib/match/score';
+import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,9 @@ function Row({ s }: { s: SeasonStanding }) {
         <span className="w-8 text-right text-slate-400 font-mono">{s.rank}</span>
         <Avatar s={s} />
         <div className="flex-1 min-w-0">
-          <p className="text-white font-medium truncate">{name}</p>
+          <p className="text-white font-medium truncate">
+            {name} <MyDRepBadge drepId={s.drep_id} className="ml-1 align-middle" />
+          </p>
           <p className="text-xs text-slate-400">
             {s.votes_cast} votes · {s.actions_missed} missed · {formatAda(s.amount_lovelace / 1_000_000)} ·{' '}
             {s.delegator_count.toLocaleString()} delegators

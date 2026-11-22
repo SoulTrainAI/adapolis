@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Award, ExternalLink, Globe } from 'lucide-react';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
+import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 
 interface DRepCardProps {
   rank: number;
@@ -101,6 +102,7 @@ function CardFront({ props }: { props: DRepCardProps }) {
       <div className="mb-4">
         <p className="text-sm font-semibold text-slate-300 truncate">{props.displayName}</p>
         <p className="text-xs text-slate-500 font-mono truncate">{props.drepId.substring(0, 12)}...</p>
+        <MyDRepBadge drepId={props.drepId} className="mt-1" />
       </div>
 
       {/* Adjusted Score (prominent) */}

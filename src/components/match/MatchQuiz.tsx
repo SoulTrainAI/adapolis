@@ -8,6 +8,9 @@ import { TOPICS, IMPORTANCE_LEVELS, MATCH_RULES, type Topic } from '@/lib/match/
 import { scoreMatches, formatAda, type Answers, type MatchResult, type RankMode } from '@/lib/match/score';
 import type { MatchData, RealVoteQuestion } from '@/lib/match/profiles';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
+import { publicUrl } from '@/lib/utils/links';
+import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
+import type { ProposalArgument } from '@/lib/statements/proposal-arguments';
 
 type Step =
   | { kind: 'intro' }
@@ -21,8 +24,8 @@ const DEEPER_TOPICS = TOPICS.filter((t) => t.group === 'deeper');
 
 // Literal class strings so Tailwind keeps them: red = disagree, green = agree.
 const SCALE_IDLE = [
-  'bg-red-800/80', 'bg-red-800/60', 'bg-red-800/45', 'bg-red-800/30', 'bg-red-900/20',
-  'bg-emerald-900/20', 'bg-emerald-800/30', 'bg-emerald-800/45', 'bg-emerald-800/60', 'bg-emerald-800/80',
+  'bg-red-700/80', 'bg-red-700/60', 'bg-red-700/45', 'bg-red-700/30', 'bg-red-700/15',
+  'bg-emerald-600/15', 'bg-emerald-600/30', 'bg-emerald-600/45', 'bg-emerald-600/60', 'bg-emerald-600/80',
 ];
 const SCALE_SELECTED = [
   'bg-red-600 text-white', 'bg-red-600 text-white', 'bg-red-500 text-white', 'bg-red-500 text-white', 'bg-rose-300 text-slate-900',
@@ -60,7 +63,10 @@ function AgreeScale({ value, onChange, left, right }: { value: number; onChange:
 
 interface Argument {
   text: string;
+  quote?: string;
   url?: string | null;
+  drepId?: string | null;
+  drepName?: string | null;
 }
 
 function ArgumentsPanel({ argsFor, argsAgainst, footnote }: { argsFor: Argument[]; argsAgainst: Argument[]; footnote?: string }) {
@@ -74,10 +80,19 @@ function ArgumentsPanel({ argsFor, argsAgainst, footnote }: { argsFor: Argument[
           {items.map((a) => (
             <li key={a.text}>
               {a.text}
-              {a.url && (
-                <a href={a.url} target="_blank" rel="noopener noreferrer nofollow" className="ml-1 text-xs text-violet-300 hover:text-violet-200">
-                  source ↗
-                </a>
+              {a.quote && (
+                <blockquote className="mt-1 border-l-2 border-slate-700 pl-2 text-xs italic text-slate-400">
+                  “{a.quote}”
+                  <span className="not-italic block mt-0.5 text-slate-500">
+                    {a.drepName ?? (a.drepId ? `${a.drepId.slice(0, 14)}…` : 'A DRep')}
+                    {a.drepId && <MyDRepBadge drepId={a.drepId} className="ml-1 align-middle" />}
+                    {a.url && (
+                      <a href={a.url} target="_blank" rel="noopener noreferrer nofollow" className="ml-2 text-violet-300 hover:text-violet-200">
+                        Read full rationale ↗
+                      </a>
+                    )}
+                  </span>
+                </blockquote>
               )}
             </li>
           ))}
@@ -132,6 +147,7 @@ function ResultCard({ result, rank }: { result: MatchResult; rank: number }) {
             </p>
             <p className="text-2xl font-bold text-violet-300 flex-shrink-0">{Math.round(result.matchPercent)}%</p>
           </div>
+          <MyDRepBadge drepId={result.drep.drep_id} className="mt-1" />
           <p className="text-xs text-slate-500 font-mono truncate">{result.drep.drep_id}</p>
           <div className="flex flex-wrap gap-2 mt-2 text-xs">
             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">
@@ -184,9 +200,9 @@ function ResultCard({ result, rank }: { result: MatchResult; rank: number }) {
               </p>
               <blockquote className="border-l-2 border-slate-700 pl-3 text-slate-300 italic">
                 “{stated.quote}”
-                {stated.source_url && (
+                {publicUrl(stated.source_url) && (
                   <a
-                    href={stated.source_url}
+                    href={publicUrl(stated.source_url) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
                     className="not-italic text-xs text-violet-300 hover:text-violet-200 ml-2"
@@ -333,8 +349,16 @@ export function MatchQuiz() {
       {step.kind === 'topic' && (
         <TopicQuestion
           topic={step.topic}
-          answer={answers.topics[step.topic.id] ?? { agree: 5, importance: 2 }}
+          answer={answers.topics[step.topic.id] ?? { agree: 0, importance: 2 }}
           onChange={(a) => setAnswers((prev) => ({ ...prev, topics: { ...prev.topics, [step.topic.id]: a } }))}
+          onSkip={() => {
+            setAnswers((prev) => {
+              const topics = { ...prev.topics };
+              delete topics[step.topic.id];
+              return { ...prev, topics };
+            });
+            next();
+          }}
         />
       )}
 
@@ -369,9 +393,9 @@ export function MatchQuiz() {
             {step.question.arguments && (
               <div className="border-t border-slate-800 pt-4">
                 <ArgumentsPanel
-                  argsFor={step.question.arguments.for}
-                  argsAgainst={step.question.arguments.against}
-                  footnote={`AI-summarized from the published rationales of DReps who voted Yes (${step.question.arguments.for_sources}) and No (${step.question.arguments.against_sources}). Each point links to a rationale it came from.`}
+                  argsFor={step.question.arguments.for.map(toArgument)}
+                  argsAgainst={step.question.arguments.against.map(toArgument)}
+                  footnote={`AI-summarized from the published rationales of DReps who voted Yes (${step.question.arguments.for_sources}) and No (${step.question.arguments.against_sources}). Each quote is the DRep's exact words; read the full rationale to judge for yourself.`}
                 />
               </div>
             )}
@@ -514,7 +538,10 @@ export function MatchQuiz() {
           <button
             type="button"
             onClick={next}
-            disabled={step.kind === 'real' && answers.realVotes[step.question.proposal_id] === undefined}
+            disabled={
+              (step.kind === 'real' && answers.realVotes[step.question.proposal_id] === undefined) ||
+              (step.kind === 'topic' && !(answers.topics[step.topic.id]?.agree > 0))
+            }
             className="bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white font-semibold py-2 px-6 rounded-lg"
           >
             Next
@@ -529,17 +556,13 @@ function TopicQuestion({
   topic,
   answer,
   onChange,
+  onSkip,
 }: {
   topic: Topic;
   answer: { agree: number; importance: number };
   onChange: (a: { agree: number; importance: number }) => void;
+  onSkip: () => void;
 }) {
-  // Record the default immediately so "Next" without touching anything counts as answered.
-  useEffect(() => {
-    onChange(answer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per topic
-  }, [topic.id]);
-
   return (
     <div className="space-y-6">
       <div>
@@ -578,6 +601,13 @@ function TopicQuestion({
           ))}
         </div>
       </div>
+      <button type="button" onClick={onSkip} className="text-sm text-slate-400 hover:text-slate-200 underline underline-offset-2">
+        Skip, no opinion
+      </button>
     </div>
   );
+}
+
+function toArgument(p: ProposalArgument): Argument {
+  return { text: p.text, quote: p.quote, url: p.url, drepId: p.drep_id, drepName: p.drep_name };
 }
