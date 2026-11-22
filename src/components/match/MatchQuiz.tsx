@@ -9,6 +9,7 @@ import { scoreMatches, formatAda, type Answers, type MatchResult, type RankMode 
 import type { MatchData, RealVoteQuestion } from '@/lib/match/profiles';
 import { getAvatarDataUri } from '@/lib/utils/avatar';
 import { publicUrl } from '@/lib/utils/links';
+import { rationaleHref } from '@/lib/rationale/href';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import { ArgumentsPanel, toArgument } from '@/components/governance/ArgumentsPanel';
 
@@ -150,15 +151,24 @@ function ResultCard({ result, rank }: { result: MatchResult; rank: number }) {
               </p>
               <blockquote className="border-l-2 border-slate-700 pl-3 text-slate-300 italic">
                 “{stated.quote}”
-                {publicUrl(stated.source_url) && (
+                {stated.source_kind === 'rationale' && stated.proposal_id ? (
                   <a
-                    href={publicUrl(stated.source_url) ?? undefined}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
+                    href={rationaleHref(result.drep.drep_id, stated.proposal_id)}
                     className="not-italic text-xs text-violet-300 hover:text-violet-200 ml-2"
                   >
-                    {stated.source_kind === 'rationale' ? 'vote rationale' : 'profile'} ↗
+                    read vote rationale →
                   </a>
+                ) : (
+                  publicUrl(stated.source_url) && (
+                    <a
+                      href={publicUrl(stated.source_url) ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="not-italic text-xs text-violet-300 hover:text-violet-200 ml-2"
+                    >
+                      profile ↗
+                    </a>
+                  )
                 )}
               </blockquote>
             </div>
@@ -345,6 +355,7 @@ export function MatchQuiz() {
                 <ArgumentsPanel
                   argsFor={step.question.arguments.for.map(toArgument)}
                   argsAgainst={step.question.arguments.against.map(toArgument)}
+                  proposalId={step.question.proposal_id}
                   footnote={`AI-summarized from the published rationales of DReps who voted Yes (${step.question.arguments.for_sources}) and No (${step.question.arguments.against_sources}). Each quote is the DRep's exact words; read the full rationale to judge for yourself.`}
                 />
               </div>

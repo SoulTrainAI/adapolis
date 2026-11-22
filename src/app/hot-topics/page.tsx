@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ExternalLink, MessagesSquare } from 'lucide-react';
+import { rationaleHref } from '@/lib/rationale/href';
 import { getHotTopics, type HotTopic, type Tally, type VocalDRep } from '@/lib/hot-topics/data';
 import type { ForumDiscussion } from '@/lib/forum/discussions';
 import { ArgumentsPanel, toArgument } from '@/components/governance/ArgumentsPanel';
@@ -46,7 +48,7 @@ function SplitBar({ label, values, format }: { label: string; values: Tally['cou
   );
 }
 
-function VocalList({ title, dreps, tone }: { title: string; dreps: VocalDRep[]; tone: string }) {
+function VocalList({ title, dreps, tone, proposalId }: { title: string; dreps: VocalDRep[]; tone: string; proposalId: string }) {
   return (
     <div>
       <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${tone}`}>{title}</p>
@@ -60,14 +62,9 @@ function VocalList({ title, dreps, tone }: { title: string; dreps: VocalDRep[]; 
               <MyDRepBadge drepId={d.drep_id} />
               <span className="text-xs text-slate-500">{formatAda(d.ada)}</span>
               {d.rationale_url && (
-                <a
-                  href={d.rationale_url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  className="text-xs text-violet-300 hover:text-violet-200"
-                >
-                  rationale ↗
-                </a>
+                <Link href={rationaleHref(d.drep_id, proposalId)} className="text-xs text-violet-300 hover:text-violet-200">
+                  read rationale →
+                </Link>
               )}
             </li>
           ))}
@@ -176,14 +173,15 @@ function TopicCard({ t, currentEpoch }: { t: HotTopic; currentEpoch: number }) {
           <ArgumentsPanel
             argsFor={t.arguments.for.map(toArgument)}
             argsAgainst={t.arguments.against.map(toArgument)}
+            proposalId={t.proposal_id}
             footnote={`AI-summarized from ${t.arguments.for_sources} Yes and ${t.arguments.against_sources} No rationales. Quotes are the DReps' exact words.`}
           />
         </div>
       )}
 
       <div className="border-t border-slate-800 pt-4 grid sm:grid-cols-2 gap-4">
-        <VocalList title="Explained a Yes vote" dreps={t.vocal.yes} tone="text-emerald-300" />
-        <VocalList title="Explained a No vote" dreps={t.vocal.no} tone="text-red-300" />
+        <VocalList title="Explained a Yes vote" dreps={t.vocal.yes} tone="text-emerald-300" proposalId={t.proposal_id} />
+        <VocalList title="Explained a No vote" dreps={t.vocal.no} tone="text-red-300" proposalId={t.proposal_id} />
       </div>
 
       {t.forum && <ForumSection forum={t.forum} />}

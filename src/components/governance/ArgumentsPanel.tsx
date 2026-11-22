@@ -1,4 +1,5 @@
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
+import { rationaleHref } from '@/lib/rationale/href';
 import type { ProposalArgument } from '@/lib/statements/proposal-arguments';
 
 export interface Argument {
@@ -12,7 +13,19 @@ export interface Argument {
   linkLabel?: string;
 }
 
-export function ArgumentsPanel({ argsFor, argsAgainst, footnote }: { argsFor: Argument[]; argsAgainst: Argument[]; footnote?: string }) {
+export function ArgumentsPanel({
+  argsFor,
+  argsAgainst,
+  footnote,
+  proposalId,
+}: {
+  argsFor: Argument[];
+  argsAgainst: Argument[];
+  footnote?: string;
+  /** When set, DRep points link to the readable rationale page instead of the raw document */
+  proposalId?: string;
+}) {
+  const href = (a: Argument) => (proposalId && a.drepId ? rationaleHref(a.drepId, proposalId) : a.url);
   const column = (title: string, items: Argument[], tone: string, empty: string) => (
     <div>
       <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${tone}`}>{title}</p>
@@ -29,8 +42,12 @@ export function ArgumentsPanel({ argsFor, argsAgainst, footnote }: { argsFor: Ar
                   <span className="not-italic block mt-0.5 text-slate-500">
                     {a.drepName ?? a.author ?? (a.drepId ? `${a.drepId.slice(0, 14)}…` : 'A DRep')}
                     {a.drepId && <MyDRepBadge drepId={a.drepId} className="ml-1 align-middle" />}
-                    {a.url && (
-                      <a href={a.url} target="_blank" rel="noopener noreferrer nofollow" className="ml-2 text-violet-300 hover:text-violet-200">
+                    {href(a) && (
+                      <a
+                        href={href(a) ?? undefined}
+                        {...(href(a)?.startsWith('/') ? {} : { target: '_blank', rel: 'noopener noreferrer nofollow' })}
+                        className="ml-2 text-violet-300 hover:text-violet-200"
+                      >
                         {a.linkLabel ?? 'Read full rationale ↗'}
                       </a>
                     )}
