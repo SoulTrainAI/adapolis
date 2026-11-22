@@ -135,7 +135,7 @@ function ForumSection({ forum }: { forum: ForumDiscussion }) {
 function TopicCard({ t, currentEpoch }: { t: HotTopic; currentEpoch: number }) {
   const left = t.voting_ends_epoch !== null ? t.voting_ends_epoch - currentEpoch : null;
   return (
-    <article className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-5">
+    <article id={t.proposal_id} className="scroll-mt-24 bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-5">
       <div>
         <div className="flex flex-wrap items-center gap-2 text-xs mb-2">
           <span className="rounded-full bg-violet-900/50 text-violet-200 px-2 py-0.5">

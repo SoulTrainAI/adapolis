@@ -20,6 +20,8 @@ import { refreshProposalArguments } from '@/lib/statements/proposal-arguments';
 import { getHotTopics } from '@/lib/hot-topics/data';
 import { getCards } from '@/lib/cards/data';
 import { refreshForumDiscussions } from '@/lib/forum/discussions';
+import { discordConfigured } from '@/lib/discord/rest';
+import { runFeeds } from '@/lib/discord/feeds';
 
 const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
 
@@ -265,6 +267,19 @@ async function runPipeline(): Promise<void> {
       console.error(
         JSON.stringify({ event: 'cron_step_season_failed', error: error instanceof Error ? error.message : String(error) })
       );
+    }
+
+    // Discord feeds are opt-in: set DISCORD_FEEDS=on once the server is set up.
+    if (process.env.DISCORD_FEEDS === 'on' && discordConfigured()) {
+      try {
+        await step('discord_feeds', async () => {
+          const report = await runFeeds({ apply: true });
+          return { posted: report.posted.length, warnings: report.warnings };
+        });
+      } catch (error) {
+        demoteError();
+        console.error(JSON.stringify({ event: 'cron_step_discord_failed', error: error instanceof Error ? error.message : String(error) }));
+      }
     }
 
     lastRun.current_step = 'done';
