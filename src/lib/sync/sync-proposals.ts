@@ -5,6 +5,7 @@
 
 import type { KoiosProposal } from '@/lib/koios';
 import { supabaseAdmin } from './supabase-admin';
+import { fetchVerifiedAnchor } from '@/lib/metadata/proposal-metadata';
 import type { SyncResult } from './sync-dreps';
 
 /**
@@ -77,6 +78,17 @@ export async function syncProposals(): Promise<SyncResult> {
       expired_epoch: p.expired_epoch,
       updated_at: new Date().toISOString(),
     }));
+
+    // Koios resolves anchors with a lag, so open proposals can arrive untitled.
+    // Only active ones are fetched here, which keeps this to a handful of requests.
+    for (const record of proposalRecords) {
+      if (record.metadata || record.status !== 'active' || !record.metadata_url || !record.metadata_hash) continue;
+      const json = await fetchVerifiedAnchor(record.metadata_url, record.metadata_hash);
+      if (!json) continue;
+      record.metadata = json;
+      record.title = extractTitleFromMetadata(json);
+      record.abstract = extractAbstractFromMetadata(json);
+    }
 
     // Step 3: Upsert into proposals table (conflict on proposal_id)
     firstRecord = proposalRecords[0];
