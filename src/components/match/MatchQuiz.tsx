@@ -19,6 +19,16 @@ type Step =
 const CORE_TOPICS = TOPICS.filter((t) => t.group !== 'deeper');
 const DEEPER_TOPICS = TOPICS.filter((t) => t.group === 'deeper');
 
+// Literal class strings so Tailwind keeps them: red = disagree, green = agree.
+const SCALE_IDLE = [
+  'bg-red-800/80', 'bg-red-800/60', 'bg-red-800/45', 'bg-red-800/30', 'bg-red-900/20',
+  'bg-emerald-900/20', 'bg-emerald-800/30', 'bg-emerald-800/45', 'bg-emerald-800/60', 'bg-emerald-800/80',
+];
+const SCALE_SELECTED = [
+  'bg-red-600 text-white', 'bg-red-600 text-white', 'bg-red-500 text-white', 'bg-red-500 text-white', 'bg-rose-300 text-slate-900',
+  'bg-emerald-300 text-slate-900', 'bg-emerald-500 text-white', 'bg-emerald-500 text-white', 'bg-emerald-600 text-white', 'bg-emerald-600 text-white',
+];
+
 function AgreeScale({ value, onChange, left, right }: { value: number; onChange: (v: number) => void; left: string; right: string }) {
   return (
     <div>
@@ -30,18 +40,58 @@ function AgreeScale({ value, onChange, left, right }: { value: number; onChange:
             onClick={() => onChange(n)}
             aria-pressed={value === n}
             aria-label={`${n} of 10`}
-            className={`py-3 rounded-md text-sm font-semibold transition-colors ${
-              value === n ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            className={`py-3 rounded-md text-sm font-semibold transition-all ${
+              value === n
+                ? `${SCALE_SELECTED[n - 1]} ring-2 ring-white scale-105`
+                : `${SCALE_IDLE[n - 1]} text-slate-100 hover:brightness-150`
             }`}
           >
             {n}
           </button>
         ))}
       </div>
-      <div className="flex justify-between text-xs text-slate-500 mt-2">
-        <span>{left}</span>
-        <span>{right}</span>
+      <div className="flex justify-between text-xs font-medium mt-2">
+        <span className="text-red-300">← {left}</span>
+        <span className="text-emerald-300">{right} →</span>
       </div>
+    </div>
+  );
+}
+
+interface Argument {
+  text: string;
+  url?: string | null;
+}
+
+function ArgumentsPanel({ argsFor, argsAgainst, footnote }: { argsFor: Argument[]; argsAgainst: Argument[]; footnote?: string }) {
+  const column = (title: string, items: Argument[], tone: string, empty: string) => (
+    <div>
+      <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${tone}`}>{title}</p>
+      {items.length === 0 ? (
+        <p className="text-sm text-slate-500">{empty}</p>
+      ) : (
+        <ul className="list-disc pl-4 space-y-1.5 text-sm text-slate-300">
+          {items.map((a) => (
+            <li key={a.text}>
+              {a.text}
+              {a.url && (
+                <a href={a.url} target="_blank" rel="noopener noreferrer nofollow" className="ml-1 text-xs text-violet-300 hover:text-violet-200">
+                  source ↗
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+  return (
+    <div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        {column('Arguments for', argsFor, 'text-emerald-300', 'No published arguments yet.')}
+        {column('Arguments against', argsAgainst, 'text-red-300', 'No published arguments yet.')}
+      </div>
+      {footnote && <p className="text-[11px] text-slate-500 mt-3">{footnote}</p>}
     </div>
   );
 }
@@ -291,28 +341,41 @@ export function MatchQuiz() {
       {step.kind === 'real' && (
         <div className="space-y-5">
           <p className="text-xs uppercase tracking-wider text-violet-300">Real proposal · DReps split on this one</p>
-          <h2 className="text-2xl font-bold text-white">{step.question.title}</h2>
-          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4">
-            <p className="text-xs text-slate-500 mb-1">Proposer&apos;s summary</p>
-            <p className="text-sm text-slate-300">{step.question.summary}</p>
-            <a
-              href={`https://gov.tools/governance_actions/${step.question.proposal_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-violet-300 hover:text-violet-200 mt-2"
-            >
-              Read the full proposal <ExternalLink size={12} />
-            </a>
+          <h2 className="text-3xl font-bold text-white leading-tight">{step.question.title}</h2>
+          <div>
+            <p className="text-slate-200 font-medium mb-3">Do you agree or disagree that this should pass?</p>
+            <AgreeScale
+              value={answers.realVotes[step.question.proposal_id] ?? 0}
+              onChange={(v) =>
+                setAnswers((prev) => ({ ...prev, realVotes: { ...prev.realVotes, [step.question.proposal_id]: v } }))
+              }
+              left="Should fail"
+              right="Should pass"
+            />
           </div>
-          <p className="text-slate-200 font-medium">How much do you agree this should pass?</p>
-          <AgreeScale
-            value={answers.realVotes[step.question.proposal_id] ?? 0}
-            onChange={(v) =>
-              setAnswers((prev) => ({ ...prev, realVotes: { ...prev.realVotes, [step.question.proposal_id]: v } }))
-            }
-            left="Should fail"
-            right="Should pass"
-          />
+          <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-4">
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Proposer&apos;s summary</p>
+              <p className="text-sm text-slate-300">{step.question.summary}</p>
+              <a
+                href={`https://gov.tools/governance_actions/${step.question.proposal_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-violet-300 hover:text-violet-200 mt-2"
+              >
+                Read the full proposal <ExternalLink size={12} />
+              </a>
+            </div>
+            {step.question.arguments && (
+              <div className="border-t border-slate-800 pt-4">
+                <ArgumentsPanel
+                  argsFor={step.question.arguments.for}
+                  argsAgainst={step.question.arguments.against}
+                  footnote={`AI-summarized from the published rationales of DReps who voted Yes (${step.question.arguments.for_sources}) and No (${step.question.arguments.against_sources}). Each point links to a rationale it came from.`}
+                />
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -484,12 +547,18 @@ function TopicQuestion({
           {topic.group === 'decentralization' ? 'Decentralization' : topic.group === 'deeper' ? 'Going deeper' : 'Your values'}
           {topic.source === 'stated' && ' · not yet measurable from votes'}
         </p>
-        <h2 className="text-2xl font-bold text-white">{topic.statement}</h2>
-        <p className="text-sm text-slate-400 mt-2">{topic.context}</p>
+        <h2 className="text-3xl font-bold text-white leading-tight">{topic.statement}</h2>
       </div>
       <div>
-        <p className="text-slate-200 font-medium mb-3">How much do you agree?</p>
+        <p className="text-slate-200 font-medium mb-3">Do you agree or disagree?</p>
         <AgreeScale value={answer.agree} onChange={(agree) => onChange({ ...answer, agree })} left="Strongly disagree" right="Strongly agree" />
+      </div>
+      <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-4">
+        <p className="text-sm text-slate-400">{topic.context}</p>
+        <ArgumentsPanel
+          argsFor={topic.argsFor.map((text) => ({ text }))}
+          argsAgainst={topic.argsAgainst.map((text) => ({ text }))}
+        />
       </div>
       <div>
         <p className="text-slate-200 font-medium mb-3">How important is this to you?</p>

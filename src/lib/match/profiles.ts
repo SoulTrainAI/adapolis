@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { loadProposalArguments, type ProposalArguments } from '@/lib/statements/proposal-arguments';
 import { koiosFetch } from '@/lib/koios/client';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
@@ -57,6 +58,8 @@ export interface RealVoteQuestion {
   proposed_epoch: number;
   yes: number;
   no: number;
+  /** AI summary of Yes and No voters' published rationales; null until generated. */
+  arguments: ProposalArguments | null;
 }
 
 export interface MatchData {
@@ -177,7 +180,10 @@ async function computeMatchData(): Promise<MatchData> {
     loadAll<Proposal>('proposals', 'proposal_id, action_type, proposed_epoch, title, abstract', 'proposal_id'),
     paramDirections(),
   ]);
-  return buildMatchData({ dreps, scores, votes, proposals, directions, stated: await loadStated() });
+  const data = buildMatchData({ dreps, scores, votes, proposals, directions, stated: await loadStated() });
+  const args = await loadProposalArguments(data.real_votes.map((q) => q.proposal_id));
+  data.real_votes = data.real_votes.map((q) => ({ ...q, arguments: args.get(q.proposal_id) ?? null }));
+  return data;
 }
 
 /** Pure: turns loaded records into match data. Separated from I/O for testing. */
@@ -364,6 +370,7 @@ function pickRealVotes(proposals: Proposal[], votes: Vote[], eligibleIds: Set<st
       proposed_epoch: p.proposed_epoch,
       yes: t.yes,
       no: t.no,
+      arguments: null,
     }));
 }
 

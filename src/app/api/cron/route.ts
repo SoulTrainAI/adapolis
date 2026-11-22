@@ -16,6 +16,7 @@ import { syncDRepMetadata } from '@/lib/metadata/drep-metadata';
 import { getMatchData } from '@/lib/match/profiles';
 import { getSeasonData } from '@/lib/season/data';
 import { isStatementRunActive, runStatementSummaries } from '@/lib/statements/run';
+import { refreshProposalArguments } from '@/lib/statements/proposal-arguments';
 
 const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
 
@@ -180,6 +181,24 @@ async function runPipeline(): Promise<void> {
       console.error(
         JSON.stringify({ event: 'cron_step_match_failed', error: error instanceof Error ? error.message : String(error) })
       );
+    }
+
+    // Quiz proposals get for/against summaries from Yes and No voters' rationales.
+    // Only proposals whose rationales changed are re-sent to the AI, so most runs cost nothing.
+    if (STATEMENT_INTERVAL_HOURS[process.env.STATEMENT_SUMMARIES ?? ''] !== undefined) {
+      try {
+        await step('summarize_proposal_arguments', async () => {
+          const { real_votes } = await getMatchData();
+          const r = await refreshProposalArguments(real_votes.map((q) => ({ proposal_id: q.proposal_id, title: q.title })));
+          if (r.generated > 0) await getMatchData({ force: true });
+          return r;
+        });
+      } catch (error) {
+        if (lastRun) lastRun.error = null;
+        console.error(
+          JSON.stringify({ event: 'cron_step_proposal_arguments_failed', error: error instanceof Error ? error.message : String(error) })
+        );
+      }
     }
 
     try {
