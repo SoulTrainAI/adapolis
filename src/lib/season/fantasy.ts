@@ -54,7 +54,7 @@ function seasonFor(seasonNumber: number, launchWindow: number): DraftSeason {
 
 /**
  * The season people can draft for now: the earliest season whose lock is
- * still ahead. Null until Season 1 is scheduled with SEASON_ONE_START_EPOCH.
+ * still ahead. Null only when SEASON_ONE_START_EPOCH is "off".
  */
 export async function draftSeason(now = new Date()): Promise<DraftSeason | null> {
   const launch = seasonOneStartEpoch();

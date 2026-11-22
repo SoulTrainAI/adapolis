@@ -39,11 +39,17 @@ export function windowEpochs(window: number): { start: number; end: number } {
   return { start, end: start + SEASON_LENGTH_EPOCHS - 1 };
 }
 
-/** Season 1's first epoch, from SEASON_ONE_START_EPOCH; null = not launched. */
+/** Season 1's first epoch (Jason, 2026-11-21): Jan 4, 2027. Drafting opens now. */
+const DEFAULT_SEASON_ONE_START_EPOCH = 678;
+
+/**
+ * Season 1's first epoch. SEASON_ONE_START_EPOCH overrides the default;
+ * "off" turns seasons back into previews.
+ */
 export function seasonOneStartEpoch(): number | null {
-  const raw = process.env.SEASON_ONE_START_EPOCH;
-  if (!raw || !/^\d+$/.test(raw)) return null;
-  const epoch = Number(raw);
+  const raw = process.env.SEASON_ONE_START_EPOCH?.trim();
+  if (raw === 'off') return null;
+  const epoch = raw && /^\d+$/.test(raw) ? Number(raw) : DEFAULT_SEASON_ONE_START_EPOCH;
   // Snap to the grid so seasons never straddle two windows.
   return windowEpochs(windowForEpoch(epoch)).start;
 }
