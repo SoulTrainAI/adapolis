@@ -6,7 +6,7 @@
  * lifted, flipped card with profile, stats, trends and collectible data.
  */
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
 import {
@@ -145,7 +145,13 @@ function GeneratedArt({ drepId, name }: { drepId: string; name: string }) {
 
 function CardArt({ card }: { card: CardSummary }) {
   const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const name = cardName(card);
+  // A server-rendered image can fail before React attaches onError; catch that on mount.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth === 0) setFailed(true);
+  }, [card.image]);
   if (!card.image || failed) return <GeneratedArt drepId={card.drep_id} name={name} />;
   return (
     <>
@@ -153,6 +159,7 @@ function CardArt({ card }: { card: CardSummary }) {
       <img src={card.image} alt="" aria-hidden referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-xl" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRef}
         src={card.image}
         alt={`${name} profile image`}
         loading="lazy"
