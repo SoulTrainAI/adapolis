@@ -239,7 +239,7 @@ function CardFront({ props }: { props: DRepCardProps }) {
 
         {props.rank <= 10 ? (
           <div
-            className="pointer-events-none absolute inset-0 opacity-25 mix-blend-color-dodge transition-opacity duration-300 group-hover:opacity-70"
+            className="pointer-events-none absolute inset-0 opacity-[0.08] mix-blend-color-dodge transition-opacity duration-300 group-hover:opacity-70"
             style={{
               backgroundImage:
                 'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.55), transparent 45%), linear-gradient(125deg, #ff008080, #ffd60080 20%, #00ff9580 40%, #00c8ff80 60%, #b400ff80 80%, #ff008080)',
