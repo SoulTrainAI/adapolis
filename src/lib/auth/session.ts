@@ -42,12 +42,13 @@ function mac(purpose: string, body: string): string {
   return createHmac('sha256', secret()).update(`${purpose}.${body}`).digest('base64url');
 }
 
-function sign(purpose: string, data: object): string {
+/** HMAC-signed token (base64url JSON + tag); `purpose` keeps token kinds from being swapped. */
+export function sign(purpose: string, data: object): string {
   const body = Buffer.from(JSON.stringify(data), 'utf8').toString('base64url');
   return `${body}.${mac(purpose, body)}`;
 }
 
-function unsign(purpose: string, token: string): unknown {
+export function unsign(purpose: string, token: string): unknown {
   const [body, tag, extra] = token.split('.');
   if (!body || !tag || extra !== undefined) return null;
   const expected = Buffer.from(mac(purpose, body));
