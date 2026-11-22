@@ -178,9 +178,18 @@ export function computeSeasonPoints(
  * size only — never on rank, which a DRep could tank on purpose.
  * 1 + maxBonus × smallness, smallness = 1 − mean(ADA percentile, delegator percentile).
  */
-export function underdogMultipliers(
-  dreps: Array<{ drep_id: string; amount_lovelace: number; delegator_count: number }>
-): Map<string, number> {
+export interface DRepSize {
+  drep_id: string;
+  amount_lovelace: number;
+  delegator_count: number;
+}
+
+/**
+ * Underdog multiplier scale built from a reference group: smallness is the
+ * mean of ADA and delegator percentiles within that group. A DRep outside the
+ * group is placed by where its size would fall in it.
+ */
+export function underdogScale(reference: DRepSize[]): (size: Omit<DRepSize, 'drep_id'>) => number {
   const percentile = (values: number[]) => {
     const sorted = values.slice().sort((a, b) => a - b);
     return (v: number) => {
@@ -189,15 +198,19 @@ export function underdogMultipliers(
       while (below < sorted.length && sorted[below] < v) below++;
       let equal = 0;
       while (below + equal < sorted.length && sorted[below + equal] === v) equal++;
-      return (below + (equal - 1) / 2) / (sorted.length - 1);
+      const rank = equal > 0 ? below + (equal - 1) / 2 : below - 0.5;
+      return Math.min(1, Math.max(0, rank / (sorted.length - 1)));
     };
   };
-  const adaPct = percentile(dreps.map((d) => d.amount_lovelace));
-  const delPct = percentile(dreps.map((d) => d.delegator_count));
-  return new Map(
-    dreps.map((d) => {
-      const smallness = 1 - (adaPct(d.amount_lovelace) + delPct(d.delegator_count)) / 2;
-      return [d.drep_id, Math.round((1 + POINT_RULES.maxUnderdogBonus * smallness) * 100) / 100];
-    })
-  );
+  const adaPct = percentile(reference.map((d) => d.amount_lovelace));
+  const delPct = percentile(reference.map((d) => d.delegator_count));
+  return (size) => {
+    const smallness = 1 - (adaPct(size.amount_lovelace) + delPct(size.delegator_count)) / 2;
+    return Math.round((1 + POINT_RULES.maxUnderdogBonus * smallness) * 100) / 100;
+  };
+}
+
+export function underdogMultipliers(dreps: DRepSize[]): Map<string, number> {
+  const scale = underdogScale(dreps);
+  return new Map(dreps.map((d) => [d.drep_id, scale(d)]));
 }

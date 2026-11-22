@@ -12,6 +12,7 @@ export function Navbar() {
           <Link href="/match" className="text-slate-200 hover:text-white text-base transition-colors">Find My DRep</Link>
           <Link href="/hot-topics" className="text-slate-200 hover:text-white text-base transition-colors">Hot Topics</Link>
           <Link href="/season" className="text-slate-200 hover:text-white text-base transition-colors">Season</Link>
+          <Link href="/draft" className="text-slate-200 hover:text-white text-base transition-colors">Draft</Link>
           <Link href="/about" className="text-slate-200 hover:text-white text-base transition-colors">About</Link>
           <Link href="/methodology" className="text-slate-200 hover:text-white text-base transition-colors">Methodology</Link>
           <span className="text-slate-200 text-base">Open Data</span>
