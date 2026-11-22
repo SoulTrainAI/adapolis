@@ -22,7 +22,7 @@ export function Navbar() {
         <Link href="/" aria-label="ADApolis home" className="flex-shrink-0">
           <Logo size={38} />
         </Link>
-        <div className="mx-auto flex items-center gap-1 overflow-x-auto">
+        <div className="mx-auto flex items-center gap-1 overflow-x-auto overflow-y-hidden">
           {LINKS.map(([href, label]) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
@@ -35,7 +35,7 @@ export function Navbar() {
                 }`}
               >
                 {label}
-                {active && <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brand-gold" />}
+                {active && <span className="absolute inset-x-3 bottom-0.5 h-0.5 rounded-full bg-brand-gold" />}
               </Link>
             );
           })}
