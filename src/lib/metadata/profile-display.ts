@@ -22,7 +22,7 @@ export interface DisplayProfile {
 
 export const EMPTY_PROFILE: DisplayProfile = { name: null, image: null, bio: null, links: [], doNotList: false };
 
-function safeHttpsUrl(value: unknown): string | null {
+export function safeHttpsUrl(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   try {
     const url = new URL(value.trim());
@@ -58,7 +58,7 @@ export function embeddedImage(metadata: unknown): { type: string; bytes: Buffer 
   return bytes.length > 0 && bytes.length <= MAX_DATA_IMAGE_BYTES ? { type: head.slice(5, head.indexOf(';')), bytes } : null;
 }
 
-function safeImageUrl(raw: unknown, drepId?: string): string | null {
+export function safeImageUrl(raw: unknown, drepId?: string): string | null {
   const value = imageSource(raw);
   // Embedded images are checked in full when served; here the prefix is enough to route them there.
   if (value && drepId && DATA_IMAGE_PREFIX.test(value)) return `/api/dreps/${drepId}/image`;
@@ -69,14 +69,14 @@ function safeImageUrl(raw: unknown, drepId?: string): string | null {
   return safeHttpsUrl(value);
 }
 
-function cleanText(value: unknown, maxChars: number): string | null {
+export function cleanText(value: unknown, maxChars: number): string | null {
   if (typeof value !== 'string') return null;
   const text = value.replace(/\s+/g, ' ').trim();
   if (!text) return null;
   return text.length > maxChars ? `${text.slice(0, maxChars - 1).trimEnd()}…` : text;
 }
 
-function hostLabel(url: string): string {
+export function hostLabel(url: string): string {
   return new URL(url).hostname.replace(/^www\./, '');
 }
 

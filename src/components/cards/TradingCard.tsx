@@ -681,7 +681,10 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose: () =>
                   </div>
                 </>
               )}
-              <div style={{ marginTop: cq(3.5) }}>
+              <a href="/drep" className="block text-violet-200 hover:text-white" style={{ marginTop: cq(3), fontSize: cq(3.2) }}>
+                Is this your card? Sign with your DRep key to edit its art, bio and links →
+              </a>
+              <div style={{ marginTop: cq(2.5) }}>
                 {c.do_not_list ? (
                   <p className="text-center text-slate-300">This DRep has asked not to be promoted for delegation.</p>
                 ) : (

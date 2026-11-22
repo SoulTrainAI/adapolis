@@ -7,6 +7,7 @@ import { loadAll, proposalWindow } from '@/lib/scoring/govscore-v1';
 import { blockTimeToEpoch, fetchDRepRegistrationPeriods } from '@/lib/koios/drep-registrations';
 import { fetchCurrentEpoch } from '@/lib/koios';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
+import { applyOverride, getOverride, getOverrides } from '@/lib/drep-profile/overrides';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { draftSeason } from '@/lib/season/fantasy';
 import { computeCards, type CardComputation } from './compute';
@@ -159,12 +160,14 @@ async function getLoaded(force = false): Promise<Loaded> {
 }
 
 export async function getCards(options: { force?: boolean } = {}): Promise<CardsPayload> {
-  const data = await getLoaded(options.force);
+  const [data, overrides] = await Promise.all([getLoaded(options.force), getOverrides()]);
   return {
     computed_at: data.computedAt,
     current_epoch: data.currentEpoch,
     current_window: data.currentWindow,
-    cards: Array.from(data.summaries.values()).filter((c) => c.registered),
+    cards: Array.from(data.summaries.values())
+      .filter((c) => c.registered)
+      .map((c) => applyOverride(c, overrides.get(c.drep_id))),
   };
 }
 
@@ -191,10 +194,11 @@ export function cardMetadata(s: CardSummary, seasonLabel: string): Record<string
 }
 
 export async function getCardDetail(drepId: string): Promise<CardDetail | null> {
-  const data = await getLoaded();
-  const summary = data.summaries.get(drepId);
-  if (!summary) return null;
-  const profile = data.profiles.get(drepId) ?? { bio: null, links: [] };
+  const [data, override] = await Promise.all([getLoaded(), getOverride(drepId)]);
+  const base = data.summaries.get(drepId);
+  if (!base) return null;
+  const summary = applyOverride(base, override);
+  const profile = applyOverride({ image: null, ...(data.profiles.get(drepId) ?? { bio: null, links: [] }) }, override);
   return {
     summary,
     seasons: data.lines.get(drepId) ?? [],
@@ -203,4 +207,13 @@ export async function getCardDetail(drepId: string): Promise<CardDetail | null> 
     votes: data.tallies.get(drepId) ?? { yes: 0, no: 0, abstain: 0 },
     metadata: cardMetadata(summary, summary.season.label),
   };
+}
+
+/** The DRep's own on-chain profile (before any edits made on ADApolis). */
+export async function getOnchainProfile(drepId: string): Promise<{ image: string | null; bio: string | null; links: Array<{ label: string; url: string }> } | null> {
+  const data = await getLoaded();
+  const summary = data.summaries.get(drepId);
+  if (!summary) return null;
+  const profile = data.profiles.get(drepId) ?? { bio: null, links: [] };
+  return { image: summary.image, bio: profile.bio, links: profile.links };
 }

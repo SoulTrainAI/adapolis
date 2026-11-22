@@ -45,6 +45,11 @@ export function Footer() {
         >
           <span aria-hidden className="text-base font-bold">𝕏</span> Follow {X_HANDLE}
         </a>
+        <p className="mt-2 text-sm">
+          <a href="/drep" className="text-slate-400 hover:text-white">
+            Are you a DRep? Claim your card
+          </a>
+        </p>
       </div>
     </footer>
   );

@@ -15,13 +15,13 @@ function short(stakeAddress: string): string {
   return `${stakeAddress.slice(0, 10)}…${stakeAddress.slice(-4)}`;
 }
 
-async function errorText(res: Response): Promise<string> {
+export async function errorText(res: Response): Promise<string> {
   const body: unknown = await res.json().catch(() => null);
   if (typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string') return body.error;
   return `Server returned HTTP ${res.status}. Try again in a minute.`;
 }
 
-function walletErrorText(error: unknown): string {
+export function walletErrorText(error: unknown): string {
   const raw =
     error instanceof Error
       ? error.message

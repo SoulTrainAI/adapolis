@@ -13,6 +13,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { toDisplayProfile, type DisplayProfile } from '@/lib/metadata/profile-display';
+import { applyOverride, getOverrides } from '@/lib/drep-profile/overrides';
 
 export const dynamic = 'force-dynamic';
 
@@ -148,7 +149,8 @@ export async function GET(request: Request) {
       )
       .sort((a, b) => sign * (key(a) - key(b)) || (b.adjusted_govscore ?? -1) - (a.adjusted_govscore ?? -1));
 
-    const pageRows = filtered.slice((page - 1) * perPage, page * perPage).map((r) => ({ ...r }));
+    const overrides = await getOverrides();
+    const pageRows = filtered.slice((page - 1) * perPage, page * perPage).map((r) => ({ ...r, profile: applyOverride(r.profile, overrides.get(r.drep_id)) }));
     if (pageRows.length) {
       const { data: summaries, error } = await supabaseAdmin.rpc('get_vote_summaries', { drep_ids: pageRows.map((d) => d.drep_id) });
       if (error) console.error(JSON.stringify({ event: 'vote_summary_error', error: error.message }));
