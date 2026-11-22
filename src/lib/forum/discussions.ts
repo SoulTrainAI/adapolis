@@ -128,7 +128,7 @@ async function loadTopic(id: number): Promise<{ topic: Topic; posts: Post[] }> {
 // ---------- matching ----------
 
 const STOPWORDS = new Set(
-  'a an and the of for to in on with by from at as is are be this that it its or into over under per via cardano proposal governance action treasury withdrawal'.split(' ')
+  'a an and the of for to in on with by from at as is are be this that it its or into over under per via cardano proposal governance action treasury withdrawal ada'.split(' ')
 );
 function tokens(text: string): Set<string> {
   return new Set(
@@ -136,19 +136,24 @@ function tokens(text: string): Set<string> {
       .toLowerCase()
       .replace(/[^a-z0-9₳\s]/g, ' ')
       .split(/\s+/)
-      .filter((w) => w.length > 2 && !STOPWORDS.has(w))
+      // Amounts ("24,995,775 ada") vary between a proposal and its threads; years don't.
+      .filter((w) => w.length > 2 && !STOPWORDS.has(w) && (!/^\d+$/.test(w) || /^(19|20)\d\d$/.test(w)))
   );
 }
-/** Share of the proposal title's significant words that appear in the thread title. */
-export function titleOverlap(proposalTitle: string, threadTitle: string): number {
+/**
+ * A thread title matches when it covers most of the proposal title's
+ * distinctive words, or when at least 3 of them make up most of the shorter
+ * title (long proposal titles vs short thread titles).
+ */
+export function titleMatches(proposalTitle: string, threadTitle: string): boolean {
   const p = tokens(proposalTitle);
-  if (p.size < 2) return 0;
   const t = tokens(threadTitle);
+  if (p.size < 2 || t.size === 0) return false;
   let hit = 0;
   p.forEach((w) => {
     if (t.has(w)) hit++;
   });
-  return hit / p.size;
+  return hit / p.size >= TITLE_MATCH_THRESHOLD || (hit >= 3 && hit / Math.min(p.size, t.size) >= TITLE_MATCH_THRESHOLD);
 }
 
 function referencedTopicIds(metadata: unknown): number[] {
@@ -173,7 +178,7 @@ async function findThreads(p: { proposal_id: string; title: string; metadata: un
   if (found.size < MAX_TOPICS_PER_PROPOSAL && tokens(p.title).size >= 2) {
     const byTitle = await search(`${p.title} ${GOVERNANCE_TAG}`);
     for (const t of byTitle.topics) {
-      if (!found.has(t.id) && titleOverlap(p.title, t.title) >= TITLE_MATCH_THRESHOLD) found.set(t.id, 'title');
+      if (!found.has(t.id) && titleMatches(p.title, t.title)) found.set(t.id, 'title');
     }
   }
   return new Map(Array.from(found).slice(0, MAX_TOPICS_PER_PROPOSAL));
