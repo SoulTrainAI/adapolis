@@ -733,6 +733,16 @@ pick contribution = points × multiplier   if points > 0
           <Bullets
             items={[
               <>
+                <strong>Alignment and Personal GovScore:</strong> Alignment is
+                your values match with a DRep, 0–100%. Personal GovScore is
+                GovScore × (1 + 0.25 × (Alignment − 50%) ÷ 50%), capped at 100:
+                50% alignment leaves it unchanged, 100% raises it by a quarter,
+                0% lowers it by a quarter. Both are worked out in your browser,
+                shown only to you (in Find My DRep and as sorts in the DRep Hall
+                of Fame) and never change the public GovScore, which depends on
+                whether DReps vote, never how.
+              </>,
+              <>
                 <strong>Who can be matched:</strong> registered DReps with at
                 least {MATCH_RULES.minVotesCast} votes and at least{" "}
                 {MATCH_RULES.minParticipation * 100}% participation, excluding

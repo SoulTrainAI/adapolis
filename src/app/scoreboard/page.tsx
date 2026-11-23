@@ -9,7 +9,7 @@ import { ScoreboardClient } from '@/components/scoreboard/ScoreboardClient';
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'DRep Hall of Fame',
+  title: 'DRep Hall of Fame — ADApolis',
   description: 'Every Cardano DRep ranked by lifetime GovScore, with your own Alignment after the Find My DRep quiz.',
 };
 

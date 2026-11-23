@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Search, SlidersHorizontal } from 'lucide-react';
-import { formatAda, type MatchResult } from '@/lib/match/score';
+import type { MatchResult } from '@/lib/match/score';
 import type { MatchDRep } from '@/lib/match/profiles';
 import { MyDRepBadge, useMyDRep } from '@/components/auth/MyDRepBadge';
 import { DRepAvatar, ResultCard } from './ResultCard';
+import { TradingCard } from '@/components/cards/TradingCard';
+import { placeholderCard, useCards } from '@/components/cards/useCards';
+import { personalGovScore } from '@/lib/match/personal';
+import { TIPS } from '@/lib/site/glossary';
 
 type WeightKey = 'values' | 'track' | 'stamina' | 'xp' | 'insight' | 'power' | 'charisma';
 type Weights = Record<WeightKey, number>;
@@ -77,6 +81,7 @@ export function ExploreDReps({
   const [shown, setShown] = useState(10);
   const [expanded, setExpanded] = useState<string | null>(null);
   const myDRep = useMyDRep();
+  const { cards } = useCards();
 
   useEffect(() => {
     if (quickPick || !hasAnswers) return;
@@ -282,40 +287,51 @@ export function ExploreDReps({
         </select>
       </div>
 
-      <ol className="space-y-2">
+      <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {listed.slice(0, shown).map((r) => {
           const open = expanded === r.drep.drep_id;
+          const card =
+            cards.get(r.drep.drep_id) ??
+            placeholderCard({ drep_id: r.drep.drep_id, name: r.drep.name, image: r.drep.image, ada: r.drep.ada, delegators: r.drep.delegators });
           return (
-            <li key={r.drep.drep_id} className="rounded-xl border border-slate-800 bg-slate-900/60">
-              <button
-                type="button"
-                onClick={() => setExpanded(open ? null : r.drep.drep_id)}
-                aria-expanded={open}
-                className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
-              >
-                <span className="w-8 text-right font-mono text-sm text-slate-500">#{rankOf.get(r.drep.drep_id)}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-white">
-                    {r.drep.name ?? `${r.drep.drep_id.slice(0, 16)}…`} <MyDRepBadge drepId={r.drep.drep_id} className="ml-1 align-middle" />
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {hasAnswers && r.result ? `${Math.round(r.result.matchPercent)}% values · ` : ''}
-                    GovScore {r.drep.govscore.toFixed(0)} · {Math.round(r.drep.participation * 100)}% stamina · {r.drep.votes_cast} XP ·{' '}
-                    explains {Math.round(r.parts.insight * 100)}% · {formatAda(r.drep.ada)} · {r.drep.delegators.toLocaleString()} delegators
-                  </p>
-                </div>
-                <span className="text-xl font-bold text-violet-300" title="Your personalized score (0-100)">
-                  {Math.round(r.score)}
+            <li key={r.drep.drep_id} className={`flex flex-col gap-2 ${open ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
+              <div className="flex items-center gap-2 rounded-lg bg-slate-900/70 px-3 py-1.5 text-xs">
+                <span className="font-mono text-slate-500">#{rankOf.get(r.drep.drep_id)}</span>
+                <MyDRepBadge drepId={r.drep.drep_id} />
+                {hasAnswers && r.result ? (
+                  <>
+                    <span className="ml-auto text-slate-300" title={TIPS.alignment}>
+                      Alignment <strong className="text-brand-lilac">{Math.round(r.result.matchPercent)}%</strong>
+                    </span>
+                    <span className="text-slate-300" title={TIPS.personalGovscore}>
+                      Personal GovScore{' '}
+                      <strong className="text-white">{personalGovScore(r.drep.govscore, r.result.matchPercent).toFixed(1)}</strong>
+                    </span>
+                  </>
+                ) : (
+                  <span className="ml-auto text-slate-400">GovScore {r.drep.govscore.toFixed(1)}</span>
+                )}
+                <span className="text-slate-400" title="Your score from the weights above (0-100). The list is ordered by it.">
+                  · You {Math.round(r.score)}
                 </span>
-                {open ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
-              </button>
-              {open && r.result && (
-                <div className="px-3 pb-3">
-                  <ResultCard result={r.result} rank={rankOf.get(r.drep.drep_id) ?? 0} />
-                </div>
-              )}
+              </div>
+              <TradingCard
+                variant="scoreboard"
+                card={card}
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(open ? null : r.drep.drep_id)}
+                    aria-expanded={open}
+                    className="flex w-full items-center justify-center gap-1 rounded-lg bg-slate-800 py-1.5 text-sm text-slate-200 hover:bg-slate-700"
+                  >
+                    {r.result ? 'Why this match' : 'Delegate'} {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
+                }
+              />
+              {open && r.result && <ResultCard result={r.result} rank={rankOf.get(r.drep.drep_id) ?? 0} />}
               {open && !r.result && (
-                <p className="px-3 pb-3 text-sm text-slate-400">
+                <p className="text-sm text-slate-400">
                   <a
                     href={`https://gov.tools/connected/drep_directory/${r.drep.drep_id}`}
                     target="_blank"

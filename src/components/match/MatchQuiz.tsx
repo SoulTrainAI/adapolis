@@ -220,6 +220,14 @@ export function MatchQuiz() {
   }, [data, includeDeeper]);
 
   const step = steps[Math.min(stepIndex, steps.length - 1)];
+  // Once answers exist (saved here or to the wallet), open straight on the matches.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (autoOpened.current || !data || !hasAnswers || stepIndex !== 0) return;
+    autoOpened.current = true;
+    setQuickPick(false);
+    setStepIndex(steps.length - 1);
+  }, [data, hasAnswers, stepIndex, steps.length]);
   const questionSteps = steps.filter((s) => s.kind === 'topic' || s.kind === 'real');
   const answeredPosition = steps.slice(0, stepIndex + 1).filter((s) => s.kind === 'topic' || s.kind === 'real').length;
   const next = () => setStepIndex((i) => Math.min(i + 1, steps.length - 1));
@@ -241,7 +249,7 @@ export function MatchQuiz() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className={`${step.kind === 'results' ? 'max-w-6xl' : 'max-w-2xl'} mx-auto`}>
       {step.kind !== 'intro' && step.kind !== 'results' && step.kind !== 'deeper-offer' && (
         <div className="mb-6">
           <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
