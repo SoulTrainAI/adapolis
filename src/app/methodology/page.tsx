@@ -9,6 +9,7 @@ import { PROVISIONAL_BELOW_ELIGIBLE } from "@/lib/scoring/confidence";
 import { POINT_RULES, SEASON_LENGTH_EPOCHS } from "@/lib/season/points";
 import { ROSTER_SIZE } from "@/lib/season/fantasy";
 import { MATCH_RULES } from "@/lib/match/topics";
+import { CollectiblesNotice } from "@/components/cards/CollectiblesNotice";
 
 export const metadata = {
   title: "Methodology — ADApolis",
@@ -530,6 +531,7 @@ pick contribution = points × multiplier   if points > 0
         </Section>
 
         <Section id="champion-cards" n={next()} title="Champion Cards (NFTs)">
+          <CollectiblesNotice />
           <P>
             At each season&apos;s end, the top 10 DReps by season points are
             preserved as Champion Cards: Cardano NFTs of their card as it stood
@@ -596,8 +598,16 @@ pick contribution = points × multiplier   if points > 0
                 the ADApolis project wallet. Marketplaces honour it voluntarily.
               </>,
               <>
-                <strong>Pure collectibles:</strong> no votes, no say over
-                ADApolis, no royalty share and no promise of value.
+                <strong>Collectibles only, not financial instruments:</strong> no
+                yield, no revenue or royalty share, no votes or say over ADApolis
+                and no promise of value.
+              </>,
+              <>
+                <strong>Collector&apos;s Cup editions (from Season 2):</strong> a
+                winner whose wallet holds Champion Cards of the DReps involved
+                (earned or bought) may mint their Champion Card copy or Season
+                Trophy as the Collector&apos;s Cup edition: same item, own frame
+                and trait, replacing the regular one, never adding to supply.
               </>,
               <>
                 <strong>Season Trophies</strong> (top 3 qualifying global teams) are

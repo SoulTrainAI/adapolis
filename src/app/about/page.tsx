@@ -6,6 +6,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { DISCORD_URL, X_HANDLE, X_URL } from "@/lib/site/social";
+import { CollectiblesNotice } from "@/components/cards/CollectiblesNotice";
 
 export const metadata = {
   title: "About — ADApolis",
@@ -299,6 +300,7 @@ export default function AboutPage() {
 
         <section id="champion-cards" className="mb-12 space-y-4 text-slate-300 leading-relaxed scroll-mt-24">
           <H2>Champion Cards (NFTs)</H2>
+          <CollectiblesNotice />
           <p>
             At the end of every season, the top 10 DReps by season points are preserved as Champion Cards: Cardano NFTs of
             their card exactly as it stood at the season&apos;s final whistle. The live card on this site keeps evolving;
@@ -357,6 +359,13 @@ export default function AboutPage() {
               </>,
             ]}
           />
+
+          <H3>Collector&apos;s Cup editions (from Season 2)</H3>
+          <p>
+            If you win a Champion Card or a Season Trophy while your wallet holds Champion Cards of the DReps involved,
+            you can mint your prize as its <B>Collector&apos;s Cup edition</B>: the same card or trophy with its own frame
+            and a Collector&apos;s Cup trait. It replaces your regular copy rather than adding one, so supply never grows.
+          </p>
 
           <H3>What they are, and aren&apos;t</H3>
           <p>

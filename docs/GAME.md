@@ -253,23 +253,26 @@ contest. Recommended: make the Collector's Cup memento **non-transferable**
 (a profile trophy, or a token locked to the winner's wallet), so it has
 recognition value but no market value. Earliest: Season 2.
 
-### 2.9a Collector's Cup edition — Decided (Jason, 2026-11-23), Season 2 earliest
+### 2.9a Collector's Cup editions — Decided (Jason, 2026-11-23), Season 2 earliest
 
-A collector's version of a DRep's Champion Card, earned only by loyalty:
-- **Who:** a top-25 prize-eligible team whose wallet still holds a Champion
-  Card of that same DRep that **this wallet claimed itself** in an earlier
-  season (minted to it and never transferred out), and who wins that DRep's
-  card again.
-- **What:** instead of the regular copy, they mint the **Collector's Cup
-  edition**: the same card with its own frame and a "Collector's Cup" trait,
-  plus the seasons it links ("Back-to-back: Season 2 → Season 3").
-- **Supply stays fixed:** it replaces that team's regular copy, never adds one.
-  No second copies.
-- **Can't be bought:** cards bought on the market don't qualify, so no purchase
-  makes anyone's prize bigger. It rewards backing a DRep, keeping their card
-  and backing them again, which also keeps cards off the market.
-- Verified on-chain from the claim records (claimant wallet minted it) and the
-  wallet's current holdings at the season's end snapshot.
+A trait, never an extra item: a prize can be minted as its **Collector's Cup
+edition** instead of the regular one.
+- **Champion Card copy:** a top-25 prize-eligible team whose wallet holds any
+  Champion Card of that DRep (earned or bought) at the season's end snapshot
+  may mint its copy of that DRep's new card as the Collector's Cup edition.
+- **Season Trophy:** a top-3 team whose wallet holds Champion Cards of DReps on
+  its team may mint its trophy as the Collector's Cup edition. Same mechanics.
+- **Same item, same supply:** the edition replaces the regular one (own frame,
+  "Collector's Cup" trait, the seasons it links). No second copies.
+- Bought cards count (Jason): the point is to support collecting and trading.
+- **Lawyer question:** holding a purchasable card lets a winner choose a rarer
+  edition of the same prize. Confirm this is acceptable in a free contest
+  before the first mint.
+
+**All ADApolis cards and trophies are collectibles only, not financial
+instruments:** no yield, no revenue share, no governance rights, no promise of
+value, and nothing ADApolis does is aimed at their price. This is stated on
+About, Methodology, Collection and every claim.
 
 ### 2.10 Pools outside ADApolis
 

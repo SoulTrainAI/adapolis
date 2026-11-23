@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { Award } from 'lucide-react';
 import type { Claim } from '@/lib/season/champions';
 import { seasonLabel } from '@/lib/season/points';
+import { CollectiblesNotice } from './CollectiblesNotice';
 
 const WHY: Record<Claim['claimant_type'], string> = {
   drep: 'your own Champion Card (DRep copies)',
@@ -34,6 +35,7 @@ export function ClaimsSection() {
       <h2 className="flex items-center gap-2 font-display text-xl font-bold text-white">
         <Award className="h-5 w-5 text-brand-gold-light" /> Champion Cards you&apos;ve earned
       </h2>
+      <CollectiblesNotice compact />
       {claims && claims.length > 0 ? (
         <ul className="space-y-2">
           {claims.map((c) => (

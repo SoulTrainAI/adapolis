@@ -9,6 +9,7 @@ import { TradingCard } from './TradingCard';
 import { placeholderCard, useCards } from './useCards';
 import { DRepCheckup } from './DRepCheckup';
 import { ClaimsSection } from './ClaimsSection';
+import { CollectiblesNotice } from './CollectiblesNotice';
 
 type DraftResponse = (({ enabled: true } & DraftData) | { enabled: false }) & { signed_in?: boolean };
 
@@ -60,6 +61,7 @@ export function CollectionView() {
           their season; Season 1&apos;s are the Genesis set. Cards are pure collectibles: they never change how anyone scores
           or votes.
         </p>
+        <CollectiblesNotice compact />
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <button
             type="button"
