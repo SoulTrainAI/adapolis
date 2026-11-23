@@ -16,16 +16,16 @@ const LINES: Record<string, string[]> = {
     'Has opened more governance actions than most people have opened emails.',
     'Shows up. Reads it. Votes. Repeat until the chain stops.',
   ],
-  ironclad: ['Has not missed a vote in a while. Nobody is quite sure it sleeps.', 'Missed votes: rumoured, never confirmed.'],
-  on_fire: ['On a streak. Please do not mention it, it might be listening.', 'Hot hand. Steady gavel.'],
+  ironclad: ['Has not missed a vote in a while. Nobody is quite sure they sleep.', 'Missed votes: rumoured, never confirmed.'],
+  on_fire: ['On a streak. Please do not mention it, they might be listening.', 'Hot hand. Steady gavel.'],
   early_bird: ['Votes before the coffee is ready.', 'First in the booth, every time.'],
-  scholar: ['Explains every vote. Probably footnotes its grocery list too.', 'Never votes without writing down why.'],
+  scholar: ['Explains every vote. Probably footnotes their grocery list too.', 'Never votes without writing down why.'],
   veteran: ['Has been here since the first gavel fell.', 'Seen a few seasons. Still taking notes.'],
   underdog: ['Small stake. Big notebook.', 'Proof you don’t need a whale to make waves.'],
   rookie: ['New to the chamber. Already taking notes.', 'Fresh registration, sharpened pencil.'],
   steady: ['Quietly does the job, season after season.', 'No speeches. Just a long, tidy voting record.'],
-  occasional: ['Picks its moments.', 'Rare sightings in the voting booth. Collectors take note.'],
-  default: ['Registered, voting, and keeping its thoughts mostly on-chain.', 'A DRep of few words and several votes.', 'Governs quietly. Lets the record talk.'],
+  occasional: ['Picks their moments.', 'Rare sightings in the voting booth. Collectors take note.'],
+  default: ['Registered, voting, and keeping their thoughts mostly on-chain.', 'A DRep of few words and several votes.', 'Governs quietly. Lets the record talk.'],
 };
 
 /** Stable choice per DRep, so a card's flavor text doesn't change on every load. */

@@ -316,7 +316,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
             >
               <option value="active" title="Registered, at least one vote cast and some ADA delegated: the pool card ranks use.">Active DReps (have voted and hold delegation)</option>
               <option value="registered" title="Every DRep currently registered on-chain, including ones that have never voted or hold no delegation.">All registered DReps</option>
-              <option value="all" title="Also includes DReps that have deregistered (retired).">Everyone, including retired</option>
+              <option value="all" title="Also includes DReps who have deregistered (retired).">Everyone, including retired</option>
             </select>
           </div>
 

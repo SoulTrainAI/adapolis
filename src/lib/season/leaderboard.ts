@@ -81,7 +81,7 @@ async function loadRosters(seasonNumber: number): Promise<RosterRow[]> {
     .from('fantasy_rosters')
     .select('stake_address, team_name, created_at, fantasy_roster_picks(drep_id, underdog_multiplier)')
     .eq('season_number', seasonNumber);
-  if (error) throw new Error(`Couldn't load fantasy teams: ${error.message}`);
+  if (error) throw new Error(`Couldn't load game teams: ${error.message}`);
   return (data ?? []).map((r) => ({
     stake_address: r.stake_address as string,
     team_name: (r.team_name as string | null) ?? null,

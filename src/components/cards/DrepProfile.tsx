@@ -184,7 +184,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
                   <LineChart points={activeSeasons(detail.seasons).map((s) => ({ label: s.label, value: s.govscore_end }))} />
                 </div>
                 <div>
-                  <p className="mb-1 text-sm text-slate-300">Fantasy points per window</p>
+                  <p className="mb-1 text-sm text-slate-300">Points per season</p>
                   <BarChart points={activeSeasons(detail.seasons).map((s) => ({ label: s.label, value: s.played || s.in_progress ? s.points : null }))} />
                 </div>
               </div>
@@ -195,7 +195,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
               <SeasonHistory seasons={detail.seasons} />
             </Section>
 
-            <Section title="How it voted (not scored)">
+            <Section title="How they voted (not scored)">
               <div className="grid max-w-md grid-cols-3 gap-2 text-center">
                 <div className="bg-emerald-900/30 p-2">
                   <p className="text-2xl font-black text-emerald-300">{detail.votes.yes}</p>

@@ -3,7 +3,7 @@ import { CollectionView } from '@/components/cards/CollectionView';
 
 export const metadata: Metadata = {
   title: 'My Collection — ADApolis',
-  description: 'Your ADApolis DRep trading cards, your fantasy team and your DRep, in one place.',
+  description: 'Your ADApolis DRep trading cards, your game team and your DRep, in one place.',
 };
 
 export default function CollectionPage() {

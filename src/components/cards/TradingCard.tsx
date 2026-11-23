@@ -653,7 +653,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
             <StatLine label="Streak" tip={TIPS.streak} value={`${c.streak} ep.`} />
           </div>
           <div>
-            <BackTitle>Fantasy</BackTitle>
+            <BackTitle>Game</BackTitle>
             <StatLine label="Last window" tip={TIPS.lastWindow} value={num(c.last_points)} />
             <StatLine label="Form (last 3)" tip={TIPS.form} value={num(c.form)} />
             <StatLine label="Avg / window" tip={TIPS.avgWindow} value={num(c.avg_points)} />
@@ -696,7 +696,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
         {/* Quote: always complete (picked to fit two lines), never cut off */}
         {detail?.quote && (
           detail.quote_by === 'drep' ? (
-            <p className="italic text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3 }} title="In the DRep's own words, from its on-chain profile or its claimed card.">
+            <p className="italic text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3 }} title="In the DRep's own words, from their on-chain profile or their claimed card.">
               “{detail.quote}”
             </p>
           ) : (

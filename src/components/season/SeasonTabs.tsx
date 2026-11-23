@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 const TABS = [
   ['standings', '/season', 'DRep standings'],
-  ['leaderboard', '/leaderboard', 'Fantasy leaderboard'],
+  ['leaderboard', '/leaderboard', 'Game leaderboard'],
   ['draft', '/draft', 'Draft'],
 ] as const;
 

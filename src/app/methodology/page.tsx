@@ -13,7 +13,7 @@ import { MATCH_RULES } from "@/lib/match/topics";
 export const metadata = {
   title: "Methodology — ADApolis",
   description:
-    "How ADApolis scores DReps: GovScore, ADA-power dampening, season points, the fantasy draft, trading cards, Find My DRep and AI summaries.",
+    "How ADApolis scores DReps: GovScore, ADA-power dampening, season points, the game, Champion Cards, trading cards, Find My DRep and AI summaries.",
 };
 
 const LAST_UPDATED = "November 2026";
@@ -116,7 +116,8 @@ const CONTENTS = [
   ["dampening", "ADA-power dampening"],
   ["not-measured", "What we never score"],
   ["season-points", "Season points"],
-  ["fantasy", "Fantasy draft and underdog multiplier"],
+  ["game", "The game"],
+  ["champion-cards", "Champion Cards (NFTs)"],
   ["cards", "Trading cards"],
   ["card-abilities", "Card abilities"],
   ["find-my-drep", "Find My DRep"],
@@ -166,7 +167,7 @@ export default function MethodologyPage() {
             items={[
               <>
                 <strong>GovScore</strong> (career): how reliably a DRep has
-                voted over its whole record. It drives the{" "}
+                voted over their whole record. It drives the{" "}
                 <A href="/scoreboard">Scoreboard</A>, the card tiers and the
                 DRep&apos;s rank.
               </>,
@@ -174,7 +175,7 @@ export default function MethodologyPage() {
                 <strong>Season points</strong> (this season): how well a DRep
                 did the job over the current 6-epoch season: voting, explaining,
                 voting early and not missing actions. They drive the{" "}
-                <A href="/season">season standings</A> and the fantasy game.
+                <A href="/season">season standings</A> and the game.
               </>,
             ]}
           />
@@ -206,8 +207,8 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
               </>,
               <>
                 <strong>Eligible actions:</strong> actions that were open while
-                the DRep was registered. A DRep that joined recently is measured
-                only against actions since it joined.
+                the DRep was registered. A DRep who joined recently is measured
+                only against actions since they joined.
               </>,
               <>
                 <strong>Actions still open</strong> count only once the DRep has
@@ -257,8 +258,8 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
             </div>
             <P>
               DRep B has the highest rate but only five votes, so DRep C ranks
-              first. If DRep B keeps voting on everything, its score rises
-              toward its rate: 50 of 50 scores 92.9.
+              first. If DRep B keeps voting on everything, their score rises
+              toward their rate: 50 of 50 scores 92.9.
             </P>
           </div>
         </Section>
@@ -314,8 +315,8 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
             </h3>
             <P>
               <strong className="text-violet-100">
-                Scores, points, abilities and fantasy results come from how a
-                DRep does the job, never from how it votes.
+                Scores, points, abilities and game results come from how a
+                DRep does the job, never from how they vote.
               </strong>
             </P>
             <P>
@@ -405,44 +406,70 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
                 {POINT_RULES.missed}
               </span>{" "}
               <strong>Missed</strong>: an action closed while the DRep was
-              registered and it never voted. Counted in the epoch it closed.
+              registered and they never voted. Counted in the epoch it closed.
             </li>
           </ul>
           <P muted>
             Card and draft stats derived from season points:{" "}
             <strong>Form</strong> is the average of the DRep&apos;s last 3
-            completed seasons; <strong>Projected</strong> is its form, or its
-            career average when it has no completed season yet;{" "}
-            <strong>Season rank</strong> is among DReps that voted this season.
+            completed seasons; <strong>Projected</strong> is their form, or their
+            career average when they have no completed season yet;{" "}
+            <strong>Season rank</strong> is among DReps who voted this season.
           </P>
         </Section>
 
-        <Section
-          id="fantasy"
-          n={next()}
-          title="Fantasy draft and underdog multiplier"
-        >
+        <Section id="game" n={next()} title="The game">
+          <P>
+            Pick {ROSTER_SIZE} DReps before each season; your team scores the
+            season points they earn. The full rules, in order:
+          </P>
           <Bullets
             items={[
               <>
-                <strong>Free to play.</strong> Connect a Cardano wallet and sign
-                a message to prove it&apos;s yours. No transaction, no fee,
-                nothing staked.
+                <strong>Seasons:</strong> {SEASON_LENGTH_EPOCHS} epochs each.
+                Season 1 is epochs 678–683 (from 4 January 2027); each season
+                follows straight on.
               </>,
               <>
-                <strong>Draft {ROSTER_SIZE} DReps</strong> before the roster
-                lock, 24 hours after the season&apos;s first epoch begins. Until
-                then you can change picks; DReps you keep hold their original
-                multiplier.
+                <strong>Free to play.</strong> Connect a Cardano wallet and sign
+                a message to prove it&apos;s yours. No transaction, no fee,
+                nothing staked. One team per wallet per season.
+              </>,
+              <>
+                <strong>Draft {ROSTER_SIZE} different DReps</strong>, any
+                registered DRep, no salary cap. The next season&apos;s draft is
+                always open; picks can change until the roster lock, 24 hours
+                after the season&apos;s first epoch begins. DReps you keep hold
+                their original multiplier.
               </>,
               <>
                 <strong>Team points</strong> are the sum of your DReps&apos;
                 season points, with gains multiplied by each pick&apos;s
-                underdog multiplier.
+                underdog multiplier (below).
               </>,
               <>
-                <strong>Leaderboard ties</strong> share a rank; the team that
-                drafted first is listed first.
+                <strong>Retirements:</strong> if a drafted DRep deregisters
+                mid-season, you get one free replacement for that slot, at the
+                new DRep&apos;s current multiplier. Points already earned stay.
+              </>,
+              <>
+                <strong>Leaderboards:</strong> the global game (opt in when you
+                save; on by default) decides Season Trophies. Public leagues and
+                invite-only private leagues have their own leaderboards; one team
+                can be in the global game and any number of leagues. Ties share a
+                rank; the team that drafted first is listed first.
+              </>,
+              <>
+                <strong>Rewards:</strong> the top 3 global teams each season win
+                a one-of-one Season Trophy NFT; the top 10 get a Finalist badge;
+                teams that drafted a top-10 DRep can claim that DRep&apos;s
+                Champion Card (next section).
+              </>,
+              <>
+                <strong>No stakes.</strong> No ADA prizes, no paid entry and no
+                betting pools in leagues, in ADA or NFTs. Staking something of
+                value on the outcome would be gambling, which is illegal in
+                Hawaii. That holds unless a lawyer&apos;s review says otherwise.
               </>,
             ]}
           />
@@ -481,15 +508,99 @@ pick contribution = points × multiplier   if points > 0
                 <>
                   <strong>Why it exists:</strong> big DReps already get
                   attention. The multiplier makes it worth scouting the reliable
-                  small DReps that most people never look at.
+                  small DReps most people never look at.
                 </>,
               ]}
             />
           </div>
           <P muted>
-            Prizes, when offered, are collectible cards, never ADA. Find My DRep
-            tilts toward small DReps for a different reason: to spread voting
-            power (see section 9).
+            Leagues, the global opt-in and retirement replacements arrive with
+            Season 1. Find My DRep tilts toward small DReps for a different
+            reason: to spread voting power (see Find My DRep below).
+          </P>
+        </Section>
+
+        <Section id="champion-cards" n={next()} title="Champion Cards (NFTs)">
+          <P>
+            At each season&apos;s end, the top 10 DReps by season points are
+            preserved as Champion Cards: Cardano NFTs of their card as it stood
+            at the final whistle. A Champion Card never changes; the live card on
+            the site keeps evolving. Season 1&apos;s cards are the Genesis set.
+          </P>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="text-xs uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="py-2 pr-4 font-semibold">Season rank</th>
+                  <th className="py-2 font-semibold">Edition</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["#1", "Gold Champion"],
+                  ["#2", "Silver"],
+                  ["#3", "Bronze"],
+                  ["#4–10", "Holo"],
+                ].map(([rank, edition]) => (
+                  <tr key={rank} className="border-t border-slate-800">
+                    <td className="py-2 pr-4 font-semibold text-white">{rank}</td>
+                    <td className="py-2">{edition}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Bullets
+            items={[
+              <>
+                <strong>Copies:</strong> the DRep gets 5 of their own card; every
+                team that drafted them can claim 1; every wallet delegating to them
+                at the season&apos;s last epoch can claim 1 within 7 days. Then the
+                supply is fixed forever and each copy is numbered.
+              </>,
+              <>
+                <strong>Snapshots:</strong> the drafting teams and delegators
+                eligible to claim are recorded at the season&apos;s last epoch and
+                published, so anyone can check them.
+              </>,
+              <>
+                <strong>On the card:</strong> the card front and back image;
+                metadata (CIP-25) with season, edition, season rank, season points,
+                GovScore, Power, Stamina, XP, Charisma, abilities, set
+                (&ldquo;Genesis&rdquo; for Season 1), copy number and supply.
+              </>,
+              <>
+                <strong>Supply is enforced on-chain:</strong> one minting policy
+                per season, time-locked to close when the claim window ends, so
+                nobody, ADApolis included, can mint more.
+              </>,
+              <>
+                <strong>Cost:</strong> ADApolis charges nothing. Claimers pay the
+                Cardano network fee and the minimum ADA an NFT must hold (about
+                1.5–2 ADA, most of it staying with the NFT). No packs and no paid
+                extra copies, for anyone.
+              </>,
+              <>
+                <strong>Royalty:</strong> a single 5% CIP-27 royalty on resales to
+                the ADApolis project wallet. Marketplaces honour it voluntarily.
+              </>,
+              <>
+                <strong>Pure collectibles:</strong> no votes, no say over
+                ADApolis, no royalty share and no promise of value.
+              </>,
+              <>
+                <strong>Season Trophies</strong> (top 3 global teams) are
+                one-of-one NFTs with the team name, final points and five picks.
+              </>,
+            ]}
+          />
+          <P muted>
+            Planned: testnet first; the first mainnet mint (Season 1, early
+            February 2027) follows a legal review. The full design is in{" "}
+            <A href="https://github.com/SoulTrainAI/adapolis/blob/main/docs/GAME.md">
+              docs/GAME.md
+            </A>
+            .
           </P>
         </Section>
 
@@ -519,8 +630,8 @@ pick contribution = points × multiplier   if points > 0
               </>,
               <>
                 <strong>Art, bio and links</strong> come from the DRep&apos;s
-                CIP-119 metadata. A DRep can <A href="/drep">claim its card</A>{" "}
-                by signing with its DRep key (CIP-95) and replace the art, bio
+                CIP-119 metadata. A DRep can <A href="/drep">claim their card</A>{" "}
+                by signing with their DRep key (CIP-95) and replace the art, bio
                 and links. Stats can&apos;t be edited.
               </>,
               <>
@@ -531,7 +642,7 @@ pick contribution = points × multiplier   if points > 0
                 quote until the DRep writes one.
               </>,
               <>
-                <strong>Not seeking delegation:</strong> DReps that set CIP-119{" "}
+                <strong>Not seeking delegation:</strong> DReps who set CIP-119{" "}
                 <code>doNotList</code> are labelled so and left out of Find My
                 DRep.
               </>,
@@ -599,7 +710,7 @@ pick contribution = points × multiplier   if points > 0
                 <strong>Who can be matched:</strong> registered DReps with at
                 least {MATCH_RULES.minVotesCast} votes and at least{" "}
                 {MATCH_RULES.minParticipation * 100}% participation, excluding
-                DReps that set <code>doNotList</code>.
+                DReps who set <code>doNotList</code>.
               </>,
               <>
                 <strong>Your answers:</strong> each statement is rated 1–10 for
@@ -666,13 +777,13 @@ pick contribution = points × multiplier   if points > 0
             Find My DRep can also show what each DRep has <em>said</em> about
             the quiz topics. These are kept apart from voting data and never
             change a vote-based match %, so you can compare what a DRep says
-            with what it does.
+            with what they do.
           </P>
           <Bullets
             items={[
               <>
                 <strong>Sources:</strong> only the DRep&apos;s own published
-                words: its CIP-119 profile and up to 100 recent distinct vote
+                words: their CIP-119 profile and up to 100 recent distinct vote
                 rationales (CIP-100/136), each checked against its on-chain
                 hash. Newer writing wins over older.
               </>,
@@ -699,7 +810,7 @@ pick contribution = points × multiplier   if points > 0
               </>,
               <>
                 <strong>Freshness:</strong> a DRep is re-summarized only when
-                its profile or rationales change.
+                their profile or rationales change.
               </>,
             ]}
           />

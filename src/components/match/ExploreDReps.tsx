@@ -179,7 +179,7 @@ export function ExploreDReps({
           ) : (
             <p className="mt-1 text-sm text-slate-300">
               Your wallet delegates to <span className="font-mono text-xs">{myDRep.slice(0, 20)}…</span>, which isn&apos;t in the
-              matching pool: it has voted fewer than 3 times, isn&apos;t active, or has asked not to be promoted.
+              matching pool: they have voted fewer than 3 times, aren&apos;t active, or have asked not to be promoted.
             </p>
           )}
         </div>

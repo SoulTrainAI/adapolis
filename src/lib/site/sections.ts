@@ -11,7 +11,7 @@ export const SECTIONS = {
   scoreboard: {
     href: '/scoreboard',
     label: 'Scoreboard',
-    blurb: 'Every active DRep ranked by GovScore: how reliably it votes, over its whole record. Sort by season points or projections.',
+    blurb: 'Every active DRep ranked by GovScore: how reliably they vote, over their whole record. Sort by season points or projections.',
   },
   match: {
     href: '/match',
@@ -26,17 +26,17 @@ export const SECTIONS = {
   season: {
     href: '/season',
     label: 'Season',
-    blurb: 'This season’s DRep standings and the fantasy leaderboard. Seasons are 6 epochs, about a month.',
+    blurb: 'This season’s DRep standings and the game leaderboard. Seasons are 6 epochs, about a month.',
   },
   draft: {
     href: '/draft',
     label: 'Draft',
-    blurb: 'Free fantasy game: draft 5 DReps and score their season points. Small DReps carry an underdog bonus.',
+    blurb: 'Free game: draft 5 DReps and score their season points. Small DReps carry an underdog bonus.',
   },
   collection: {
     href: '/collection',
     label: 'Collection',
-    blurb: 'Your fantasy team’s cards, a check-up on the DRep you delegate to, and collectible cards (coming soon).',
+    blurb: 'Your game team’s cards, a check-up on the DRep you delegate to, and collectible cards (coming soon).',
   },
   claim: {
     href: '/drep',

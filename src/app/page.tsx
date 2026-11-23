@@ -126,7 +126,7 @@ const PATHS: Path[] = [
     chip: 'an ADA holder',
     icon: Wallet,
     who: 'ADA holders and delegators',
-    pitch: 'Your ADA votes through a DRep. Make sure it’s one that shows up and thinks like you.',
+    pitch: 'Your ADA votes through a DRep. Make sure they show up and thinks like you.',
     links: [
       { href: SECTIONS.match.href, label: 'Find My DRep', tip: SECTIONS.match.blurb },
       { href: SECTIONS.collection.href, label: 'Check your DRep', tip: 'Connect your wallet to see who you delegate to and whether they’re still voting.' },
@@ -154,7 +154,7 @@ const PATHS: Path[] = [
     links: [
       { href: SECTIONS.draft.href, label: 'Draft your team', tip: SECTIONS.draft.blurb },
       { href: SECTIONS.season.href, label: 'Season standings', tip: SECTIONS.season.blurb },
-      { href: '/leaderboard', label: 'Fantasy leaderboard', tip: 'Every fantasy team’s score, pick by pick.' },
+      { href: '/leaderboard', label: 'Game leaderboard', tip: 'Every team’s score, pick by pick.' },
     ],
   },
   {
@@ -279,7 +279,7 @@ export default async function Home() {
           <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="Scoreboard" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
           <GameTile href={SECTIONS.draft.href} icon={Swords} title="Draft" body={SECTIONS.draft.blurb} accent="bg-brand-gold/20 text-brand-gold-light" />
           <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="Season standings" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
-          <GameTile href="/leaderboard" icon={Trophy} title="Leaderboard" body="Every fantasy team’s score, pick by pick, updated as the season unfolds." accent="bg-sky-500/15 text-sky-300" />
+          <GameTile href="/leaderboard" icon={Trophy} title="Leaderboard" body="Every team’s score, pick by pick, updated as the season unfolds." accent="bg-sky-500/15 text-sky-300" />
         </div>
       </section>
 

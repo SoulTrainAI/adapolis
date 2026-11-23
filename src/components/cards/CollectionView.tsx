@@ -91,7 +91,7 @@ export function CollectionView() {
         )}
       </Section>
 
-      <Section title="Your fantasy team" icon={<span className="text-brand-gold-light">★</span>}>
+      <Section title="Your game team" icon={<span className="text-brand-gold-light">★</span>}>
         {!draft ? (
           <p className="flex items-center gap-2 text-slate-400">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading…

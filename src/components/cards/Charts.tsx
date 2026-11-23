@@ -101,7 +101,7 @@ export function BarChart({ points, color = '#f5b301', negative = '#f87171', heig
   const slot = (width - pad.l - pad.r) / nums.length;
   const bw = Math.max(2, slot * 0.7);
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Fantasy points per window">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Game points per season">
       {[min, 0, max].filter((v, i, a) => a.indexOf(v) === i).map((t) => (
         <g key={t}>
           <line x1={pad.l} x2={width - pad.r} y1={y(t)} y2={y(t)} stroke={t === 0 ? AXIS : GRID} />

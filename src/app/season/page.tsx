@@ -43,7 +43,7 @@ export default async function SeasonPage() {
           <h1 className="text-4xl font-bold">DRep Season Standings</h1>
           <p className="text-slate-300">
             DReps earn points for doing the job: voting, explaining their votes, and voting on time. Yes, No and Abstain
-            all earn the same. Points never depend on which way a DRep votes or whether its side won.
+            all earn the same. Points never depend on which way a DRep votes or whether their side won.
           </p>
           {data && (
             <p className="text-sm text-slate-400">
@@ -52,7 +52,7 @@ export default async function SeasonPage() {
           )}
           {isPreview && (
             <p className="text-sm bg-violet-950/50 border border-violet-800/60 rounded-lg px-4 py-3 text-violet-100">
-              This is a preview season to test the scoring on real data. Fantasy drafting, where you pick 5 DReps and
+              This is a preview season to test the scoring on real data. Game drafting, where you pick 5 DReps and
               score their points, starts with Season 1. Feedback on the point rules is welcome.
             </p>
           )}
@@ -73,7 +73,7 @@ export default async function SeasonPage() {
           </ul>
           <p className="text-slate-400">
             Underdog: smaller DReps, by both ADA and number of delegators, will be worth up to{' '}
-            {1 + POINT_RULES.maxUnderdogBonus}× to fantasy teams that draft them.{' '}
+            {1 + POINT_RULES.maxUnderdogBonus}× to game teams that draft them.{' '}
             <Link href="/methodology#season-points" className="text-violet-300 hover:underline">
               Full rules
             </Link>

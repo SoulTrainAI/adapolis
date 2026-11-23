@@ -125,7 +125,7 @@ export const CATEGORIES: CategorySpec[] = [
     channels: [
       { name: 'season-feed', kind: 'text', access: { mode: 'read_only' }, feed: 'season_feed', topic: 'Automatic: standings each epoch, draft opening and lock reminders.' },
       { name: 'draft-talk', kind: 'text', access: { mode: 'open' }, topic: 'Scouting reports and draft strategy: adapolis.net/draft' },
-      { name: 'arena-chat', kind: 'text', access: { mode: 'open' }, onboardingDefault: true, topic: 'Fantasy league banter. Points come from showing up and explaining, never from how DReps vote.' },
+      { name: 'arena-chat', kind: 'text', access: { mode: 'open' }, onboardingDefault: true, topic: 'Game banter. Points come from showing up and explaining, never from how DReps vote.' },
     ],
   },
   {
@@ -172,7 +172,7 @@ export const ONBOARDING = [
     options: [
       { emoji: '📚', title: 'Learn how Cardano governance works', description: 'Guides and a no-judgement Q&A', roles: ['learner'] as RoleKey[], channels: ['learn-governance', 'governance-guides'] },
       { emoji: '🗳️', title: 'Pick or check on my DRep', description: 'Ask DReps questions and follow live votes', roles: ['delegator'] as RoleKey[], channels: ['ask-a-drep', 'hot-topics-chat'] },
-      { emoji: '🏟️', title: 'Play the fantasy DRep league', description: 'Draft 5 DReps each season', roles: ['player'] as RoleKey[], channels: ['season-feed', 'draft-talk', 'arena-chat'] },
+      { emoji: '🏟️', title: 'Play the ADApolis DRep game', description: 'Draft 5 DReps each season', roles: ['player'] as RoleKey[], channels: ['season-feed', 'draft-talk', 'arena-chat'] },
       { emoji: '🃏', title: 'Collect DRep trading cards', description: 'Card of the day and the Genesis set', roles: ['collector'] as RoleKey[], channels: ['card-of-the-day', 'collectors-chat'] },
       { emoji: '🏛️', title: "I'm a DRep", description: 'Get verified for the gold role and the DRep lounge', roles: ['drep_unverified'] as RoleKey[], channels: [] },
       { emoji: '🛠️', title: 'I build on Cardano', description: 'Feedback and integrations', roles: ['builder'] as RoleKey[], channels: ['feedback', 'bug-reports'] },

@@ -86,7 +86,7 @@ export default function DiscordPage({ searchParams }: { searchParams: Record<str
             detail={
               stake
                 ? 'Wallet connected: Delegator if it delegates to a DRep, Player if it has a team this season.'
-                : 'Connect your wallet (top right) to check delegation and your fantasy team.'
+                : 'Connect your wallet (top right) to check delegation and your game team.'
             }
           />
         </ol>

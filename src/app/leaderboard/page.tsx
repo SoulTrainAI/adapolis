@@ -3,8 +3,8 @@ import { LeaderboardView } from '@/components/season/LeaderboardView';
 import { SeasonTabs } from '@/components/season/SeasonTabs';
 
 export const metadata: Metadata = {
-  title: 'Fantasy Leaderboard — ADApolis',
-  description: 'ADApolis fantasy DRep league: every team ranked by the season points its DReps earn for showing up, explaining and voting on time.',
+  title: 'Game Leaderboard — ADApolis',
+  description: 'ADApolis DRep game: every team ranked by the season points their DReps earn for showing up, explaining and voting on time.',
 };
 
 export default function LeaderboardPage() {

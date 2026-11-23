@@ -67,7 +67,7 @@ export function DRepCheckup({ findHref = '/match', findLabel = 'Find a DRep who 
       body = (
         <>
           {plural(missed, 'governance action')} closed recently without a vote from your DRep
-          {since !== null ? `, and its last vote was ${plural(since, 'epoch')} ago` : ', and it has never voted'}. {find}.
+          {since !== null ? `, and their last vote was ${plural(since, 'epoch')} ago` : ', and they have never voted'}. {find}.
         </>
       );
     } else if (missed > 0) {
@@ -75,7 +75,7 @@ export function DRepCheckup({ findHref = '/match', findLabel = 'Find a DRep who 
       title = `${name} missed ${plural(missed, 'vote')} lately`;
       body = (
         <>
-          In the last two 6-epoch windows it voted {plural(votes, 'time')} and let {plural(missed, 'action')} close without voting. Worth keeping an eye on.
+          In the last two 6-epoch windows they voted {plural(votes, 'time')} and let {plural(missed, 'action')} close without voting. Worth keeping an eye on.
         </>
       );
     } else if (votes > 0) {
