@@ -1,567 +1,544 @@
 /**
- * Methodology Page
- * Explains the ADApolis GovScore v1 scoring system
- * Target: DReps, researchers, delegators
+ * Methodology: every rule ADApolis uses to score, rank, match and summarize,
+ * in enough detail to check our numbers against the chain.
  */
 
-import { ABILITY_RULES, TIER_NAMES } from '@/lib/cards/abilities';
+import type { ReactNode } from "react";
+import { ABILITY_RULES, TIER_NAMES } from "@/lib/cards/abilities";
+import { PROVISIONAL_BELOW_ELIGIBLE } from "@/lib/scoring/confidence";
+import { POINT_RULES, SEASON_LENGTH_EPOCHS } from "@/lib/season/points";
+import { ROSTER_SIZE } from "@/lib/season/fantasy";
+import { MATCH_RULES } from "@/lib/match/topics";
 
 export const metadata = {
-  title: 'Methodology — ADApolis',
-  description: 'How ADApolis scores DReps: participation rates, quadratic ADA dampening, and scoring formulas.',
+  title: "Methodology — ADApolis",
+  description:
+    "How ADApolis scores DReps: GovScore, ADA-power dampening, season points, the fantasy draft, trading cards, Find My DRep and AI summaries.",
 };
 
+const LAST_UPDATED = "November 2026";
+const MAX_UNDERDOG = 1 + POINT_RULES.maxUnderdogBonus;
+
+function Section({
+  id,
+  n,
+  title,
+  children,
+}: {
+  id: string;
+  n: number;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="space-y-5 scroll-mt-24">
+      <h2 className="text-2xl sm:text-3xl font-bold text-white">
+        {n}. {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function Bullets({
+  items,
+  mark = "•",
+  markClass = "text-violet-400",
+}: {
+  items: ReactNode[];
+  mark?: string;
+  markClass?: string;
+}) {
+  return (
+    <ul className="space-y-2 text-slate-300">
+      {items.map((item, i) => (
+        <li key={i} className="flex gap-3">
+          <span className={`${markClass} flex-shrink-0`}>{mark}</span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Formula({ children }: { children: string }) {
+  return (
+    <pre className="bg-slate-950 border border-slate-700 rounded p-4 overflow-x-auto text-sm font-mono text-slate-200">
+      {children}
+    </pre>
+  );
+}
+
+function P({
+  children,
+  muted = false,
+}: {
+  children: ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <p
+      className={
+        muted
+          ? "text-slate-400 text-sm leading-relaxed"
+          : "text-slate-300 leading-relaxed"
+      }
+    >
+      {children}
+    </p>
+  );
+}
+
+function A({ href, children }: { href: string; children: ReactNode }) {
+  const external = href.startsWith("http");
+  return (
+    <a
+      href={href}
+      className="text-violet-400 hover:text-violet-300"
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+    >
+      {children}
+    </a>
+  );
+}
+
+const DAMPENING = [
+  ["0", "1.000", "90.0"],
+  ["100K", "0.990", "89.1"],
+  ["1M", "0.930", "83.7"],
+  ["10M", "0.793", "71.4"],
+  ["100M", "0.666", "60.0"],
+];
+
+const CONTENTS = [
+  ["overview", "Overview"],
+  ["govscore", "GovScore"],
+  ["dampening", "ADA-power dampening"],
+  ["not-measured", "What we never score"],
+  ["season-points", "Season points"],
+  ["fantasy", "Fantasy draft and underdog multiplier"],
+  ["cards", "Trading cards"],
+  ["card-abilities", "Card abilities"],
+  ["find-my-drep", "Find My DRep"],
+  ["stated-positions", "Stated positions (AI)"],
+  ["hot-topics", "Hot Topics (AI)"],
+  ["data", "Data, refresh and transparency"],
+  ["limitations", "Limitations"],
+];
+
 export default function MethodologyPage() {
+  let n = 0;
+  const next = () => ++n;
   return (
     <div className="min-h-screen bg-brand-navy text-slate-100 py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-12">
-        {/* Header */}
         <div className="space-y-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white">ADApolis Methodology</h1>
+          <h1 className="text-4xl sm:text-5xl font-bold text-white">
+            ADApolis Methodology
+          </h1>
           <p className="text-base sm:text-lg text-slate-300">
-            How we score DReps on participation, consistency, and accessibility to delegation.
+            Every rule we use to score, rank, match and summarize DReps, in
+            enough detail to check our numbers against the chain.
           </p>
-          <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-slate-400">
-            <span>Last updated: June 2026</span>
-            <span>•</span>
-            <span>Phase 1: Participation Rate</span>
-          </div>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Last updated: {LAST_UPDATED}
+          </p>
+          <nav
+            aria-label="Contents"
+            className="bg-slate-900/50 border border-slate-800 rounded-lg p-4"
+          >
+            <ol className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm list-decimal list-inside text-slate-300">
+              {CONTENTS.map(([id, label]) => (
+                <li key={id}>
+                  <A href={`#${id}`}>{label}</A>
+                </li>
+              ))}
+            </ol>
+          </nav>
         </div>
 
-        {/* Section 1: Overview */}
-        <section className="space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">1. Overview</h2>
-          <p className="text-slate-300 leading-relaxed">
-            ADApolis <strong>GovScore</strong> is a composite participation metric computed from on-chain Cardano
-            governance data. It measures how actively and consistently a DRep participates in governance, adjusted
-            to surface high-quality DReps who are under-delegated.
-          </p>
-          <p className="text-slate-300 leading-relaxed">
-            In Phase 1, GovScore focuses on a single dimension: <strong>participation rate</strong> — the
-            percentage of eligible governance proposals a DRep voted on. Future phases will add dimensions
-            measuring rationale quality, consistency, delegator alignment, and more.
-          </p>
-          <p className="text-slate-300 leading-relaxed">
-            All scores are computed from publicly available on-chain data and are fully auditable. The entire
-            computation pipeline is deterministic and reproducible.
-          </p>
-        </section>
+        <Section id="overview" n={next()} title="Overview">
+          <P>
+            ADApolis measures DReps with two scores that answer different
+            questions:
+          </P>
+          <Bullets
+            items={[
+              <>
+                <strong>GovScore</strong> (career): how reliably a DRep has
+                voted over its whole record. It drives the{" "}
+                <A href="/scoreboard">Scoreboard</A>, the card tiers and the
+                DRep&apos;s rank.
+              </>,
+              <>
+                <strong>Season points</strong> (this season): how well a DRep
+                did the job over the current 6-epoch season: voting, explaining,
+                voting early and not missing actions. They drive the{" "}
+                <A href="/season">season standings</A> and the fantasy game.
+              </>,
+            ]}
+          />
+          <P>
+            Both come only from public on-chain data, by fixed rules published
+            on this page. Neither depends on which way a DRep votes or whether a
+            proposal passes. AI is used only to summarize what DReps and the
+            community have written, never to score anyone.
+          </P>
+        </Section>
 
-        {/* Section 2: Phase 1 Score */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">2. Phase 1 Score: Participation Rate</h2>
-
+        <Section id="govscore" n={next()} title="GovScore">
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
             <h3 className="text-xl font-semibold text-slate-100">Formula</h3>
-            <pre className="bg-slate-950 border border-slate-700 rounded p-4 overflow-x-auto text-sm font-mono text-slate-200">
-{`Participation  p = Votes Cast / Eligible Proposals   (n = Eligible Proposals)
+            <Formula>
+              {`Participation  p = Votes Cast / Eligible Actions   (n = Eligible Actions)
 
 Raw GovScore = 100 × Wilson lower bound of p at 95% confidence
-             = 100 × ( p + z²/2n − z·√( p(1−p)/n + z²/4n² ) ) / ( 1 + z²/n ),  z = 1.96`}
-            </pre>
-          </div>
+             = 100 × ( p + z²/2n − z·√( p(1−p)/n + z²/4n² ) ) / ( 1 + z²/n ),  z = 1.96
 
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-slate-100">Definitions</h3>
-            <ul className="space-y-2 text-slate-300">
-              <li className="flex gap-3">
-                <span className="text-violet-400 flex-shrink-0">•</span>
-                <span>
-                  <strong>Votes Cast:</strong> The number of governance actions (proposals) a DRep voted on
-                  (YES, NO, or ABSTAIN).
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-violet-400 flex-shrink-0">•</span>
-                <span>
-                  <strong>Eligible Proposals:</strong> Any governance action that was active during an epoch
-                  where the DRep was registered on-chain. A DRep that registered recently is measured only
-                  against proposals since it joined.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-violet-400 flex-shrink-0">•</span>
-                <span>
-                  <strong>Proposals still open for voting</strong> count only once the DRep has voted on
-                  them. A vote can&apos;t be missed until its voting window closes.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-violet-400 flex-shrink-0">•</span>
-                <span>
-                  <strong>Raw GovScore:</strong> The participation rate we can be 95% confident the DRep is at or
-                  above, given how many chances it has had, on a 0–100 scale.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-violet-400 flex-shrink-0">•</span>
-                <span>
-                  <strong>Why the confidence adjustment:</strong> a perfect 5 of 5 is promising but tells us far less
-                  than 159 of 164. Without it, DReps with a handful of votes outranked DReps with years of
-                  consistent participation. With it, a long, steady record ranks highest, and newcomers who keep
-                  voting climb as their record grows. There is no tuning constant: it is the standard Wilson score
-                  interval.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-violet-400 flex-shrink-0">•</span>
-                <span>
-                  <strong>Provisional:</strong> DReps with fewer than 10 eligible proposals are marked provisional on
-                  their card.
-                </span>
-              </li>
-            </ul>
+GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
+            </Formula>
           </div>
-
+          <Bullets
+            items={[
+              <>
+                <strong>Votes cast:</strong> governance actions the DRep voted
+                on (Yes, No or Abstain all count the same).
+              </>,
+              <>
+                <strong>Eligible actions:</strong> actions that were open while
+                the DRep was registered. A DRep that joined recently is measured
+                only against actions since it joined.
+              </>,
+              <>
+                <strong>Actions still open</strong> count only once the DRep has
+                voted on them. A vote can&apos;t be missed until its window
+                closes.
+              </>,
+              <>
+                <strong>Why the confidence adjustment:</strong> 5 of 5 is
+                promising but tells us far less than 159 of 164. The Wilson
+                lower bound is the participation rate we can be 95% sure the
+                DRep is at or above, so a long, steady record ranks highest and
+                newcomers who keep voting climb as their record grows. There is
+                no tuning constant.
+              </>,
+              <>
+                <strong>Provisional:</strong> DReps with fewer than{" "}
+                {PROVISIONAL_BELOW_ELIGIBLE} eligible actions are marked
+                provisional.
+              </>,
+              <>
+                <strong>Who is ranked:</strong> by default the Scoreboard and
+                card ranks cover <em>active</em> DReps: registered, at least one
+                vote cast, and some ADA delegated. The Scoreboard&apos;s Show
+                filter can include all registered or retired DReps.
+              </>,
+            ]}
+          />
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-slate-100">Data Source</h3>
-            <p className="text-slate-300">
-              <strong>Koios API</strong> ({' '}
-              <a href="https://api.koios.rest/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300">
-                api.koios.rest
-              </a>
-              ) — a decentralized, community-maintained Cardano chain indexer. All vote records, proposal
-              metadata, and DRep registration status are fetched directly from the blockchain.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-slate-100">Worked Example</h3>
-            <div className="bg-slate-900/30 border border-slate-700 rounded p-4">
-              <p className="text-slate-300 font-mono text-sm">
-                DRep A: voted on 93 of 100 eligible proposals (93%)<br />
-                <strong className="text-slate-100">Raw GovScore = 86.3</strong>
-                <br /><br />
-                DRep B: voted on 5 of 5 eligible proposals (100%)<br />
-                <strong className="text-slate-100">Raw GovScore = 56.6 (provisional)</strong>
-                <br /><br />
-                DRep C: voted on 159 of 164 eligible proposals (97%)<br />
-                <strong className="text-slate-100">Raw GovScore = 93.1</strong>
+            <h3 className="text-lg font-semibold text-slate-100">
+              Worked example
+            </h3>
+            <div className="bg-slate-900/30 border border-slate-700 rounded p-4 font-mono text-sm text-slate-300 space-y-3">
+              <p>
+                DRep A: 93 of 100 (93%) →{" "}
+                <strong className="text-slate-100">Raw 86.3</strong>
+              </p>
+              <p>
+                DRep B: 5 of 5 (100%) →{" "}
+                <strong className="text-slate-100">
+                  Raw 56.6 (provisional)
+                </strong>
+              </p>
+              <p>
+                DRep C: 159 of 164 (97%) →{" "}
+                <strong className="text-slate-100">Raw 93.1</strong>
               </p>
             </div>
-            <p className="text-slate-300">
-              DRep B has the highest rate, but on only five votes. DRep C has both a high rate and a long record,
-              so it ranks first. If DRep B keeps voting on everything, its score rises toward its rate: 50 of 50
-              scores 92.9.
-            </p>
+            <P>
+              DRep B has the highest rate but only five votes, so DRep C ranks
+              first. If DRep B keeps voting on everything, its score rises
+              toward its rate: 50 of 50 scores 92.9.
+            </P>
           </div>
-        </section>
+        </Section>
 
-        {/* Section 3: Quadratic ADA Dampening */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">3. Quadratic ADA-Power Dampening</h2>
+        <Section id="dampening" n={next()} title="ADA-power dampening">
+          <P>
+            GovScore multiplies the raw score by a factor that shrinks gently as
+            delegated ADA grows. It surfaces reliable, under-delegated DReps
+            without punishing large DReps for being trusted.
+          </P>
+          <Formula>
+            {`D = 1 / (1 + log₁₀(ADA_M + 1) / 4)      ADA_M = delegated ADA in millions`}
+          </Formula>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-700 text-slate-100">
+                  <th className="text-left py-3 px-4 font-semibold">
+                    ADA delegated
+                  </th>
+                  <th className="text-center py-3 px-4 font-semibold">
+                    Factor D
+                  </th>
+                  <th className="text-center py-3 px-4 font-semibold">
+                    Raw 90.0 becomes
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="text-slate-300 font-mono">
+                {DAMPENING.map(([ada, d, adj]) => (
+                  <tr key={ada} className="border-b border-slate-800">
+                    <td className="py-3 px-4">{ada}</td>
+                    <td className="text-center py-3 px-4">{d}</td>
+                    <td className="text-center py-3 px-4">{adj}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <P>
+            <strong>Participation still dominates.</strong> A 93% DRep with 100M
+            ADA scores 93.0 × 0.666 = 61.9; a 60% DRep with no delegation scores
+            60.0. Dampening breaks near-ties; it can&apos;t lift a weak record
+            over a strong one by much. The logarithm means each tenfold increase
+            in ADA costs a similar, modest step.
+          </P>
+        </Section>
 
-          <p className="text-slate-300 leading-relaxed">
-            A DRep&apos;s <strong>Adjusted GovScore</strong> is the Raw GovScore multiplied by a dampening factor
-            based on how much ADA is delegated to them. This creates a gentle curve that surfaces high-quality,
-            under-delegated DReps without punishing large DReps for receiving delegation.
-          </p>
+        <Section id="not-measured" n={next()} title="What we never score">
+          <div className="bg-violet-950/30 border border-violet-800 rounded-lg p-6 space-y-3">
+            <h3 className="text-lg font-semibold text-violet-200">
+              The Cardinal Rule
+            </h3>
+            <P>
+              <strong className="text-violet-100">
+                Scores, points, abilities and fantasy results come from how a
+                DRep does the job, never from how it votes.
+              </strong>
+            </P>
+            <P>
+              Yes, No and Abstain are worth the same, and nothing depends on
+              whether a proposal passed. Rewarding the winning side would turn
+              governance into a bet on outcomes and push DReps to vote with the
+              crowd. ADApolis takes no position on any proposal, treasury
+              request or policy direction.
+            </P>
+          </div>
+          <Bullets
+            mark="✗"
+            markClass="text-red-400"
+            items={[
+              <>
+                <strong>Vote direction or outcomes.</strong> Never scored. Find
+                My DRep uses vote direction only to show you which DReps agree
+                with <em>you</em>; it doesn&apos;t rank anyone as right or
+                wrong.
+              </>,
+              <>
+                <strong>Rationale quality.</strong> Season points reward
+                attaching a rationale and writing a fresh one per action, not
+                how good it is. Judging quality by AI would be contested;
+                community ratings may come later.
+              </>,
+              <>
+                <strong>Off-chain activity.</strong> Forum posts, social media
+                and Discord activity don&apos;t affect any score.
+              </>,
+              <>
+                <strong>Delegator satisfaction.</strong> Not measured yet.
+              </>,
+            ]}
+          />
+        </Section>
 
+        <Section id="season-points" n={next()} title="Season points">
+          <P>
+            A season is {SEASON_LENGTH_EPOCHS} epochs (about 30 days), on a
+            fixed grid starting at epoch 666. Season 1 starts at epoch 678;
+            windows before that are public previews of the rules. Points are
+            added in the epoch they happen:
+          </P>
+          <ul className="space-y-2 text-slate-300">
+            <li>
+              <span className="text-emerald-400 font-semibold">
+                +{POINT_RULES.vote}
+              </span>{" "}
+              <strong>Vote</strong> on a governance action. A changed vote
+              counts once, at its latest time.
+            </li>
+            <li>
+              <span className="text-emerald-400 font-semibold">
+                +{POINT_RULES.rationale}
+              </span>{" "}
+              <strong>Rationale</strong> attached to the vote (CIP-100 anchor).
+            </li>
+            <li>
+              <span className="text-emerald-400 font-semibold">
+                +{POINT_RULES.freshRationale}
+              </span>{" "}
+              <strong>Fresh rationale</strong>: one this DRep hasn&apos;t
+              attached to an earlier vote, so writing for each action beats
+              pasting one text everywhere.
+            </li>
+            <li>
+              <span className="text-emerald-400 font-semibold">
+                +{POINT_RULES.early}
+              </span>{" "}
+              <strong>Early vote</strong>, in the first half of the
+              action&apos;s voting window, which gives delegators time to react.
+            </li>
+            <li>
+              <span className="text-emerald-400 font-semibold">
+                +{POINT_RULES.streakStep} to +
+                {POINT_RULES.streakStep * POINT_RULES.streakCap}
+              </span>{" "}
+              <strong>Streak</strong>: an epoch where the DRep voted and missed
+              nothing is clean. Each clean epoch in a row adds +
+              {POINT_RULES.streakStep} more, up to +
+              {POINT_RULES.streakStep * POINT_RULES.streakCap} per epoch. Epochs
+              with nothing to vote on neither extend nor break a streak.
+            </li>
+            <li>
+              <span className="text-red-400 font-semibold">
+                {POINT_RULES.missed}
+              </span>{" "}
+              <strong>Missed</strong>: an action closed while the DRep was
+              registered and it never voted. Counted in the epoch it closed.
+            </li>
+          </ul>
+          <P muted>
+            Card and draft stats derived from season points:{" "}
+            <strong>Form</strong> is the average of the DRep&apos;s last 3
+            completed seasons; <strong>Projected</strong> is its form, or its
+            career average when it has no completed season yet;{" "}
+            <strong>Season rank</strong> is among DReps that voted this season.
+          </P>
+        </Section>
+
+        <Section
+          id="fantasy"
+          n={next()}
+          title="Fantasy draft and underdog multiplier"
+        >
+          <Bullets
+            items={[
+              <>
+                <strong>Free to play.</strong> Connect a Cardano wallet and sign
+                a message to prove it&apos;s yours. No transaction, no fee,
+                nothing staked.
+              </>,
+              <>
+                <strong>Draft {ROSTER_SIZE} DReps</strong> before the roster
+                lock, 24 hours after the season&apos;s first epoch begins. Until
+                then you can change picks; DReps you keep hold their original
+                multiplier.
+              </>,
+              <>
+                <strong>Team points</strong> are the sum of your DReps&apos;
+                season points, with gains multiplied by each pick&apos;s
+                underdog multiplier.
+              </>,
+              <>
+                <strong>Leaderboard ties</strong> share a rank; the team that
+                drafted first is listed first.
+              </>,
+            ]}
+          />
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
-            <h3 className="text-xl font-semibold text-slate-100">Formula</h3>
-            <pre className="bg-slate-950 border border-slate-700 rounded p-4 overflow-x-auto text-sm font-mono text-slate-200">
-{`Adjusted GovScore = Raw GovScore × D
+            <h3 className="text-xl font-semibold text-slate-100">
+              Underdog multiplier
+            </h3>
+            <Formula>
+              {`smallness  = 1 − mean(ADA percentile, delegator percentile)
+multiplier = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to ${MAX_UNDERDOG.toFixed(2)}×)
 
-where D = 1 / (1 + log₁₀(ADA_M + 1) / 4)
-and ADA_M = ADA delegated in millions`}
-            </pre>
+pick contribution = points × multiplier   if points > 0
+                  = points                if points ≤ 0`}
+            </Formula>
+            <Bullets
+              items={[
+                <>
+                  <strong>Size, not rank.</strong> Percentiles are taken among
+                  DReps active in the last finished season, using both delegated
+                  ADA and delegator count, since a DRep can be small in either
+                  sense. A DRep gains nothing by performing badly on purpose.
+                </>,
+                <>
+                  <strong>Smooth, no cutoff.</strong> There is no threshold to
+                  sit just under.
+                </>,
+                <>
+                  <strong>Locked when you pick.</strong> The multiplier is fixed
+                  for that pick for the whole season, even if the DRep grows.
+                </>,
+                <>
+                  <strong>Gains only.</strong> The multiplier boosts positive
+                  points; losses count at 1×. Drafting a small DRep never costs
+                  you more in a bad stretch than drafting a large one would.
+                </>,
+                <>
+                  <strong>Why it exists:</strong> big DReps already get
+                  attention. The multiplier makes it worth scouting the reliable
+                  small DReps that most people never look at.
+                </>,
+              ]}
+            />
           </div>
+          <P muted>
+            Prizes, when offered, are collectible cards, never ADA. Find My DRep
+            tilts toward small DReps for a different reason: to spread voting
+            power (see section 9).
+          </P>
+        </Section>
 
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-slate-100">Dampening Table</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b-2 border-slate-700">
-                    <th className="text-left py-3 px-4 font-semibold text-slate-100">ADA Delegated</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-100">Dampening Factor</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-100">Example: Raw 90.0 → Adjusted</th>
-                  </tr>
-                </thead>
-                <tbody className="text-slate-300">
-                  <tr className="border-b border-slate-800 hover:bg-slate-900/30">
-                    <td className="py-3 px-4 font-mono">0</td>
-                    <td className="text-center py-3 px-4 font-mono">1.000</td>
-                    <td className="text-center py-3 px-4 font-mono">90.0</td>
-                  </tr>
-                  <tr className="border-b border-slate-800 hover:bg-slate-900/30">
-                    <td className="py-3 px-4 font-mono">100K</td>
-                    <td className="text-center py-3 px-4 font-mono">0.941</td>
-                    <td className="text-center py-3 px-4 font-mono">84.7</td>
-                  </tr>
-                  <tr className="border-b border-slate-800 hover:bg-slate-900/30">
-                    <td className="py-3 px-4 font-mono">1M</td>
-                    <td className="text-center py-3 px-4 font-mono">0.857</td>
-                    <td className="text-center py-3 px-4 font-mono">77.1</td>
-                  </tr>
-                  <tr className="border-b border-slate-800 hover:bg-slate-900/30">
-                    <td className="py-3 px-4 font-mono">10M</td>
-                    <td className="text-center py-3 px-4 font-mono">0.750</td>
-                    <td className="text-center py-3 px-4 font-mono">67.5</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/30">
-                    <td className="py-3 px-4 font-mono">100M</td>
-                    <td className="text-center py-3 px-4 font-mono">0.667</td>
-                    <td className="text-center py-3 px-4 font-mono">60.0</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p className="text-slate-400 text-xs mt-2">
-              All calculations use base-10 logarithm. The divisor of 4 was chosen to create a smooth,
-              gentle curve that avoids discontinuities.
-            </p>
-          </div>
+        <Section id="cards" n={next()} title="Trading cards">
+          <P>
+            Every active DRep has a trading card, rebuilt from on-chain data
+            every 6 hours. Front and back are fixed layouts so a card reads the
+            same on the site, in Discord and as a downloaded image.
+          </P>
+          <Bullets
+            items={[
+              <>
+                <strong>Frame tier</strong> by GovScore rank among active DReps:
+                Legend (#1), Silver (#2), Bronze (#3), Holo (top 10, with foil),
+                Rare (top 50), Common.
+              </>,
+              <>
+                <strong>Stats:</strong> Power = delegated ADA, Stamina =
+                participation rate, XP = votes cast of eligible, Charisma =
+                delegators. These describe the DRep; only participation feeds
+                GovScore.
+              </>,
+              <>
+                <strong>Scores:</strong> GovScore with its change since the last
+                season and a trend line; season points with season rank and
+                trend.
+              </>,
+              <>
+                <strong>Art, bio and links</strong> come from the DRep&apos;s
+                CIP-119 metadata. A DRep can <A href="/drep">claim its card</A>{" "}
+                by signing with its DRep key (CIP-95) and replace the art, bio
+                and links. Stats can&apos;t be edited.
+              </>,
+              <>
+                <strong>Not seeking delegation:</strong> DReps that set CIP-119{" "}
+                <code>doNotList</code> are labelled so and left out of Find My
+                DRep.
+              </>,
+            ]}
+          />
+        </Section>
 
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-slate-100">Design Rationale</h3>
-            <p className="text-slate-300 leading-relaxed">
-              <strong>Behavioral score (participation) always dominates.</strong> Dampening is a tiebreak mechanism,
-              not a primary ranking criterion. A DRep with worse participation cannot outscore a better one purely
-              through ADA dampening — the math prevents this.
-            </p>
-
-            <div className="bg-slate-900/30 border border-slate-700 rounded p-4 space-y-2">
-              <p className="text-slate-200 font-semibold">Proof by Example:</p>
-              <p className="text-slate-300 font-mono text-sm">
-                DRep A: 93% participation, 100M ADA delegated<br />
-                Adjusted Score = 93.0 × 0.667 = 62.0<br />
-                <br />
-                DRep B: 60% participation, 0 ADA delegated<br />
-                Adjusted Score = 60.0 × 1.000 = 60.0<br />
-                <br />
-                <strong className="text-slate-100">DRep A still ranks higher despite the dampening.</strong>
-              </p>
-            </div>
-
-            <p className="text-slate-300 leading-relaxed">
-              <strong>Purpose:</strong> Distribute delegation toward high-quality DReps who haven&apos;t yet
-              received community recognition. A 93%-participation DRep with 0 ADA delegated will rank above
-              all except the most highly-participated-in large DReps. This creates a discovery mechanism for
-              excellent under-delegated DReps.
-            </p>
-          </div>
-        </section>
-
-        {/* Section 4: What GovScore Does NOT Measure */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">4. What GovScore Does NOT Measure (Phase 1)</h2>
-
-          <p className="text-slate-300 leading-relaxed">
-            Be explicit about what this score is <em>not</em>. Clarity on limitations is essential to credibility.
-          </p>
-
-          <ul className="space-y-3 text-slate-300">
-            <li className="flex gap-3">
-              <span className="text-red-400 flex-shrink-0">✗</span>
-              <span>
-                <strong>Does not measure vote direction or outcomes.</strong> ADApolis does not care whether a
-                DRep voted YES or NO on any proposal. Only whether they voted.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-red-400 flex-shrink-0">✗</span>
-              <span>
-                <strong>Does not measure rationale quality.</strong> While a DRep may have published detailed
-                reasoning for their votes (CIP-100 rationales), Phase 1 GovScore does not evaluate them.
-                (Coming in Phase 2.)
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-red-400 flex-shrink-0">✗</span>
-              <span>
-                <strong>Does not measure cross-channel consistency.</strong> Whether a DRep&apos;s Forum posts,
-                Twitter statements, and GitHub activity align with their votes. (Coming in Phase 2+.)
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-red-400 flex-shrink-0">✗</span>
-              <span>
-                <strong>Does not measure delegator alignment.</strong> Whether delegators agree with or are
-                satisfied by a DRep&apos;s voting record. (Coming in Phase 2+.)
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-red-400 flex-shrink-0">✗</span>
-              <span>
-                <strong>Does not measure responsiveness or community engagement.</strong> How quickly or thoroughly
-                a DRep responds to delegator questions. (Coming in Phase 2+.)
-              </span>
-            </li>
-          </ul>
-
-          <div className="bg-violet-950/30 border border-violet-800 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-violet-200 mb-3">The Cardinal Rule</h3>
-            <p className="text-slate-300 leading-relaxed">
-              <strong className="text-violet-100">ADApolis never scores based on HOW a DRep votes — only WHETHER they vote.</strong>
-            </p>
-            <p className="text-slate-300 leading-relaxed mt-3">
-              This is a deliberate design choice to preserve DRep independence and platform neutrality. ADApolis
-              takes no position on policy outcomes, treasury allocation, or governance direction. We measure
-              participation and transparency, not correctness.
-            </p>
-          </div>
-        </section>
-
-        {/* Section 5: Planned Expansions */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">5. Planned Score Expansions</h2>
-
-          <p className="text-slate-300 leading-relaxed">
-            Phase 1 is intentionally narrow. Future phases will add richer signals to GovScore, all while
-            maintaining the Cardinal Rule above.
-          </p>
-
-          <div className="grid gap-4">
-            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Phase 2 — Rationale Quality</h3>
-              <p className="text-slate-300 text-sm">
-                AI-scored analysis of CIP-100 rationales for clarity, evidence citation, reasoning depth,
-                and novelty. Dimensions added to GovScore: rationale publication rate, rationale quality,
-                consistency (voting aligned with stated positions).
-              </p>
-            </div>
-
-            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Phase 2+ — Delegator Alignment</h3>
-              <p className="text-slate-300 text-sm">
-                Match rate between DRep votes and aggregated pre-vote signals from delegators. Measures
-                whether a DRep represents the values of their delegator base.
-              </p>
-            </div>
-
-            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Phase 2+ — Growth Normalization</h3>
-              <p className="text-slate-300 text-sm">
-                Recent activity weighted higher; gentle decay for inactivity. Surfaces DReps who are currently
-                active over those who participated historically but have gone dormant.
-              </p>
-            </div>
-
-            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Phase 2+ — Forum & Social Consistency</h3>
-              <p className="text-slate-300 text-sm">
-                Cross-channel consistency score: do a DRep&apos;s Forum posts, Twitter statements, GitHub activity,
-                and actual votes align? Penalizes opportunism and rewards intellectual coherence.
-              </p>
-            </div>
-          </div>
-
-          <p className="text-slate-400 text-sm">
-            All expansions will be published in advance with full transparency. Phase 1 scores will never be
-            retroactively changed; new dimensions will be added as separate metrics.
-          </p>
-        </section>
-
-        {/* Section 6: Data Sources */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">6. Data Sources and Transparency</h2>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-100">Primary Data Source</h3>
-            <p className="text-slate-300">
-              <strong>Koios API</strong> ({' '}
-              <a href="https://api.koios.rest/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300">
-                api.koios.rest
-              </a>
-              ) — Community-maintained, decentralized Cardano chain indexer. Open source, auditable, no
-              single point of failure.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-100">Transparency Commitments</h3>
-            <ul className="space-y-2 text-slate-300">
-              <li className="flex gap-3">
-                <span className="text-green-400 flex-shrink-0">✓</span>
-                <span>
-                  <strong>All underlying data is on-chain and publicly verifiable.</strong> Every vote, every
-                  proposal, every DRep registration can be audited on the Cardano blockchain.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-green-400 flex-shrink-0">✓</span>
-                <span>
-                  <strong>Open governance explorer:</strong> {' '}
-                  <a href="https://gov.tools/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300">
-                    gov.tools
-                  </a>
-                  {' '} provides an independent view of all on-chain governance data.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-green-400 flex-shrink-0">✓</span>
-                <span>
-                  <strong>Sync frequency:</strong> Daily (automated), with 1–2 block lag time before data
-                  appears in Scoreboard.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-green-400 flex-shrink-0">✓</span>
-                <span>
-                  <strong>Open API access:</strong> All computed scores will be available via ADApolis API
-                  (launching Phase 2). No paywall, no rate limits beyond fair-use.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-green-400 flex-shrink-0">✓</span>
-                <span>
-                  <strong>Code is open source:</strong> The entire ADApolis codebase is available on GitHub.
-                  The scoring algorithm is not proprietary.
-                </span>
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        {/* Section 7: Limitations */}
-        <section className="space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">7. Limitations and Known Issues</h2>
-
-          <p className="text-slate-300 leading-relaxed">
-            Intellectual honesty requires naming the shortcomings of this approach.
-          </p>
-
-          <ul className="space-y-4">
-            <li>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Phase 1 Scope</h3>
-              <p className="text-slate-300">
-                Participation rate alone is not a complete picture of DRep quality. A DRep could attend every
-                vote but provide poor reasoning, miss nuance, or vote counter to delegator interests. Phase 1
-                deliberately omits these dimensions. Do not interpret a high Raw GovScore as an endorsement
-                of a DRep&apos;s wisdom — only their attendance.
-              </p>
-            </li>
-
-            <li>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">DRep Metadata Coverage</h3>
-              <p className="text-slate-300">
-                DReps who have not published CIP-119 metadata appear on the Scoreboard with a generated avatar
-                and no bio. This does not mean they are inactive — only that they haven&apos;t registered metadata
-                on-chain.
-              </p>
-            </li>
-
-            <li>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">New DReps</h3>
-              <p className="text-slate-300">
-                A newly-registered DRep may have excellent recent performance but rank lower than an old DRep
-                with mediocre participation — because they had fewer eligible proposals to vote on. This bias
-                favors seniority. Future phases will add &quot;growth normalization&quot; to weight recent activity higher.
-              </p>
-            </li>
-
-            <li>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Koios API Lag</h3>
-              <p className="text-slate-300">
-                Koios is decentralized and community-maintained. Data may lag the chain by 1–2 blocks. In rare
-                cases, if the Koios infrastructure experiences downtime, scores may not update on schedule.
-              </p>
-            </li>
-
-            <li>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Proposal Timing</h3>
-              <p className="text-slate-300">
-                Governance actions do not occur on a fixed schedule. Some epochs have many proposals; others
-                have none. A DRep in a quiet epoch may appear less active than one in a busy epoch, even if
-                their consistency is identical. This is a feature of Cardano governance, not a measurement error.
-              </p>
-            </li>
-          </ul>
-
-          <div className="bg-yellow-950/30 border border-yellow-800 rounded-lg p-6">
-            <p className="text-slate-300 leading-relaxed">
-              <strong className="text-yellow-100">Feedback on limitations?</strong> We take these issues seriously.
-              If you find a bug, have a suggestion for improvement, or want to report a data anomaly, please open
-              an issue on GitHub or reach out to the ADApolis team.
-            </p>
-          </div>
-        </section>
-
-        {/* Section 8: Find My DRep */}
-        <section id="find-my-drep" className="space-y-6 scroll-mt-24">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">8. How Find My DRep Matching Works</h2>
-          <p className="text-slate-300 leading-relaxed">
-            The <a href="/match" className="text-violet-400 hover:text-violet-300">Find My DRep</a> quiz compares your
-            answers with how DReps have actually voted on-chain. Everything is computed by fixed rules from public data; no
-            AI is involved. Your answers are scored in your browser and are never sent to us or stored.
-          </p>
-          <ul className="space-y-2 text-slate-300">
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Who can be matched:</strong> registered DReps with at least 3 votes and at least 50% participation, excluding DReps that set CIP-119 <code>doNotList</code> (they asked not to be promoted for delegation).</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Your answers:</strong> each statement is rated 1–10 for agreement and Not at all / A little / Somewhat / Very for importance (weights 0 / 1 / 2 / 3).</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>DRep positions:</strong> measured from votes on the relevant governance actions (e.g. treasury withdrawals), from rationale publication rate, or from delegated ADA. Treasury, protocol-change, transparency and size positions are ranked relative to other DReps.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Parameter topics</strong> (stake pool decentralization, staking rewards, fees) use parameter-change votes. Each change is classified by comparing the proposed values with the values in force when it was proposed; a Yes on a change that lowers the minimum pool fee, for example, counts as siding with small pools.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Thin records:</strong> each DRep&apos;s position is blended with the average DRep as if they had cast 3 extra average votes. A DRep with 3 votes can still match well, but one vote can&apos;t make them look extreme. Results label profiles with fewer than 10 votes as early.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Real-vote questions</strong> are recent proposals (last ~2 years) with their own title and summary, on which eligible DReps split most evenly. A DRep&apos;s Yes counts as 10, No as 1, Abstain or not voting as the midpoint. Answers near the middle count less, since they usually mean &quot;unsure&quot;.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Match %</strong> is the importance-weighted average agreement across every answered topic. &quot;My DRep should explain every vote&quot; only counts when you agree with it.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Decentralization boost:</strong> every ranking adds up to 5 points for the smallest DReps (scaled by delegated-ADA rank), so voting power spreads out. The boost is shown separately and never changes the match %. Exact ties go to the DRep with less delegated ADA.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Not yet measurable:</strong> some topics (e.g. DRep pay, treasury investing) haven&apos;t been voted on. The quiz asks them, but they don&apos;t affect matches until DReps publish positions.</span></li>
-          </ul>
-          <p className="text-slate-400 text-sm">
-            Because about two-thirds of governance actions so far are treasury withdrawals, matches currently lean on treasury
-            attitudes. Data refreshes every 6 hours.
-          </p>
-        </section>
-
-        {/* Section 9: Stated positions */}
-        <section id="stated-positions" className="space-y-6 scroll-mt-24">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">9. What DReps Say: AI-Summarized Stated Positions</h2>
-          <p className="text-slate-300 leading-relaxed">
-            Alongside voting records, Find My DRep can show what each DRep has <em>said</em> about the quiz topics. These are
-            kept separate from voting-record data and never change a match % based on votes, so you can compare what a DRep
-            says with what it does.
-          </p>
-          <ul className="space-y-2 text-slate-300">
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Sources:</strong> only the DRep&apos;s own published words: its CIP-119 profile and up to its 100 most recent distinct vote rationales (CIP-100/136), each verified by Koios against its on-chain hash. When newer writing conflicts with older writing, the newer view is recorded.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Summarizer:</strong> an AI model (Claude Haiku 5.5) records a 1–10 stance on a topic only when the DRep clearly states or clearly implies a general view. Objections to a single proposal don&apos;t count as a general view. Omitting a topic is preferred to guessing.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Every stance is quoted:</strong> each one must include a verbatim quote from the cited source. Quotes that can&apos;t be found word-for-word in the source are automatically discarded, along with their stance.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Says vs. does:</strong> when a DRep&apos;s stated stance and its voting record on the same topic (3+ votes) differ by half the scale or more, results flag it.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>&quot;What they say&quot; ranking</strong> uses only stated positions, needs at least 2 topics in common with your answers, and applies the same decentralization boost.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>DReps can override:</strong> once DRep-signed positions are available, a DRep&apos;s own signed answer replaces the AI summary for that topic.</span></li>
-            <li className="flex gap-3"><span className="text-violet-400 flex-shrink-0">•</span><span><strong>Freshness:</strong> a DRep is re-summarized only when its profile or rationales change.</span></li>
-          </ul>
-          <p className="text-slate-400 text-sm">
-            AI summaries can still misread nuance. Always check the quoted source before relying on a stated position.
-          </p>
-        </section>
-
-        <section id="season-points" className="space-y-6 scroll-mt-24">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">10. Season Points</h2>
-          <p className="text-slate-300 leading-relaxed">
-            Season points power the fantasy layer: players will draft 5 DReps and score their points. A season is 6 epochs
-            (about 30 days), on a fixed grid starting at epoch 666. Until Season 1 launches, each season is a public preview of the rules.
-          </p>
-          <p className="text-slate-300 leading-relaxed">
-            <strong>The rule that never bends:</strong> points come only from how a DRep does the job, never from how it
-            votes. Yes, No and Abstain earn the same, and nothing depends on whether a proposal passed. Rewarding the
-            winning side would turn the game into a bet on outcomes and pressure DReps to vote with the crowd.
-          </p>
-          <ul className="space-y-2 text-slate-300">
-            <li>• <strong>Vote</strong> on a governance action: +10, in the epoch the vote is cast. A changed vote counts once, at its latest time.</li>
-            <li>• <strong>Rationale</strong> attached to the vote (CIP-100 anchor): +10. <strong>Fresh rationale</strong>, one this DRep hasn&apos;t attached to an earlier vote: +5 more, so writing for each action beats pasting one text everywhere.</li>
-            <li>• <strong>Early vote</strong>, in the first half of the action&apos;s voting window: +5. Early votes give delegators time to react.</li>
-            <li>• <strong>Missed</strong>: an action closed while the DRep was registered and it never voted: −5, in the epoch it closed.</li>
-            <li>• <strong>Streak</strong>: an epoch where the DRep voted and missed nothing is clean. Each clean epoch in a row adds +5, +10, +15, then +20 per epoch. Epochs with nothing to vote on neither extend nor break a streak.</li>
-          </ul>
-          <p className="text-slate-300 leading-relaxed">
-            <strong>Underdog multiplier.</strong> A fantasy team drafting a small DRep multiplies that DRep&apos;s points by up to
-            1.5×. Size combines two percentiles among DReps active this season: delegated ADA and number of delegators,
-            because a DRep can be small in either sense. It scales smoothly (no cutoff to game) and is fixed at draft time.
-            It is based on size, not rank, so a DRep gains nothing by performing badly on purpose.
-          </p>
-          <p className="text-slate-400 text-sm">
-            Rationale points check that a rationale exists, not how good it is. Judging quality by AI would be contested;
-            community ratings may be added later. Points are computed from on-chain data via Koios and refresh every 6 hours.
-          </p>
-        </section>
-
-        <section id="card-abilities" className="space-y-6 scroll-mt-24">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white">11. Card Abilities</h2>
-          <p className="text-slate-300 leading-relaxed">
-            Every DRep card lists the abilities it has earned. Most come in {TIER_NAMES[1]}, {TIER_NAMES[2]} and {TIER_NAMES[3]}{' '}
-            tiers. Like season points, they only count how a DRep does the job: none depends on which way it voted or whether
-            a proposal passed. The headline ability on the front of a card is the rarest one that DRep holds.
-          </p>
+        <Section id="card-abilities" n={next()} title="Card abilities">
+          <P>
+            Abilities are badges earned by how a DRep does the job. Most have{" "}
+            {TIER_NAMES[1]}, {TIER_NAMES[2]} and {TIER_NAMES[3]} tiers. None
+            depends on vote direction or outcomes. The headline ability on the
+            front of a card is the rarest one that DRep holds.
+          </P>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-300">
               <thead className="text-xs uppercase tracking-wider text-slate-500">
@@ -575,8 +552,13 @@ and ADA_M = ADA delegated in millions`}
               </thead>
               <tbody>
                 {ABILITY_RULES.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-800 align-top">
-                    <td className="py-2 pr-4 font-semibold text-white">{r.label}</td>
+                  <tr
+                    key={r.id}
+                    className="border-t border-slate-800 align-top"
+                  >
+                    <td className="py-2 pr-4 font-semibold text-white">
+                      {r.label}
+                    </td>
                     <td className="py-2 pr-4">{r.measures}</td>
                     {r.tiers ? (
                       r.tiers.map((t, i) => (
@@ -594,17 +576,249 @@ and ADA_M = ADA delegated in millions`}
               </tbody>
             </table>
           </div>
-        </section>
+        </Section>
 
-        {/* Footer */}
-        <section className="pt-8 border-t border-slate-800 space-y-4">
-          <p className="text-slate-400 text-sm">
-            <strong>Last updated:</strong> June 2026 | <strong>Phase:</strong> Phase 1 MVP
-          </p>
-          <p className="text-slate-400 text-sm">
-            <strong>Citation:</strong> ADApolis GovScore v1 Methodology. ADApolis. 2026. Retrieved from
+        <Section id="find-my-drep" n={next()} title="Find My DRep">
+          <P>
+            The <A href="/match">Find My DRep</A> quiz compares your answers
+            with how DReps have actually voted. Matching uses fixed rules, no
+            AI. Answers are scored in your browser; they are saved only if you
+            sign in with a wallet and choose to save them, and you can delete
+            them at any time.
+          </P>
+          <Bullets
+            items={[
+              <>
+                <strong>Who can be matched:</strong> registered DReps with at
+                least {MATCH_RULES.minVotesCast} votes and at least{" "}
+                {MATCH_RULES.minParticipation * 100}% participation, excluding
+                DReps that set <code>doNotList</code>.
+              </>,
+              <>
+                <strong>Your answers:</strong> each statement is rated 1–10 for
+                agreement and Not at all / A little / Somewhat / Very for
+                importance (weights 0 / 1 / 2 / 3).
+              </>,
+              <>
+                <strong>DRep positions:</strong> measured from votes on the
+                relevant actions (e.g. treasury withdrawals), from rationale
+                publication rate, or from delegated ADA. Treasury,
+                protocol-change, transparency and size positions are ranked
+                relative to other DReps.
+              </>,
+              <>
+                <strong>Parameter topics</strong> (pool decentralization,
+                staking rewards, fees) use parameter-change votes, classified by
+                comparing proposed values with the values in force when
+                proposed. A Yes on lowering the minimum pool fee, for example,
+                counts as siding with small pools.
+              </>,
+              <>
+                <strong>Thin records:</strong> each position is blended with the
+                average DRep as if the DRep had cast{" "}
+                {MATCH_RULES.shrinkagePriorVotes} extra average votes, so one
+                vote can&apos;t make anyone look extreme. Profiles with fewer
+                than 10 votes are labelled early.
+              </>,
+              <>
+                <strong>Real-vote questions</strong> are recent actions on which
+                eligible DReps split most evenly. Yes counts as 10, No as 1,
+                Abstain or not voting as the midpoint. Answers near the middle
+                count less, since they usually mean &quot;unsure&quot;.
+              </>,
+              <>
+                <strong>Match %</strong> is the importance-weighted average
+                agreement across every answered topic.
+              </>,
+              <>
+                <strong>Decentralization boost:</strong> rankings add up to{" "}
+                {MATCH_RULES.maxDecentralizationBoost} points for the smallest
+                DReps (by delegated-ADA rank) so voting power spreads out. The
+                boost is shown separately and never changes the match %. Exact
+                ties go to the DRep with less ADA.
+              </>,
+              <>
+                <strong>Not yet measurable:</strong> topics nobody has voted on
+                yet (e.g. DRep pay) are asked but don&apos;t affect matches
+                until DReps state positions.
+              </>,
+            ]}
+          />
+          <P muted>
+            Most governance actions so far are treasury withdrawals, so matches
+            currently lean on treasury attitudes.
+          </P>
+        </Section>
+
+        <Section
+          id="stated-positions"
+          n={next()}
+          title="Stated positions (AI-summarized)"
+        >
+          <P>
+            Find My DRep can also show what each DRep has <em>said</em> about
+            the quiz topics. These are kept apart from voting data and never
+            change a vote-based match %, so you can compare what a DRep says
+            with what it does.
+          </P>
+          <Bullets
+            items={[
+              <>
+                <strong>Sources:</strong> only the DRep&apos;s own published
+                words: its CIP-119 profile and up to 100 recent distinct vote
+                rationales (CIP-100/136), each checked against its on-chain
+                hash. Newer writing wins over older.
+              </>,
+              <>
+                <strong>Summarizer:</strong> Claude Haiku records a 1–10 stance
+                only when the DRep clearly states a general view. Objections to
+                a single proposal don&apos;t count. Leaving a topic out is
+                preferred to guessing.
+              </>,
+              <>
+                <strong>Every stance is quoted.</strong> Each must include a
+                verbatim quote from its source; any quote that can&apos;t be
+                found word for word is discarded along with its stance.
+              </>,
+              <>
+                <strong>Says vs. does:</strong> when a stated stance and the
+                voting record on the same topic (3+ votes) differ by half the
+                scale or more, results flag it.
+              </>,
+              <>
+                <strong>&quot;What they say&quot; ranking</strong> uses only
+                stated positions, needs at least 2 topics in common with you,
+                and applies the same decentralization boost.
+              </>,
+              <>
+                <strong>Freshness:</strong> a DRep is re-summarized only when
+                its profile or rationales change.
+              </>,
+            ]}
+          />
+          <P muted>
+            AI summaries can misread nuance. Check the quoted source before
+            relying on a stated position.
+          </P>
+        </Section>
+
+        <Section id="hot-topics" n={next()} title="Hot Topics (AI-summarized)">
+          <P>
+            <A href="/hot-topics">Hot Topics</A> lists governance actions open
+            for voting: how DReps are splitting by count and by ADA, who has
+            explained their vote, and the main arguments on each side.
+          </P>
+          <Bullets
+            items={[
+              <>
+                <strong>DRep arguments</strong> are summarized from published
+                rationales. &quot;For&quot; points may cite only Yes rationales
+                and &quot;against&quot; points only No rationales, at most 3 per
+                side, each with a verbatim quote and a link to the full
+                rationale.
+              </>,
+              <>
+                <strong>Forum discussion</strong> is linked to an action only on
+                solid evidence: the action references the thread, a post
+                contains the action ID, or the titles closely match. Posts are
+                summarized into arguments the same way, each quoting and linking
+                its post. Quoted replies are stripped so nobody is credited with
+                words they were quoting.
+              </>,
+              <>
+                <strong>Summaries never feed a score.</strong> They are reading
+                aids, not judgements.
+              </>,
+            ]}
+          />
+        </Section>
+
+        <Section id="data" n={next()} title="Data, refresh and transparency">
+          <Bullets
+            mark="✓"
+            markClass="text-green-400"
+            items={[
+              <>
+                <strong>Source:</strong>{" "}
+                <A href="https://api.koios.rest/">Koios</A>, a community-run
+                Cardano indexer. Every vote, action, registration and delegation
+                can be checked on-chain or on an independent explorer such as{" "}
+                <A href="https://gov.tools/">gov.tools</A>.
+              </>,
+              <>
+                <strong>Refresh:</strong> data syncs every 6 hours. Scores,
+                points and cards are recomputed after each sync.
+              </>,
+              <>
+                <strong>Open data:</strong> the JSON behind the site is public,
+                for example <A href="/api/dreps">/api/dreps</A> (Scoreboard) and{" "}
+                <A href="/api/cards">/api/cards</A> (every card&apos;s stats).
+                No key needed; please cache and be gentle.
+              </>,
+              <>
+                <strong>Published rules:</strong> every formula and threshold on
+                this page is the one in use, and most numbers on it are read
+                from the same code that computes the scores. The date above
+                changes whenever a rule does.
+              </>,
+              <>
+                <strong>AI is disclosed:</strong> it appears only where this
+                page says so, and every AI summary carries a verbatim, linked
+                quote.
+              </>,
+            ]}
+          />
+        </Section>
+
+        <Section id="limitations" n={next()} title="Limitations">
+          <Bullets
+            items={[
+              <>
+                <strong>Attendance isn&apos;t wisdom.</strong> A DRep can vote
+                on everything and still reason poorly. A high GovScore says a
+                DRep shows up, not that you&apos;ll agree with it.
+              </>,
+              <>
+                <strong>Rationale points reward effort, not quality.</strong> A
+                short fresh rationale earns the same as a careful one.
+              </>,
+              <>
+                <strong>Missing metadata.</strong> DReps without CIP-119
+                metadata show a generated avatar and no bio. It doesn&apos;t
+                mean they&apos;re inactive.
+              </>,
+              <>
+                <strong>Uneven calendar.</strong> Some epochs have many actions
+                and others none, so season points vary with the governance
+                calendar as well as with effort.
+              </>,
+              <>
+                <strong>Size is a snapshot.</strong> Underdog multipliers use
+                the last finished season&apos;s sizes, and lock at draft time.
+              </>,
+              <>
+                <strong>Indexer lag.</strong> Data can trail the chain slightly,
+                and a Koios outage delays updates.
+              </>,
+            ]}
+          />
+          <div className="bg-yellow-950/30 border border-yellow-800 rounded-lg p-6">
+            <P>
+              <strong className="text-yellow-100">Found a mistake?</strong>{" "}
+              Report data anomalies or rule suggestions in our{" "}
+              <A href="https://discord.gg/64QvF9WWMM">Discord</A>.
+            </P>
+          </div>
+        </Section>
+
+        <section className="pt-8 border-t border-slate-800 space-y-2">
+          <P muted>
+            <strong>Last updated:</strong> {LAST_UPDATED}
+          </P>
+          <P muted>
+            <strong>Citation:</strong> ADApolis Methodology. ADApolis, 2026.
             adapolis.net/methodology
-          </p>
+          </P>
         </section>
       </div>
     </div>
