@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
+import { TIPS } from '@/lib/site/glossary';
 
 export interface FilterState {
   search: string;
@@ -21,14 +22,14 @@ interface FilterBarProps {
 }
 
 const SORT_OPTIONS = [
-  { value: 'adjusted_govscore', label: 'GovScore (career)' },
-  { value: 'season_points', label: 'Season points' },
-  { value: 'projection', label: 'Projected points' },
-  { value: 'raw_govscore', label: 'GovScore before ADA dampening' },
-  { value: 'participation_rate', label: 'Participation %' },
-  { value: 'amount_lovelace', label: 'ADA Delegated' },
-  { value: 'delegator_count', label: 'Delegators' },
-  { value: 'voting_streak_epochs', label: 'Voting Streak' },
+  { value: 'adjusted_govscore', label: 'GovScore (career)', tip: TIPS.govscore },
+  { value: 'season_points', label: 'Season points', tip: TIPS.seasonPoints },
+  { value: 'projection', label: 'Projected points', tip: TIPS.projection },
+  { value: 'raw_govscore', label: 'GovScore before ADA dampening', tip: TIPS.raw },
+  { value: 'participation_rate', label: 'Participation %', tip: TIPS.participation },
+  { value: 'amount_lovelace', label: 'ADA Delegated', tip: TIPS.ada },
+  { value: 'delegator_count', label: 'Delegators', tip: TIPS.delegators },
+  { value: 'voting_streak_epochs', label: 'Voting Streak', tip: TIPS.streak },
 ];
 
 export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps) {
@@ -105,6 +106,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
         <div className="relative w-48">
           <button
             onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+            title={SORT_OPTIONS.find((o) => o.value === filters.sort)?.tip ?? 'Choose what to rank DReps by'}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 text-sm flex items-center justify-between hover:border-slate-600 transition-colors"
           >
             <span className="whitespace-nowrap"><span className="text-slate-400">Rank by:</span> {currentSortLabel}</span>
@@ -117,6 +119,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
                 <button
                   key={option.value}
                   onClick={() => handleSortChange(option.value)}
+                  title={option.tip}
                   className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                     filters.sort === option.value
                       ? 'bg-slate-600 text-slate-100 font-semibold'
@@ -174,6 +177,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
                   <button
                     key={option.value}
                     onClick={() => handleSortChange(option.value)}
+                  title={option.tip}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                       filters.sort === option.value
                         ? 'bg-slate-600 text-slate-100 font-semibold'
@@ -310,9 +314,9 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
               onChange={(e) => handlePoolChange(e.target.value as FilterState['pool'])}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-slate-200 text-sm"
             >
-              <option value="active">Active DReps (have voted and hold delegation)</option>
-              <option value="registered">All registered DReps</option>
-              <option value="all">Everyone, including retired</option>
+              <option value="active" title="Registered, at least one vote cast and some ADA delegated: the pool card ranks use.">Active DReps (have voted and hold delegation)</option>
+              <option value="registered" title="Every DRep currently registered on-chain, including ones that have never voted or hold no delegation.">All registered DReps</option>
+              <option value="all" title="Also includes DReps that have deregistered (retired).">Everyone, including retired</option>
             </select>
           </div>
 

@@ -18,10 +18,10 @@ export function SocialIcons({ size = 18, className = '' }: { size?: number; clas
   const link = 'rounded-md p-2 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white';
   return (
     <div className={`flex items-center ${className}`}>
-      <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" aria-label="ADApolis on Discord" title="Join our Discord" className={link}>
+      <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" aria-label="ADApolis on Discord" title="Join On Discord: governance feeds, season recaps, Ask a DRep and newcomer guides" className={link}>
         <Glyph d={DISCORD_PATH} size={size} />
       </a>
-      <a href={X_URL} target="_blank" rel="noopener noreferrer me" aria-label="ADApolis on X" title="Follow us on X" className={link}>
+      <a href={X_URL} target="_blank" rel="noopener noreferrer me" aria-label="ADApolis on X" title="Follow On X: updates, card of the day and season news" className={link}>
         <Glyph d={X_PATH} size={size - 2} />
       </a>
     </div>

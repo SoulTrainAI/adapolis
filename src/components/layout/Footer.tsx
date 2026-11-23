@@ -32,11 +32,11 @@ export function Footer() {
             {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
           </button>
         </span>
-        <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={link}>
-          Discord
+        <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={link} title="Governance feeds, season recaps, Ask a DRep and newcomer guides">
+          Join On Discord
         </a>
-        <a href={X_URL} target="_blank" rel="noopener noreferrer me" className={link}>
-          {X_HANDLE}
+        <a href={X_URL} target="_blank" rel="noopener noreferrer me" className={link} title="Updates, card of the day and season news">
+          Follow On X {X_HANDLE}
         </a>
         <a href="/drep" className={link}>
           DReps: claim your card

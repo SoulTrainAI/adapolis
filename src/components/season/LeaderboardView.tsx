@@ -1,5 +1,6 @@
 'use client';
 
+import { TIPS } from '@/lib/site/glossary';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -46,9 +47,9 @@ function TeamRow({ team, live }: { team: LeaderboardTeam; live: boolean }) {
         <thead className="text-xs uppercase tracking-wider text-slate-500">
           <tr>
             <th className="px-4 py-2 text-left font-semibold">DRep</th>
-            <th className="px-2 text-right font-semibold">Season pts</th>
-            <th className="px-2 text-right font-semibold">Multiplier</th>
-            <th className="px-4 text-right font-semibold">Team pts</th>
+            <th className="px-2 text-right font-semibold" title={TIPS.seasonPoints}>Season pts</th>
+            <th className="px-2 text-right font-semibold" title={TIPS.underdog}>Multiplier</th>
+            <th className="px-4 text-right font-semibold" title="This pick's contribution: season points, with gains multiplied by the locked underdog multiplier.">Team pts</th>
           </tr>
         </thead>
         <tbody className="text-slate-200">

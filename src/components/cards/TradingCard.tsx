@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { hashDRepId } from '@/lib/utils/avatar';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
+import { TIPS } from '@/lib/site/glossary';
 import { PROVISIONAL_BELOW_ELIGIBLE } from '@/lib/scoring/confidence';
 import { tierFor, type CardAbility, type CardSummary, type SeasonLine, type Tier } from '@/lib/cards/types';
 import { Sparkline } from './Charts';
@@ -237,15 +238,15 @@ function DeltaChip({ value }: { value: number | null }) {
     );
   const up = rounded > 0;
   return (
-    <span className={`font-bold ${up ? 'text-emerald-300' : 'text-rose-300'}`} style={{ fontSize: cq(3.8) }} title="Change since the end of the previous 6-epoch window">
+    <span className={`font-bold ${up ? 'text-emerald-300' : 'text-rose-300'}`} style={{ fontSize: cq(3.8) }} title={TIPS.govscoreDelta}>
       {up ? '▲' : '▼'} {Math.abs(rounded).toFixed(1)}
     </span>
   );
 }
 
-function AttrStat({ label, value, sub }: { label: string; value: string; sub: string }) {
+function AttrStat({ label, value, sub, tip }: { label: string; value: string; sub: string; tip: string }) {
   return (
-    <div className="text-left" style={{ ...plate, padding: `${cq(1)} ${cq(2.4)}` }}>
+    <div className="text-left" style={{ ...plate, padding: `${cq(1)} ${cq(2.4)}` }} title={tip}>
       <div className="flex items-baseline justify-between" style={{ gap: cq(1) }}>
         <span className="font-bold uppercase tracking-wider text-slate-300" style={{ fontSize: cq(3.3) }}>
           {label}
@@ -262,12 +263,12 @@ function AttrStat({ label, value, sub }: { label: string; value: string; sub: st
 }
 
 /** The four representative stats on every card front. */
-function REP_STATS(c: CardSummary): Array<{ label: string; value: string; sub: string }> {
+function REP_STATS(c: CardSummary): Array<{ label: string; value: string; sub: string; tip: string }> {
   return [
-    { label: 'Power', value: formatAda(c.ada), sub: 'ADA delegated' },
-    { label: 'Stamina', value: pct(c.participation), sub: 'participation' },
-    { label: 'XP', value: `${c.votes_cast}`, sub: `votes of ${c.votes_eligible}` },
-    { label: 'Charisma', value: c.delegators.toLocaleString(), sub: 'delegators' },
+    { label: 'Power', value: formatAda(c.ada), sub: 'ADA delegated', tip: TIPS.power },
+    { label: 'Stamina', value: pct(c.participation), sub: 'participation', tip: TIPS.stamina },
+    { label: 'XP', value: `${c.votes_cast}`, sub: `votes of ${c.votes_eligible}`, tip: TIPS.xp },
+    { label: 'Charisma', value: c.delegators.toLocaleString(), sub: 'delegators', tip: TIPS.charisma },
   ];
 }
 
@@ -276,12 +277,12 @@ function DraftStrip({ card, mult, drafted }: { card: CardSummary; mult: number; 
   return (
     <div className="grid grid-cols-4 gap-1 text-center text-xs">
       {[
-        ['Proj.', num(card.projection)],
-        ['Form', num(card.form)],
-        ['Bonus', `${mult.toFixed(2)}×`],
-        ['Teams', drafted !== null ? String(drafted) : card.ownership !== null ? pct(card.ownership) : '0'],
-      ].map(([k, v]) => (
-        <div key={k} className={`border border-slate-700 bg-slate-900/70 py-1 ${k === 'Bonus' && mult >= 1.25 ? 'text-amber-200' : 'text-slate-100'}`}>
+        ['Proj.', num(card.projection), TIPS.projection],
+        ['Form', num(card.form), TIPS.form],
+        ['Bonus', `${mult.toFixed(2)}×`, TIPS.underdog],
+        ['Teams', drafted !== null ? String(drafted) : card.ownership !== null ? pct(card.ownership) : '0', TIPS.teams],
+      ].map(([k, v, tip]) => (
+        <div key={k} title={tip} className={`border border-slate-700 bg-slate-900/70 py-1 ${k === 'Bonus' && mult >= 1.25 ? 'text-amber-200' : 'text-slate-100'}`}>
           <p className="text-[10px] uppercase tracking-wider text-slate-400">{k}</p>
           <p className="font-bold">{v}</p>
         </div>
@@ -319,7 +320,7 @@ function CardFront(props: TradingCardProps) {
             {cardName(c)}
           </p>
           {c.rookie && (
-            <span className="bg-emerald-400/25 font-bold uppercase text-emerald-200" style={{ fontSize: cq(3.4), padding: `0 ${cq(1.2)}` }}>
+            <span className="bg-emerald-400/25 font-bold uppercase text-emerald-200" style={{ fontSize: cq(3.4), padding: `0 ${cq(1.2)}` }} title={TIPS.rookie}>
               RC
             </span>
           )}
@@ -335,6 +336,7 @@ function CardFront(props: TradingCardProps) {
           <span
             className={`absolute flex items-center bg-black/60 font-bold uppercase tracking-widest ${tier.accent}`}
             style={{ left: cq(2), top: cq(2), gap: cq(1), fontSize: cq(3.6), padding: `${cq(0.5)} ${cq(2)}` }}
+            title={TIPS.tier}
           >
             <Sparkles style={icon(3.6)} /> {tier.label}
             {c.rank !== null && ` · #${c.rank}`}
@@ -343,7 +345,7 @@ function CardFront(props: TradingCardProps) {
             <span
               className="absolute flex items-center bg-black/60 font-bold text-orange-300"
               style={{ right: cq(2), top: cq(2), gap: cq(0.5), fontSize: cq(3.8), padding: `${cq(0.5)} ${cq(2)}` }}
-              title="Epochs in a row without missing a vote"
+              title={TIPS.streak}
             >
               <Flame style={icon(4)} /> {c.streak}
             </span>
@@ -353,7 +355,7 @@ function CardFront(props: TradingCardProps) {
               <span
                 className={`flex items-center bg-black/65 font-semibold ${TIER_STYLE[c.archetype.tier ?? 0].text}`}
                 style={{ gap: cq(1), fontSize: cq(3.8), padding: `${cq(0.5)} ${cq(2)}` }}
-                title={`${c.archetype.label}: ${c.archetype.detail}`}
+                title={`${c.archetype.label}: ${c.archetype.detail}\n\n${TIPS.archetype}`}
               >
                 <ArchIcon style={icon(4)} /> {abilityName(c.archetype)}
               </span>
@@ -368,7 +370,7 @@ function CardFront(props: TradingCardProps) {
 
         {/* Scores: career GovScore and this season's fantasy points, side by side */}
         <div className="grid grid-cols-[1.3fr_1fr]" style={{ gap: cq(1.4), padding: `${cq(1.8)} ${cq(3)} 0` }}>
-          <div className="flex items-end justify-between" style={{ ...plate, padding: `${cq(1)} ${cq(2)}` }}>
+          <div className="flex items-end justify-between" style={{ ...plate, padding: `${cq(1)} ${cq(2)}` }} title={isProvisional(c) ? `${TIPS.govscore}\n\n${TIPS.provisional}` : TIPS.govscore}>
             <div className="min-w-0 text-left">
               <p className={`font-black leading-none drop-shadow ${c.rank !== null && c.rank <= 3 ? tier.accent : 'text-white'}`} style={{ fontSize: cq(9.6) }}>
                 {num(c.govscore, 1)}
@@ -379,12 +381,12 @@ function CardFront(props: TradingCardProps) {
             </div>
             <div className="flex flex-col items-end" style={{ gap: cq(0.4) }}>
               <DeltaChip value={c.delta1} />
-              <div style={{ width: cq(15), height: cq(6) }}>
+              <div style={{ width: cq(15), height: cq(6) }} title={TIPS.govscoreTrend}>
                 <Sparkline values={c.govscore_trend} color="#ddd6fe" width={60} height={24} fluid />
               </div>
             </div>
           </div>
-          <div className="flex items-end justify-between" style={{ ...plate, padding: `${cq(1)} ${cq(2)}` }}>
+          <div className="flex items-end justify-between" style={{ ...plate, padding: `${cq(1)} ${cq(2)}` }} title={TIPS.seasonPoints}>
             <div className="min-w-0 text-left">
               <p className="font-black leading-none text-amber-200 drop-shadow" style={{ fontSize: cq(7.6) }}>
                 {c.season.points}
@@ -394,10 +396,10 @@ function CardFront(props: TradingCardProps) {
               </p>
             </div>
             <div className="flex flex-col items-end" style={{ gap: cq(0.4) }}>
-              <span className="font-bold text-slate-200" style={{ fontSize: cq(3.4) }}>
+              <span className="font-bold text-slate-200" style={{ fontSize: cq(3.4) }} title={TIPS.seasonRank}>
                 {c.season.rank ? `#${c.season.rank}` : '—'}
               </span>
-              <div style={{ width: cq(11), height: cq(6) }}>
+              <div style={{ width: cq(11), height: cq(6) }} title={TIPS.seasonTrend}>
                 <Sparkline values={c.points_trend} color="#fcd34d" width={44} height={24} fluid />
               </div>
             </div>
@@ -413,17 +415,17 @@ function CardFront(props: TradingCardProps) {
 
         {/* Footer */}
         <div className="mt-auto flex items-center justify-between text-slate-300" style={{ fontSize: cq(3.6), padding: `${cq(1.2)} ${cq(3.4)} ${cq(1.6)}` }}>
-          <span className={c.registered ? 'text-emerald-300' : 'text-red-300'}>{c.registered ? '● Active' : '● Retired'}</span>
+          <span className={c.registered ? 'text-emerald-300' : 'text-red-300'} title={c.registered ? TIPS.active : TIPS.retired}>{c.registered ? '● Active' : '● Retired'}</span>
           {c.do_not_list ? (
-            <span>Not seeking delegation</span>
+            <span title={TIPS.notSeeking}>Not seeking delegation</span>
           ) : (
-            <span className="flex items-center font-semibold tracking-wide text-slate-200" style={{ gap: cq(1) }} title="Tap to flip">
+            <span className="flex items-center font-semibold tracking-wide text-slate-200" style={{ gap: cq(1) }} title="Tap or click the card to flip it and see the full record">
               {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark */}
               <img src="/brand/adapolis-mark-small.svg" alt="" style={icon(4.6)} />
               ADApolis
             </span>
           )}
-          <span className="font-mono">{c.rank !== null ? `No. ${String(c.rank).padStart(3, '0')}` : ''}</span>
+          <span className="font-mono" title={TIPS.cardNumber}>{c.rank !== null ? `No. ${String(c.rank).padStart(3, '0')}` : ''}</span>
         </div>
 
         {holo ? (
@@ -447,9 +449,9 @@ function CardFront(props: TradingCardProps) {
 /* ---------- Back ---------- */
 
 /** Score square on the back: label, value, short caption. */
-function Tile({ label, value, sub, subClass = 'text-slate-400' }: { label: string; value: string; sub?: string; subClass?: string }) {
+function Tile({ label, value, sub, subClass = 'text-slate-400', tip }: { label: string; value: string; sub?: string; subClass?: string; tip: string }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center" style={{ ...plate, padding: `${cq(0.9)} ${cq(0.5)}` }}>
+    <div className="flex flex-col items-center justify-center text-center" style={{ ...plate, padding: `${cq(0.9)} ${cq(0.5)}` }} title={tip}>
       <p className="font-bold uppercase leading-none tracking-wide text-slate-300" style={{ fontSize: cq(2.3) }}>
         {label}
       </p>
@@ -474,9 +476,9 @@ function BackTitle({ children }: { children: ReactNode }) {
 }
 
 /** Label … value line, like the stat lines on the back of a sports card. */
-function StatLine({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function StatLine({ label, value, tone, tip }: { label: string; value: string; tone?: string; tip: string }) {
   return (
-    <div className="flex items-baseline justify-between border-b border-white/10" style={{ fontSize: cq(2.7), padding: `${cq(0.32)} 0`, gap: cq(1) }}>
+    <div title={tip} className="flex items-baseline justify-between border-b border-white/10" style={{ fontSize: cq(2.7), padding: `${cq(0.32)} 0`, gap: cq(1) }}>
       <span className="truncate text-slate-300">{label}</span>
       <span className={`font-bold ${tone ?? 'text-white'}`}>{value}</span>
     </div>
@@ -487,7 +489,7 @@ function AbilityChip({ a }: { a: CardAbility }) {
   const Icon = ABILITY_ICONS[a.id] ?? Sparkles;
   const style = TIER_STYLE[a.tier ?? 0];
   return (
-    <span className={`inline-flex items-center border ${style.box} ${style.text} font-semibold`} style={{ gap: cq(0.7), fontSize: cq(2.55), padding: `${cq(0.35)} ${cq(1.2)}` }} title={a.detail}>
+    <span className={`inline-flex items-center border ${style.box} ${style.text} font-semibold`} style={{ gap: cq(0.7), fontSize: cq(2.55), padding: `${cq(0.35)} ${cq(1.2)}` }} title={`${a.label}: ${a.detail}`}>
       <Icon style={icon(2.9)} />
       {a.label}
     </span>
@@ -509,13 +511,13 @@ function RecentSeasons({ seasons, rows }: { seasons: SeasonLine[]; rows: number 
     <table className="w-full text-right" style={{ fontSize: cq(2.6) }}>
       <thead className="uppercase tracking-wider text-slate-400" style={{ fontSize: cq(2.2) }}>
         <tr>
-          <th className="text-left font-semibold">Epochs</th>
-          <th className="font-semibold">Pts</th>
-          <th className="font-semibold">Votes</th>
-          <th className="font-semibold">Expl.</th>
-          <th className="font-semibold">Early</th>
-          <th className="font-semibold">Miss</th>
-          <th className="font-semibold">Score</th>
+          <th className="text-left font-semibold" title={TIPS.seasonEpochs}>Epochs</th>
+          <th className="font-semibold" title={TIPS.seasonPoints}>Pts</th>
+          <th className="font-semibold" title={TIPS.seasonVotes}>Votes</th>
+          <th className="font-semibold" title={TIPS.seasonExplained}>Expl.</th>
+          <th className="font-semibold" title={TIPS.seasonEarly}>Early</th>
+          <th className="font-semibold" title={TIPS.seasonMissed}>Miss</th>
+          <th className="font-semibold" title={TIPS.seasonScore}>Score</th>
         </tr>
       </thead>
       <tbody className="text-slate-100">
@@ -569,7 +571,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
             <CardArt card={c} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`font-bold uppercase tracking-widest ${tier.accent}`} style={{ fontSize: cq(2.6) }}>
+            <p className={`font-bold uppercase tracking-widest ${tier.accent}`} style={{ fontSize: cq(2.6) }} title={`${TIPS.rank}\n\n${TIPS.tier}`}>
               {c.rank !== null ? `#${c.rank} of ${c.total} · ` : ''}
               {tier.label}
               {c.rookie && ' · Rookie'}
@@ -584,12 +586,12 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
           {(onFlip || onClose) && (
             <div className="flex flex-shrink-0" style={{ gap: cq(1) }}>
               {onFlip && (
-                <button type="button" onClick={onFlip} aria-label="Show the front" title="Front" className={iconButton} style={icon(6.4)}>
+                <button type="button" onClick={onFlip} aria-label="Show the front" title="Flip back to the front" className={iconButton} style={icon(6.4)}>
                   <RotateCcw style={icon(3.6)} />
                 </button>
               )}
               {onClose && (
-                <button type="button" onClick={onClose} aria-label="Close" className={iconButton} style={icon(6.4)}>
+                <button type="button" onClick={onClose} aria-label="Close" title="Close" className={iconButton} style={icon(6.4)}>
                   <X style={icon(4)} />
                 </button>
               )}
@@ -604,33 +606,34 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
             value={num(c.govscore, 1)}
             sub={c.delta1 === null ? 'career' : Math.abs(c.delta1) < 0.05 ? 'steady' : `${c.delta1 > 0 ? '▲' : '▼'} ${Math.abs(c.delta1).toFixed(1)}`}
             subClass={c.delta1 === null || Math.abs(c.delta1) < 0.05 ? 'text-slate-400' : c.delta1 > 0 ? 'text-emerald-300' : 'text-rose-300'}
+            tip={`${TIPS.govscore}\n\n${TIPS.govscoreDelta}`}
           />
-          <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `rank #${c.season.rank}` : 'points'} />
-          <Tile label="Projected" value={num(c.projection)} sub="next season" />
-          <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="draft bonus" />
+          <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `rank #${c.season.rank}` : 'points'} tip={TIPS.seasonPoints} />
+          <Tile label="Projected" value={num(c.projection)} sub="next season" tip={TIPS.projection} />
+          <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="draft bonus" tip={TIPS.underdog} />
         </div>
 
         {/* Career and fantasy lines */}
         <div className="grid grid-cols-2" style={{ columnGap: cq(3) }}>
           <div>
             <BackTitle>Career</BackTitle>
-            <StatLine label="ADA delegated" value={formatAda(c.ada)} />
-            <StatLine label="Delegators" value={c.delegators.toLocaleString()} />
-            <StatLine label="Votes" value={`${c.votes_cast} of ${c.votes_eligible}`} />
-            <StatLine label="Participation" value={pct(c.participation)} />
-            <StatLine label="Explains votes" value={pct(lt.rationale_rate)} />
-            <StatLine label="Votes early" value={pct(lt.early_rate)} />
-            <StatLine label="Streak" value={`${c.streak} ep.`} />
+            <StatLine label="ADA delegated" tip={TIPS.ada} value={formatAda(c.ada)} />
+            <StatLine label="Delegators" tip={TIPS.delegators} value={c.delegators.toLocaleString()} />
+            <StatLine label="Votes" tip={TIPS.votes} value={`${c.votes_cast} of ${c.votes_eligible}`} />
+            <StatLine label="Participation" tip={TIPS.participation} value={pct(c.participation)} />
+            <StatLine label="Explains votes" tip={TIPS.explains} value={pct(lt.rationale_rate)} />
+            <StatLine label="Votes early" tip={TIPS.early} value={pct(lt.early_rate)} />
+            <StatLine label="Streak" tip={TIPS.streak} value={`${c.streak} ep.`} />
           </div>
           <div>
             <BackTitle>Fantasy</BackTitle>
-            <StatLine label="Last window" value={num(c.last_points)} />
-            <StatLine label="Form (last 3)" value={num(c.form)} />
-            <StatLine label="Avg / window" value={num(c.avg_points)} />
-            <StatLine label="Best window" value={`${c.best_points}`} />
-            <StatLine label="Lifetime pts" value={lt.points.toLocaleString()} />
-            <StatLine label="Windows played" value={`${lt.seasons}`} />
-            <StatLine label="Missed votes" value={`${lt.missed}`} tone={lt.missed > 0 ? 'text-rose-200' : undefined} />
+            <StatLine label="Last window" tip={TIPS.lastWindow} value={num(c.last_points)} />
+            <StatLine label="Form (last 3)" tip={TIPS.form} value={num(c.form)} />
+            <StatLine label="Avg / window" tip={TIPS.avgWindow} value={num(c.avg_points)} />
+            <StatLine label="Best window" tip={TIPS.bestWindow} value={`${c.best_points}`} />
+            <StatLine label="Lifetime pts" tip={TIPS.lifetimePoints} value={lt.points.toLocaleString()} />
+            <StatLine label="Windows played" tip={TIPS.windowsPlayed} value={`${lt.seasons}`} />
+            <StatLine label="Missed votes" tip={TIPS.missedVotes} value={`${lt.missed}`} tone={lt.missed > 0 ? 'text-rose-200' : undefined} />
           </div>
         </div>
 
@@ -653,7 +656,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
               <AbilityChip key={a.id} a={a} />
             ))}
             {c.abilities.length > MAX_CHIPS && (
-              <span className="text-slate-300" style={{ fontSize: cq(2.55) }}>
+              <span className="text-slate-300" style={{ fontSize: cq(2.55) }} title={c.abilities.slice(MAX_CHIPS).map((a) => `${a.label}: ${a.detail}`).join('\n')}>
                 +{c.abilities.length - MAX_CHIPS} more
               </span>
             )}
@@ -671,11 +674,11 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
         {/* Links and record, pinned to the bottom */}
         <div className="mt-auto space-y-[0.8cqw]">
           <div className="flex items-center overflow-hidden whitespace-nowrap" style={{ gap: cq(2), fontSize: cq(2.7) }}>
-            <a href={profileHref} className="font-semibold text-amber-200 hover:text-white">
+            <a href={profileHref} className="font-semibold text-amber-200 hover:text-white" title="Every season, vote history, trends and the DRep's own bio and links">
               Full profile →
             </a>
             {!c.do_not_list && (
-              <a href={`https://gov.tools/connected/drep_directory/${c.drep_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-violet-200 hover:text-white" style={{ gap: cq(0.6) }}>
+              <a href={`https://gov.tools/connected/drep_directory/${c.drep_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-violet-200 hover:text-white" style={{ gap: cq(0.6) }} title="Delegate your ADA's voting power to this DRep on GovTool (opens in a new tab). Your ADA never leaves your wallet.">
                 Delegate <ExternalLink style={icon(2.6)} />
               </a>
             )}
@@ -687,8 +690,8 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
             ))}
           </div>
           <div className="flex items-center justify-between text-slate-400" style={{ fontSize: cq(2.35) }}>
-            <span>{votes ? `Record: ${votes.yes} Yes · ${votes.no} No · ${votes.abstain} Abstain (not scored)` : ' '}</span>
-            <span className="flex items-center font-semibold text-slate-300" style={{ gap: cq(0.7) }}>
+            <span title="How this DRep has voted. Shown for information only: vote direction never affects any score.">{votes ? `Record: ${votes.yes} Yes · ${votes.no} No · ${votes.abstain} Abstain (not scored)` : ' '}</span>
+            <span className="flex items-center font-semibold text-slate-300" style={{ gap: cq(0.7) }} title={TIPS.cardNumber}>
               {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark */}
               <img src="/brand/adapolis-mark-small.svg" alt="" style={icon(3.4)} />
               {c.rank !== null ? `No. ${String(c.rank).padStart(3, '0')}` : 'ADApolis'}
