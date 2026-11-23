@@ -224,8 +224,8 @@ export function RaceView({ race }: { race: Race }) {
             title="Season end"
           />
           <ol className="relative space-y-1.5">
-            <AnimatePresence initial={false} mode="popLayout">
-              {shown.map((o, i) => {
+            {/* Rows only animate their position: fading rows in and out got stuck when a DRep left and re-entered quickly. */}
+            {shown.map((o, i) => {
                 const r = byId.get(o.drep_id)!;
                 const name = displayName(r);
                 const pct = Math.max(0, Math.min(100, (o.points / scale) * 100));
@@ -236,9 +236,6 @@ export function RaceView({ race }: { race: Race }) {
                   <motion.li
                     key={o.drep_id}
                     layout={!reduce}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 380, damping: 34 }}
                     className={`relative flex h-10 items-center rounded-lg ${lit ? 'bg-amber-400/15 ring-1 ring-amber-300/60' : i % 2 ? 'bg-white/[0.03]' : 'bg-white/[0.06]'}`}
                   >
@@ -281,7 +278,6 @@ export function RaceView({ race }: { race: Race }) {
                   </motion.li>
                 );
               })}
-            </AnimatePresence>
           </ol>
           <p className="relative mt-3 flex items-center justify-end gap-1 text-[11px] text-slate-500">
             <Flag className="h-3 w-3" /> Finish: end of epoch {race.end_epoch}
