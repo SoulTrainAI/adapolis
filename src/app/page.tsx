@@ -149,7 +149,7 @@ const PATHS: Path[] = [
     id: 'players',
     chip: 'a gamer',
     icon: Gamepad2,
-    who: 'Fantasy players',
+    who: 'Gamers',
     pitch: 'Scout DReps, draft a team of 5 and climb the leaderboard. Free, no wallet transaction.',
     links: [
       { href: SECTIONS.draft.href, label: 'Draft your team', tip: SECTIONS.draft.blurb },
@@ -185,7 +185,7 @@ const PATHS: Path[] = [
 
 const LOOP: Array<{ icon: LucideIcon; title: string; body: string }> = [
   { icon: Vote, title: 'DReps vote on-chain', body: 'Every vote and rationale is public on the Cardano blockchain.' },
-  { icon: Calculator, title: 'ADApolis scores the process', body: 'Showing up, explaining and voting on time. Never which side.' },
+  { icon: Calculator, title: 'ADApolis scores the process', body: 'Showing up, explaining and voting on time. Never how they vote.' },
   { icon: Swords, title: 'You choose, play and collect', body: 'Delegators pick better DReps, players draft them, collectors keep the cards.' },
   { icon: Trophy, title: 'Good DReps get noticed', body: 'Attention and delegation flow to DReps who do the work, big or small.' },
 ];
