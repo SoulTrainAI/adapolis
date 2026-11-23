@@ -147,7 +147,7 @@ const PATHS: Path[] = [
   },
   {
     id: 'players',
-    chip: 'a fantasy player',
+    chip: 'a gamer',
     icon: Gamepad2,
     who: 'Fantasy players',
     pitch: 'Scout DReps, draft a team of 5 and climb the leaderboard. Free, no wallet transaction.',
