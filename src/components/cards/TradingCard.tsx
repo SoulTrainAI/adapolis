@@ -19,7 +19,6 @@ import {
   Dog,
   ExternalLink,
   Flame,
-  Gem,
   Globe,
   Hammer,
   Loader2,
@@ -36,7 +35,7 @@ import { hashDRepId } from '@/lib/utils/avatar';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import { PROVISIONAL_BELOW_ELIGIBLE } from '@/lib/scoring/confidence';
 import { tierFor, type CardAbility, type CardSummary, type SeasonLine, type Tier } from '@/lib/cards/types';
-import { BarChart, LineChart, Sparkline } from './Charts';
+import { Sparkline } from './Charts';
 import { useCardDetail } from './useCards';
 
 export type CardVariant = 'scoreboard' | 'draft' | 'season';
@@ -262,80 +261,33 @@ function AttrStat({ label, value, sub }: { label: string; value: string; sub: st
   );
 }
 
-interface Headline {
-  value: string;
-  label: string;
-  chip: ReactNode;
-  trend: Array<number | null>;
-  trendColor: string;
-  stats: Array<{ label: string; value: string; sub: string }>;
+/** The four representative stats on every card front. */
+function REP_STATS(c: CardSummary): Array<{ label: string; value: string; sub: string }> {
+  return [
+    { label: 'Power', value: formatAda(c.ada), sub: 'ADA delegated' },
+    { label: 'Stamina', value: pct(c.participation), sub: 'participation' },
+    { label: 'XP', value: `${c.votes_cast}`, sub: `votes of ${c.votes_eligible}` },
+    { label: 'Charisma', value: c.delegators.toLocaleString(), sub: 'delegators' },
+  ];
 }
 
-function headlineFor(props: TradingCardProps): Headline {
-  const c = props.card;
-  const chipStyle = { fontSize: cq(3.8), padding: `${cq(0.4)} ${cq(1.8)}` };
-  if (props.variant === 'draft') {
-    const mult = props.lockedUnderdog ?? c.underdog;
-    const drafted = props.draftedBy ?? null;
-    return {
-      value: num(c.projection),
-      label: 'Projected pts',
-      chip: (
-        <span
-          className={`font-bold ${mult >= 1.25 ? 'bg-amber-500/25 text-amber-200' : 'bg-white/10 text-slate-200'}`}
-          style={chipStyle}
-          title="Underdog multiplier: smaller DReps earn your team more per point. Fixed when you pick them."
-        >
-          {mult.toFixed(2)}×
-        </span>
-      ),
-      trend: c.points_trend,
-      trendColor: '#fcd34d',
-      stats: [
-        { label: 'Form', value: num(c.form), sub: 'avg last 3' },
-        { label: 'Avg', value: num(c.avg_points), sub: 'pts / season' },
-        { label: 'Best', value: `${c.best_points}`, sub: 'season high' },
-        {
-          label: 'Owned',
-          value: drafted !== null ? `${drafted}` : c.ownership !== null ? pct(c.ownership) : '0',
-          sub: drafted !== null ? `team${drafted === 1 ? '' : 's'}` : 'of teams',
-        },
-      ],
-    };
-  }
-  if (props.variant === 'season') {
-    return {
-      value: `${c.season.points}`,
-      label: c.season.rank ? `Season pts · #${c.season.rank}` : 'Season pts',
-      chip:
-        c.last_points !== null ? (
-          <span className="text-slate-300" style={{ fontSize: cq(3.8) }} title="Points last window">
-            last {c.last_points}
-          </span>
-        ) : null,
-      trend: c.points_trend,
-      trendColor: '#fcd34d',
-      stats: [
-        { label: 'Votes', value: `${c.season.votes}`, sub: 'this season' },
-        { label: 'Explained', value: `${c.season.rationales}`, sub: 'rationales' },
-        { label: 'Early', value: `${c.season.early}`, sub: 'first half' },
-        { label: 'Missed', value: `${c.season.missed}`, sub: 'closed unvoted' },
-      ],
-    };
-  }
-  return {
-    value: num(c.govscore, 1),
-    label: 'GovScore',
-    chip: <DeltaChip value={c.delta1} />,
-    trend: c.govscore_trend,
-    trendColor: '#ddd6fe',
-    stats: [
-      { label: 'Power', value: formatAda(c.ada), sub: 'ADA delegated' },
-      { label: 'Stamina', value: pct(c.participation), sub: 'participation' },
-      { label: 'XP', value: `${c.votes_cast}`, sub: `votes of ${c.votes_eligible}` },
-      { label: 'Charisma', value: c.delegators.toLocaleString(), sub: 'delegators' },
-    ],
-  };
+/** Draft-page facts shown under the card (they're about the pick, not part of the card). */
+function DraftStrip({ card, mult, drafted }: { card: CardSummary; mult: number; drafted: number | null }) {
+  return (
+    <div className="grid grid-cols-4 gap-1 text-center text-xs">
+      {[
+        ['Proj.', num(card.projection)],
+        ['Form', num(card.form)],
+        ['Bonus', `${mult.toFixed(2)}×`],
+        ['Teams', drafted !== null ? String(drafted) : card.ownership !== null ? pct(card.ownership) : '0'],
+      ].map(([k, v]) => (
+        <div key={k} className={`border border-slate-700 bg-slate-900/70 py-1 ${k === 'Bonus' && mult >= 1.25 ? 'text-amber-200' : 'text-slate-100'}`}>
+          <p className="text-[10px] uppercase tracking-wider text-slate-400">{k}</p>
+          <p className="font-bold">{v}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function isProvisional(c: CardSummary): boolean {
@@ -356,7 +308,6 @@ function abilityName(a: CardAbility): string {
 function CardFront(props: TradingCardProps) {
   const c = props.card;
   const tier = tierFor(c.rank);
-  const h = headlineFor(props);
   const ArchIcon = c.archetype ? ABILITY_ICONS[c.archetype.id] ?? Sparkles : null;
   const holo = c.rank !== null && c.rank <= 10;
   return (
@@ -415,28 +366,47 @@ function CardFront(props: TradingCardProps) {
           </div>
         </div>
 
-        {/* Headline number with trend */}
-        <div className="flex items-end justify-between" style={{ gap: cq(2), padding: `${cq(1.6)} ${cq(3.4)} 0` }}>
-          <div className="min-w-0 text-left">
-            <p className={`font-black leading-none drop-shadow ${c.rank !== null && c.rank <= 3 ? tier.accent : 'text-white'}`} style={{ fontSize: cq(12) }}>
-              {h.value}
-            </p>
-            <p className="truncate font-bold uppercase tracking-[0.2em] text-slate-300" style={{ fontSize: cq(3.3) }}>
-              {h.label}
-              {props.variant === 'scoreboard' && isProvisional(c) && <span className="ml-1 text-amber-300">· Prov.</span>}
-            </p>
+        {/* Scores: career GovScore and this season's fantasy points, side by side */}
+        <div className="grid grid-cols-[1.3fr_1fr]" style={{ gap: cq(1.4), padding: `${cq(1.8)} ${cq(3)} 0` }}>
+          <div className="flex items-end justify-between" style={{ ...plate, padding: `${cq(1)} ${cq(2)}` }}>
+            <div className="min-w-0 text-left">
+              <p className={`font-black leading-none drop-shadow ${c.rank !== null && c.rank <= 3 ? tier.accent : 'text-white'}`} style={{ fontSize: cq(9.6) }}>
+                {num(c.govscore, 1)}
+              </p>
+              <p className="truncate font-bold uppercase tracking-[0.14em] text-slate-300" style={{ fontSize: cq(2.8), marginTop: cq(0.6) }}>
+                GovScore{isProvisional(c) && <span className="text-amber-300"> · Prov.</span>}
+              </p>
+            </div>
+            <div className="flex flex-col items-end" style={{ gap: cq(0.4) }}>
+              <DeltaChip value={c.delta1} />
+              <div style={{ width: cq(15), height: cq(6) }}>
+                <Sparkline values={c.govscore_trend} color="#ddd6fe" width={60} height={24} fluid />
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col items-end" style={{ gap: cq(0.5) }}>
-            {h.chip}
-            <div style={{ width: cq(34), height: cq(8) }}>
-              <Sparkline values={h.trend} color={h.trendColor} width={84} height={20} fluid />
+          <div className="flex items-end justify-between" style={{ ...plate, padding: `${cq(1)} ${cq(2)}` }}>
+            <div className="min-w-0 text-left">
+              <p className="font-black leading-none text-amber-200 drop-shadow" style={{ fontSize: cq(7.6) }}>
+                {c.season.points}
+              </p>
+              <p className="truncate font-bold uppercase tracking-[0.14em] text-slate-300" style={{ fontSize: cq(2.8), marginTop: cq(0.6) }}>
+                Season pts
+              </p>
+            </div>
+            <div className="flex flex-col items-end" style={{ gap: cq(0.4) }}>
+              <span className="font-bold text-slate-200" style={{ fontSize: cq(3.4) }}>
+                {c.season.rank ? `#${c.season.rank}` : '—'}
+              </span>
+              <div style={{ width: cq(11), height: cq(6) }}>
+                <Sparkline values={c.points_trend} color="#fcd34d" width={44} height={24} fluid />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Stat plates */}
-        <div className="grid grid-cols-2" style={{ gap: cq(1.4), padding: `${cq(1.6)} ${cq(3)} 0` }}>
-          {h.stats.map((s) => (
+        <div className="grid grid-cols-2" style={{ gap: cq(1.4), padding: `${cq(1.4)} ${cq(3)} 0` }}>
+          {REP_STATS(c).map((s) => (
             <AttrStat key={s.label} {...s} />
           ))}
         </div>
@@ -476,29 +446,18 @@ function CardFront(props: TradingCardProps) {
 
 /* ---------- Back ---------- */
 
-type Tab = 'profile' | 'stats' | 'trends' | 'traits';
-const TABS: Array<[Tab, string]> = [
-  ['profile', 'Profile'],
-  ['stats', 'Stats'],
-  ['trends', 'Trends'],
-  ['traits', 'Traits'],
-];
-
-/** Stat square: label, big value, and a caption that wraps (up to two lines) instead of being cut off. */
+/** Score square on the back: label, value, short caption. */
 function Tile({ label, value, sub, subClass = 'text-slate-400' }: { label: string; value: string; sub?: string; subClass?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center" style={{ ...plate, padding: `${cq(1.2)} ${cq(0.6)}` }}>
-      <p className="font-bold uppercase leading-none tracking-wide text-slate-300" style={{ fontSize: cq(2.6) }}>
+    <div className="flex flex-col items-center justify-center text-center" style={{ ...plate, padding: `${cq(0.9)} ${cq(0.5)}` }}>
+      <p className="font-bold uppercase leading-none tracking-wide text-slate-300" style={{ fontSize: cq(2.3) }}>
         {label}
       </p>
-      <p className="font-extrabold leading-tight text-white" style={{ fontSize: cq(4.8), marginTop: cq(0.6) }}>
+      <p className="font-extrabold leading-tight text-white" style={{ fontSize: cq(4.3), marginTop: cq(0.4) }}>
         {value}
       </p>
       {sub && (
-        <p
-          className={`text-balance leading-[1.15] ${subClass}`}
-          style={{ fontSize: cq(2.55), display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginTop: cq(0.3) }}
-        >
+        <p className={`whitespace-nowrap leading-none ${subClass}`} style={{ fontSize: cq(2.25), marginTop: cq(0.3) }}>
           {sub}
         </p>
       )}
@@ -506,46 +465,51 @@ function Tile({ label, value, sub, subClass = 'text-slate-400' }: { label: strin
   );
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
+function BackTitle({ children }: { children: ReactNode }) {
   return (
-    <p className="font-bold uppercase tracking-widest text-slate-400" style={{ fontSize: cq(3.1), margin: `${cq(3)} 0 ${cq(1.4)}` }}>
+    <p className="font-bold uppercase tracking-[0.16em] text-amber-200/90" style={{ fontSize: cq(2.5), marginBottom: cq(0.8) }}>
       {children}
     </p>
   );
 }
 
-function AbilityBox({ a }: { a: CardAbility }) {
-  const Icon = ABILITY_ICONS[a.id] ?? Sparkles;
-  const style = TIER_STYLE[a.tier ?? 0];
+/** Label … value line, like the stat lines on the back of a sports card. */
+function StatLine({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className={`flex items-start border ${style.box}`} style={{ gap: cq(1.6), padding: `${cq(1.2)} ${cq(2)}` }}>
-      <Icon className={`flex-shrink-0 ${style.text}`} style={{ ...icon(4.2), marginTop: cq(0.4) }} />
-      <div className="min-w-0">
-        <p className={`font-bold ${style.text}`} style={{ fontSize: cq(3.8) }}>
-          {a.label}
-        </p>
-        <p className="text-slate-200" style={{ fontSize: cq(3.3) }}>
-          {a.detail}
-        </p>
-      </div>
+    <div className="flex items-baseline justify-between border-b border-white/10" style={{ fontSize: cq(2.75), padding: `${cq(0.45)} 0`, gap: cq(1) }}>
+      <span className="truncate text-slate-300">{label}</span>
+      <span className={`font-bold ${tone ?? 'text-white'}`}>{value}</span>
     </div>
   );
 }
 
+function AbilityChip({ a }: { a: CardAbility }) {
+  const Icon = ABILITY_ICONS[a.id] ?? Sparkles;
+  const style = TIER_STYLE[a.tier ?? 0];
+  return (
+    <span className={`inline-flex items-center border ${style.box} ${style.text} font-semibold`} style={{ gap: cq(0.7), fontSize: cq(2.55), padding: `${cq(0.35)} ${cq(1.2)}` }} title={a.detail}>
+      <Icon style={icon(2.9)} />
+      {a.label}
+    </span>
+  );
+}
+
 /** Windows from the DRep's first appearance on, so charts don't open with years of empty space. */
-function activeSeasons(seasons: SeasonLine[]): SeasonLine[] {
+export function activeSeasons(seasons: SeasonLine[]): SeasonLine[] {
   const first = seasons.findIndex((s) => s.played || s.govscore_end !== null);
   return first === -1 ? seasons.slice(-1) : seasons.slice(first);
 }
 
-function SeasonTable({ seasons }: { seasons: SeasonLine[] }) {
-  const rows = seasons.filter((s) => s.played || s.in_progress).slice().reverse();
-  if (rows.length === 0) return <p className="text-slate-400">No seasons played yet.</p>;
+/** Recent windows, newest first: the season-by-season line of the card back. */
+function RecentSeasons({ seasons, rows }: { seasons: SeasonLine[]; rows: number }) {
+  const recent = seasons.filter((s) => s.played || s.in_progress).slice(-rows).reverse();
+  if (recent.length === 0) return <p className="text-slate-400" style={{ fontSize: cq(2.7) }}>No seasons played yet.</p>;
+  const cell = { padding: `${cq(0.35)} 0` };
   return (
-    <table className="w-full text-right" style={{ fontSize: cq(3.2) }}>
-      <thead className="uppercase tracking-wider text-slate-400" style={{ fontSize: cq(2.7) }}>
+    <table className="w-full text-right" style={{ fontSize: cq(2.6) }}>
+      <thead className="uppercase tracking-wider text-slate-400" style={{ fontSize: cq(2.2) }}>
         <tr>
-          <th className="py-0.5 text-left font-semibold">Window</th>
+          <th className="text-left font-semibold">Epochs</th>
           <th className="font-semibold">Pts</th>
           <th className="font-semibold">Votes</th>
           <th className="font-semibold">Expl.</th>
@@ -555,18 +519,22 @@ function SeasonTable({ seasons }: { seasons: SeasonLine[] }) {
         </tr>
       </thead>
       <tbody className="text-slate-100">
-        {rows.map((s) => (
+        {recent.map((s) => (
           <tr key={s.window} className="border-t border-white/10">
-            <td className="py-0.5 text-left">
-              {s.label.replace('Epochs ', '')}
-              {s.in_progress && <span className="ml-1 text-violet-200">live</span>}
+            <td className="text-left" style={cell}>
+              {s.start_epoch}–{s.end_epoch}
+              {s.in_progress && <span className="text-violet-200"> •</span>}
             </td>
-            <td className={`font-bold ${s.points < 0 ? 'text-rose-300' : 'text-white'}`}>{s.points}</td>
-            <td>{s.votes}</td>
-            <td>{s.rationales}</td>
-            <td>{s.early}</td>
-            <td className={s.missed > 0 ? 'text-rose-300' : ''}>{s.missed}</td>
-            <td>{num(s.govscore_end, 1)}</td>
+            <td className={`font-bold ${s.points < 0 ? 'text-rose-300' : 'text-white'}`} style={cell}>
+              {s.points}
+            </td>
+            <td style={cell}>{s.votes}</td>
+            <td style={cell}>{s.rationales}</td>
+            <td style={cell}>{s.early}</td>
+            <td className={s.missed > 0 ? 'text-rose-300' : ''} style={cell}>
+              {s.missed}
+            </td>
+            <td style={cell}>{num(s.govscore_end, 1)}</td>
           </tr>
         ))}
       </tbody>
@@ -574,53 +542,67 @@ function SeasonTable({ seasons }: { seasons: SeasonLine[] }) {
   );
 }
 
-function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose: () => void; onFlip: () => void }) {
-  const [tab, setTab] = useState<Tab>('profile');
-  const { detail, error } = useCardDetail(card.drep_id, true);
+const MAX_CHIPS = 6;
+
+/**
+ * The back of the card: one fixed face with everything that matters, no tabs
+ * and no scrolling, so it works as the back of a printed or minted card.
+ * The DRep's full profile page holds the long-form detail.
+ */
+function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () => void; onFlip?: () => void }) {
+  const { detail } = useCardDetail(card.drep_id, true);
   const c = detail?.summary ?? card;
   const tier = tierFor(c.rank);
   const lt = c.lifetime;
+  const profileHref = `/dreps/${c.drep_id}`;
   const iconButton = 'flex items-center justify-center bg-black/40 text-slate-100 hover:bg-black/60 hover:text-white';
+  const chips = c.abilities.slice(0, MAX_CHIPS);
+  const links = detail?.links ?? [];
+  const votes = detail?.votes;
 
   return (
     <CardShell tier={tier}>
-      <div className="flex h-full flex-col text-left" style={{ padding: `${cq(2.6)} ${cq(3)} 0` }}>
-        {/* Header: thumbnail, name, actions */}
-        <div className="flex items-start" style={{ gap: cq(2.4) }}>
-          <div
-            className="relative flex-shrink-0 overflow-hidden bg-slate-900"
-            style={{ width: cq(17), height: cq(17), boxShadow: '0 0 0 1px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.3)' }}
-          >
+      <div className="flex h-full flex-col overflow-hidden text-left" style={{ padding: `${cq(2.4)} ${cq(2.8)} ${cq(1.8)}`, gap: cq(1.6) }}>
+        {/* Header */}
+        <div className="flex items-start" style={{ gap: cq(2.2) }}>
+          <div className="relative flex-shrink-0 overflow-hidden bg-slate-900" style={{ width: cq(13), height: cq(13), boxShadow: '0 0 0 1px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.3)' }}>
             <CardArt card={c} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`font-bold uppercase tracking-widest ${tier.accent}`} style={{ fontSize: cq(3) }}>
+            <p className={`font-bold uppercase tracking-widest ${tier.accent}`} style={{ fontSize: cq(2.6) }}>
               {c.rank !== null ? `#${c.rank} of ${c.total} · ` : ''}
               {tier.label}
               {c.rookie && ' · Rookie'}
             </p>
-            <h3 className="truncate font-display font-extrabold leading-tight text-white" style={{ fontSize: nameSize(cardName(c), 5.8) }} title={cardName(c)}>
+            <h3 className="truncate font-display font-extrabold leading-tight text-white" style={{ fontSize: nameSize(cardName(c), 5.2) }} title={cardName(c)}>
               {cardName(c)}
             </h3>
-            <p className="truncate font-mono text-slate-400" style={{ fontSize: cq(2.7) }} title={c.drep_id}>
+            <p className="truncate font-mono text-slate-400" style={{ fontSize: cq(2.3) }} title={c.drep_id}>
               {c.drep_id}
             </p>
           </div>
-          <div className="flex flex-shrink-0" style={{ gap: cq(1.2) }}>
-            <button type="button" onClick={onFlip} aria-label="Show the front" title="Front" className={iconButton} style={icon(7)}>
-              <RotateCcw style={icon(4)} />
-            </button>
-            <button type="button" onClick={onClose} aria-label="Close" className={iconButton} style={icon(7)}>
-              <X style={icon(4.4)} />
-            </button>
-          </div>
+          {(onFlip || onClose) && (
+            <div className="flex flex-shrink-0" style={{ gap: cq(1) }}>
+              {onFlip && (
+                <button type="button" onClick={onFlip} aria-label="Show the front" title="Front" className={iconButton} style={icon(6.4)}>
+                  <RotateCcw style={icon(3.6)} />
+                </button>
+              )}
+              {onClose && (
+                <button type="button" onClick={onClose} aria-label="Close" className={iconButton} style={icon(6.4)}>
+                  <X style={icon(4)} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-4" style={{ gap: cq(1.2), marginTop: cq(2.2), gridAutoRows: '1fr' }}>
+        {/* Headline scores */}
+        <div className="grid grid-cols-4" style={{ gap: cq(1), gridAutoRows: '1fr' }}>
           <Tile
             label="GovScore"
             value={num(c.govscore, 1)}
-            sub={c.delta1 === null ? 'no history' : Math.abs(c.delta1) < 0.05 ? 'steady' : `${c.delta1 > 0 ? '▲' : '▼'} ${Math.abs(c.delta1).toFixed(1)} this window`}
+            sub={c.delta1 === null ? 'career' : Math.abs(c.delta1) < 0.05 ? 'steady' : `${c.delta1 > 0 ? '▲' : '▼'} ${Math.abs(c.delta1).toFixed(1)}`}
             subClass={c.delta1 === null || Math.abs(c.delta1) < 0.05 ? 'text-slate-400' : c.delta1 > 0 ? 'text-emerald-300' : 'text-rose-300'}
           />
           <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `rank #${c.season.rank}` : 'points'} />
@@ -628,180 +610,89 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose: () =>
           <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="draft bonus" />
         </div>
 
-        <div role="tablist" className="flex border-b border-white/15" style={{ gap: cq(1), marginTop: cq(2.4) }}>
-          {TABS.map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={tab === id}
-              onClick={() => setTab(id)}
-              className={`-mb-px border-b-2 font-semibold ${tab === id ? 'border-brand-gold text-white' : 'border-transparent text-slate-300 hover:text-white'}`}
-              style={{ fontSize: cq(3.9), padding: `${cq(1)} ${cq(2.4)}` }}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Career and fantasy lines */}
+        <div className="grid grid-cols-2" style={{ columnGap: cq(3) }}>
+          <div>
+            <BackTitle>Career</BackTitle>
+            <StatLine label="ADA delegated" value={formatAda(c.ada)} />
+            <StatLine label="Delegators" value={c.delegators.toLocaleString()} />
+            <StatLine label="Votes" value={`${c.votes_cast} of ${c.votes_eligible}`} />
+            <StatLine label="Participation" value={pct(c.participation)} />
+            <StatLine label="Explains votes" value={pct(lt.rationale_rate)} />
+            <StatLine label="Votes early" value={pct(lt.early_rate)} />
+            <StatLine label="Streak" value={`${c.streak} ep.`} />
+          </div>
+          <div>
+            <BackTitle>Fantasy</BackTitle>
+            <StatLine label="Last window" value={num(c.last_points)} />
+            <StatLine label="Form (last 3)" value={num(c.form)} />
+            <StatLine label="Avg / window" value={num(c.avg_points)} />
+            <StatLine label="Best window" value={`${c.best_points}`} />
+            <StatLine label="Lifetime pts" value={lt.points.toLocaleString()} />
+            <StatLine label="Windows played" value={`${lt.seasons}`} />
+            <StatLine label="Missed votes" value={`${lt.missed}`} tone={lt.missed > 0 ? 'text-rose-200' : undefined} />
+          </div>
         </div>
 
-        {/* The tab body scrolls inside the fixed card, without a scrollbar, fading at the bottom edge. */}
-        <div
-          className="no-scrollbar min-h-0 flex-1 overflow-y-auto"
-          style={{
-            fontSize: cq(3.6),
-            paddingBottom: cq(6),
-            maskImage: `linear-gradient(to bottom, black calc(100% - ${cq(6)}), transparent)`,
-            WebkitMaskImage: `linear-gradient(to bottom, black calc(100% - ${cq(6)}), transparent)`,
-          }}
-        >
-          {!detail && !error && tab !== 'profile' && (
-            <p className="flex items-center text-slate-300" style={{ gap: cq(1.5), marginTop: cq(3) }}>
-              <Loader2 className="animate-spin" style={icon(4)} /> Loading history…
+        {/* Season by season */}
+        <div>
+          <BackTitle>Recent windows</BackTitle>
+          {detail ? (
+            <RecentSeasons seasons={detail.seasons} rows={4} />
+          ) : (
+            <p className="flex items-center text-slate-300" style={{ gap: cq(1), fontSize: cq(2.7) }}>
+              <Loader2 className="animate-spin" style={icon(3)} /> Loading…
             </p>
           )}
-          {error && (
-            <p className="text-rose-300" style={{ marginTop: cq(3) }}>
-              {error}
-            </p>
-          )}
+        </div>
 
-          {tab === 'profile' && (
-            <div>
-              {isProvisional(c) && (
-                <p className="text-amber-200" style={{ marginTop: cq(2.4), fontSize: cq(3.2) }}>
-                  Provisional: fewer than {PROVISIONAL_BELOW_ELIGIBLE} votes to judge so far, so the score is held back until the record grows.
-                </p>
-              )}
-              {c.abilities.length > 0 && (
-                <>
-                  <SectionTitle>Abilities</SectionTitle>
-                  <div className="grid grid-cols-2" style={{ gap: cq(1.4) }}>
-                    {c.abilities.map((a) => (
-                      <AbilityBox key={a.id} a={a} />
-                    ))}
-                  </div>
-                </>
-              )}
-              <SectionTitle>Bio</SectionTitle>
-              <p className="whitespace-pre-line leading-relaxed text-slate-100">{detail ? detail.bio || 'No bio provided.' : 'Loading…'}</p>
-              {detail && detail.links.length > 0 && (
-                <>
-                  <SectionTitle>Links</SectionTitle>
-                  <div className="grid grid-cols-2" style={{ columnGap: cq(3), rowGap: cq(1) }}>
-                    {detail.links.map((link) => (
-                      <a
-                        key={link.url}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        className="flex min-w-0 items-center text-slate-100 hover:text-white"
-                        style={{ gap: cq(1.4) }}
-                      >
-                        <Globe className="flex-shrink-0 text-slate-400" style={icon(3.6)} />
-                        <span className="truncate">{link.label}</span>
-                      </a>
-                    ))}
-                  </div>
-                </>
-              )}
-              <a href="/drep" className="block text-violet-200 hover:text-white" style={{ marginTop: cq(3), fontSize: cq(3.2) }}>
-                Is this your card? Sign with your DRep key to edit its art, bio and links →
+        {/* Abilities */}
+        {chips.length > 0 && (
+          <div className="flex flex-wrap" style={{ gap: cq(0.9) }}>
+            {chips.map((a) => (
+              <AbilityChip key={a.id} a={a} />
+            ))}
+            {c.abilities.length > MAX_CHIPS && (
+              <span className="text-slate-300" style={{ fontSize: cq(2.55) }}>
+                +{c.abilities.length - MAX_CHIPS} more
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Bio, two lines */}
+        {detail?.bio && (
+          <p className="text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {detail.bio}
+          </p>
+        )}
+
+        {/* Links and record, pinned to the bottom */}
+        <div className="mt-auto space-y-[0.8cqw]">
+          <div className="flex flex-wrap items-center" style={{ gap: `${cq(0.8)} ${cq(2)}`, fontSize: cq(2.7) }}>
+            <a href={profileHref} className="font-semibold text-amber-200 hover:text-white">
+              Full profile →
+            </a>
+            {!c.do_not_list && (
+              <a href={`https://gov.tools/connected/drep_directory/${c.drep_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-violet-200 hover:text-white" style={{ gap: cq(0.6) }}>
+                Delegate <ExternalLink style={icon(2.6)} />
               </a>
-              <div style={{ marginTop: cq(2.5) }}>
-                {c.do_not_list ? (
-                  <p className="text-center text-slate-300">This DRep has asked not to be promoted for delegation.</p>
-                ) : (
-                  <a
-                    href={`https://gov.tools/connected/drep_directory/${c.drep_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center bg-violet-600 font-semibold text-white transition-colors hover:bg-violet-700"
-                    style={{ gap: cq(1.5), padding: `${cq(2)} 0`, fontSize: cq(3.9) }}
-                  >
-                    Delegate via GovTool <ExternalLink style={icon(3.6)} />
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
-          {tab === 'stats' && detail && (
-            <div>
-              <SectionTitle>As a representative</SectionTitle>
-              <div className="grid grid-cols-4" style={{ gap: cq(1.2), gridAutoRows: '1fr' }}>
-                <Tile label="Power" value={formatAda(c.ada)} sub="ADA delegated" />
-                <Tile label="Stamina" value={pct(c.participation)} sub="participation" />
-                <Tile label="XP" value={`${c.votes_cast}`} sub={`votes of ${c.votes_eligible}`} />
-                <Tile label="Charisma" value={c.delegators.toLocaleString()} sub="delegators" />
-                <Tile label="Explains" value={pct(lt.rationale_rate)} sub="of votes" />
-                <Tile label="Early" value={pct(lt.early_rate)} sub="of votes" />
-                <Tile label="Streak" value={`${c.streak}`} sub="epochs" />
-                <Tile label="Tenure" value={`${lt.tenure_epochs}`} sub="epochs" />
-              </div>
-              <SectionTitle>As a fantasy pick</SectionTitle>
-              <div className="grid grid-cols-4" style={{ gap: cq(1.2), gridAutoRows: '1fr' }}>
-                <Tile label="Last" value={num(c.last_points)} sub="last window" />
-                <Tile label="Form" value={num(c.form)} sub="avg last 3" />
-                <Tile label="Average" value={num(c.avg_points)} sub="per window" />
-                <Tile label="Best" value={`${c.best_points}`} sub="season high" />
-                <Tile label="Lifetime" value={`${lt.points}`} sub="total pts" />
-                <Tile label="Seasons" value={`${lt.seasons}`} sub="played" />
-                <Tile label="Missed" value={`${lt.missed}`} sub="career" />
-                <Tile label="Owned" value={c.ownership !== null ? pct(c.ownership) : '—'} sub="of teams" />
-              </div>
-              <SectionTitle>Season by season</SectionTitle>
-              <SeasonTable seasons={detail.seasons} />
-              <SectionTitle>How it voted (not scored)</SectionTitle>
-              <div className="grid grid-cols-3" style={{ gap: cq(1.2) }}>
-                {(
-                  [
-                    ['Yes', detail.votes.yes, 'bg-emerald-500/20 text-emerald-200'],
-                    ['No', detail.votes.no, 'bg-red-500/20 text-red-200'],
-                    ['Abstain', detail.votes.abstain, 'bg-slate-400/20 text-slate-100'],
-                  ] as const
-                ).map(([label, n, cls]) => (
-                  <div key={label} className={`text-center ${cls}`} style={{ padding: cq(1.4) }}>
-                    <p className="font-black" style={{ fontSize: cq(5.4) }}>
-                      {n}
-                    </p>
-                    <p className="uppercase tracking-widest text-slate-300" style={{ fontSize: cq(2.8) }}>
-                      {label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {tab === 'trends' && detail && (
-            <div>
-              <SectionTitle>GovScore at the end of each window</SectionTitle>
-              <LineChart points={activeSeasons(detail.seasons).map((s) => ({ label: s.label, value: s.govscore_end }))} />
-              <SectionTitle>Fantasy points per window</SectionTitle>
-              <BarChart points={activeSeasons(detail.seasons).map((s) => ({ label: s.label, value: s.played || s.in_progress ? s.points : null }))} />
-              <p className="text-slate-300" style={{ marginTop: cq(1.5), fontSize: cq(3) }}>
-                Points come only from voting, explaining votes and voting on time. Which way a DRep votes never counts.
-              </p>
-            </div>
-          )}
-
-          {tab === 'traits' && detail && (
-            <div>
-              <p className="flex items-center text-slate-100" style={{ gap: cq(1.5), marginTop: cq(2.6) }}>
-                <Gem className="flex-shrink-0 text-amber-200" style={icon(4)} /> The traits this card would carry on-chain if minted. Not minted yet.
-              </p>
-              <dl className="grid grid-cols-1" style={{ marginTop: cq(1.6) }}>
-                {Object.entries(detail.metadata).map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b border-white/10" style={{ gap: cq(2), padding: `${cq(0.7)} 0` }}>
-                    <dt className="text-slate-400">{k.replace(/_/g, ' ')}</dt>
-                    <dd className="truncate text-right text-slate-100" title={String(v)}>
-                      {String(v)}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          )}
+            )}
+            {links.slice(0, 3).map((l) => (
+              <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex max-w-[30cqw] items-center text-slate-200 hover:text-white" style={{ gap: cq(0.6) }}>
+                <Globe className="flex-shrink-0 text-slate-400" style={icon(2.6)} />
+                <span className="truncate">{l.label}</span>
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-slate-400" style={{ fontSize: cq(2.35) }}>
+            <span>{votes ? `Record: ${votes.yes} Yes · ${votes.no} No · ${votes.abstain} Abstain (not scored)` : ' '}</span>
+            <span className="flex items-center font-semibold text-slate-300" style={{ gap: cq(0.7) }}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark */}
+              <img src="/brand/adapolis-mark-small.svg" alt="" style={icon(3.4)} />
+              {c.rank !== null ? `No. ${String(c.rank).padStart(3, '0')}` : 'ADApolis'}
+            </span>
+          </div>
         </div>
       </div>
     </CardShell>
@@ -849,7 +740,6 @@ export function TradingCard(props: TradingCardProps) {
     };
   }, [open]);
 
-  const h = headlineFor(props);
   return (
     <div className="theme-dark flex flex-col gap-2">
       <motion.button
@@ -865,11 +755,12 @@ export function TradingCard(props: TradingCardProps) {
         whileHover={{ y: -6 }}
         whileTap={{ scale: 0.97 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        aria-label={`${cardName(card)}, ${h.label} ${h.value}. Open card details`}
+        aria-label={`${cardName(card)}, GovScore ${num(card.govscore, 1)}, ${card.season.points} season points. Open card details`}
         aria-haspopup="dialog"
       >
         <CardFront {...props} />
       </motion.button>
+      {props.variant === 'draft' && <DraftStrip card={card} mult={props.lockedUnderdog ?? card.underdog} drafted={props.draftedBy ?? null} />}
       {props.action}
 
       {mounted &&
