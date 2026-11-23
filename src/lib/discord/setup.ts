@@ -637,6 +637,10 @@ export async function setupServer(options: {
       } else {
         const r = await refreshPosted(key, c.id, message);
         if (r.status === "updated") report.actions.push(`Update the ${name} message`);
+        if (r.status === "stale")
+          report.warnings.push(
+            `The #${name} message was posted by an older webhook, so it can't be edited. Delete it in Discord and rerun setup to post the current version.`,
+          );
         if (r.status === "reposted") {
           report.actions.push(`Repost the ${name} message (the old one was deleted)`);
           if (pin)
@@ -661,6 +665,8 @@ export async function setupServer(options: {
           const full = { thread_name: g.title, content: g.body, applied_tags: tag ? [tag.id] : [] };
           const r = await refreshPosted(`seed:guide:${g.slug}`, guides.id, { content: g.body }, full);
           if (r.status === "updated") report.actions.push(`Update guide "${g.title}"`);
+          if (r.status === "stale")
+            report.warnings.push(`Guide "${g.title}" can't be edited by the current webhook. Delete that post and rerun setup to post it again.`);
           if (r.status === "reposted") report.actions.push(`Repost guide "${g.title}" (the old one was deleted)`);
         }
       }

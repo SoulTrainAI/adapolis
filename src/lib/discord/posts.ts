@@ -32,7 +32,7 @@ export async function refreshPosted(
   channelId: string,
   message: WebhookMessage,
   repost?: WebhookMessage
-): Promise<{ status: 'unchanged' | 'updated' } | { status: 'reposted'; id: string; channel_id: string }> {
+): Promise<{ status: 'unchanged' | 'updated' | 'stale' } | { status: 'reposted'; id: string; channel_id: string }> {
   const { data, error } = await supabaseAdmin.from('discord_posts').select('channel_id, message_id').eq('key', key).maybeSingle();
   if (error) throw new Error(error.code === '42P01' ? MISSING_TABLE : `Couldn't read discord_posts: ${error.message}`);
   if (!data) return { status: 'unchanged' };
@@ -44,8 +44,16 @@ export async function refreshPosted(
   try {
     current = (await discord('GET', path, undefined, { auth: false })) as typeof current;
   } catch (e) {
-    // 10008 Unknown Message / 10003 Unknown Channel: it was deleted in Discord (or posted by an older webhook). Post it again.
     if (!(e instanceof DiscordError) || e.status !== 404) throw e;
+    // The webhook can't see it. Ask the bot whether the message still exists before reposting,
+    // so a message from an older webhook is never duplicated.
+    const exists = await discord('GET', `/channels/${row.channel_id}/messages/${row.message_id}`)
+      .then(() => true)
+      .catch((err: unknown) => {
+        if (err instanceof DiscordError && err.status === 404) return false;
+        throw err;
+      });
+    if (exists) return { status: 'stale' };
     const sent = await postViaWebhook(channelId, repost ?? message);
     const { error: upsertError } = await supabaseAdmin
       .from('discord_posts')
