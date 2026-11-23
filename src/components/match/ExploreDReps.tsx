@@ -295,7 +295,7 @@ export function ExploreDReps({
             placeholderCard({ drep_id: r.drep.drep_id, name: r.drep.name, image: r.drep.image, ada: r.drep.ada, delegators: r.drep.delegators });
           return (
             <li key={r.drep.drep_id} className={`flex flex-col gap-2 ${open ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
-              <div className="flex items-center gap-2 rounded-lg bg-slate-900/70 px-3 py-1.5 text-xs">
+              <div className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-slate-900/70 px-3 py-1.5 text-xs">
                 <span className="font-mono text-slate-500">#{rankOf.get(r.drep.drep_id)}</span>
                 <MyDRepBadge drepId={r.drep.drep_id} />
                 {hasAnswers && r.result ? (
@@ -304,7 +304,7 @@ export function ExploreDReps({
                       Alignment <strong className="text-brand-lilac">{Math.round(r.result.matchPercent)}%</strong>
                     </span>
                     <span className="text-slate-300" title={TIPS.personalGovscore}>
-                      Personal GovScore{' '}
+                      Personal{' '}
                       <strong className="text-white">{personalGovScore(r.drep.govscore, r.result.matchPercent).toFixed(1)}</strong>
                     </span>
                   </>

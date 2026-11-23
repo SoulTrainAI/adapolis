@@ -294,12 +294,12 @@ function AlignmentStrip({ a }: { a: Alignment | undefined }) {
     return <p className="rounded-lg bg-slate-900/60 px-3 py-1 text-xs text-slate-500">Alignment: not enough votes to compare</p>;
   }
   return (
-    <p className="flex items-center justify-between rounded-lg bg-brand-violet/15 px-3 py-1 text-xs text-slate-200">
+    <p className="flex items-center justify-between gap-2 whitespace-nowrap rounded-lg bg-brand-violet/15 px-3 py-1 text-xs text-slate-200">
       <span title={TIPS.alignment}>
         Alignment <strong className="text-brand-lilac">{Math.round(a.alignment)}%</strong>
       </span>
       <span title={TIPS.personalGovscore}>
-        Personal GovScore <strong className="text-white">{a.personal.toFixed(1)}</strong>
+        Personal <strong className="text-white">{a.personal.toFixed(1)}</strong>
       </span>
     </p>
   );

@@ -36,7 +36,7 @@ const SORT_OPTIONS = [
   { value: 'amount_lovelace', label: 'ADA Delegated', tip: TIPS.ada },
   { value: 'delegator_count', label: 'Delegators', tip: TIPS.delegators },
   { value: 'voting_streak_epochs', label: 'Voting Streak', tip: TIPS.streak },
-  { value: 'alignment', label: 'Alignment (your values)', tip: TIPS.alignment },
+  { value: 'alignment', label: 'Alignment', tip: TIPS.alignment },
   { value: 'personal_govscore', label: 'Personal GovScore', tip: TIPS.personalGovscore },
 ];
 
