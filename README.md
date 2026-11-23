@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ADApolis
 
-## Getting Started
+The civic engine for Cardano governance — live at **[adapolis.net](https://www.adapolis.net)**.
 
-First, run the development server:
+ADApolis scores every Cardano DRep on how reliably it does the job, runs monthly seasons with a free fantasy game, turns each DRep into a trading card, and helps delegators find a DRep that votes the way they think.
+
+- **Scoreboard** — every active DRep ranked by GovScore (confidence-adjusted participation, gently dampened for very large ADA holdings)
+- **Seasons and fantasy draft** — 6-epoch seasons, process-only points, an underdog multiplier for small DReps
+- **Trading cards** — stats, tiers, abilities; DReps can claim their card with their DRep key (CIP-95)
+- **Find My DRep** — a quiz matched against real on-chain votes, with a decentralization boost
+- **Hot Topics** — open governance actions, how DReps are splitting, and quoted arguments on each side
+- **Discord automation** — governance feeds, season recaps and role linking
+
+## The Cardinal Rule
+
+Scores, points, abilities and fantasy results come from **how** a DRep does the job (voting, explaining, voting on time), **never** from which way it votes or whether a proposal passed. Contributions that reward outcomes won't be merged.
+
+Every formula is documented on the [methodology page](https://www.adapolis.net/methodology); the code here is the source of truth.
+
+## Stack
+
+Next.js 14 (App Router) · TypeScript (strict) · Tailwind · Supabase (Postgres) · [Koios](https://api.koios.rest/) for chain data · Mesh.js for wallets · Anthropic Claude for summaries only · zod for every external response · Vitest · hosted on Railway with a 6-hourly cron.
+
+## Running locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.local.example .env.local   # fill in your own Supabase project and keys
+npm run dev                        # http://localhost:3000
+npm test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Create a Supabase project and run the SQL files in `supabase/migrations/` in order.
+2. Fill in `.env.local` (see comments in `.env.local.example`). Without `ANTHROPIC_API_KEY`, AI summaries are simply skipped.
+3. Populate data by calling the cron endpoint: `curl -H "Authorization: Bearer $CRON_SECRET" -X POST http://localhost:3000/api/cron`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Open data
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The JSON behind the site is public: [`/api/dreps`](https://www.adapolis.net/api/dreps) (Scoreboard) and [`/api/cards`](https://www.adapolis.net/api/cards) (every card's stats). Please cache and be gentle.
 
-## Learn More
+## Contributing
 
-To learn more about Next.js, take a look at the following resources:
+Bug reports, data anomalies and rule suggestions are welcome in our [Discord](https://discord.gg/64QvF9WWMM). For code, open an issue first so we can agree on the approach. Never commit secrets: they belong in environment variables only.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Code: [GNU AGPL-3.0](LICENSE). If you run a modified version as a public service, you must publish your changes.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The ADApolis name, logo and trading-card artwork are **not** covered by the code license; see [TRADEMARKS.md](TRADEMARKS.md). DRep profile images and bios belong to their owners.

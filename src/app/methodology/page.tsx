@@ -762,6 +762,11 @@ pick contribution = points × multiplier   if points > 0
                 changes whenever a rule does.
               </>,
               <>
+                <strong>Open source:</strong> the full code is on{" "}
+                <A href="https://github.com/SoulTrainAI/adapolis">GitHub</A> under the AGPL-3.0 license, so anyone
+                can check exactly how every score is computed.
+              </>,
+              <>
                 <strong>AI is disclosed:</strong> it appears only where this
                 page says so, and every AI summary carries a verbatim, linked
                 quote.

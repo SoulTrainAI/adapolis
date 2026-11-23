@@ -77,7 +77,12 @@ const PRINCIPLES: Array<[string, ReactNode]> = [
         methodology
       </Link>{" "}
       page and every number comes from public on-chain data you can check
-      yourself. The data behind the site is available as open JSON.
+      yourself. The data behind the site is available as open JSON, and
+      the code is 
+      <a href="https://github.com/SoulTrainAI/adapolis" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+        open source
+      </a>
+      .
     </>,
   ],
   [
