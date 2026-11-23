@@ -236,30 +236,28 @@ export async function setupServer(options: {
         }),
       undefined,
     );
-  // Order roles as in the config, just under the bot's own role.
-  if (apply) {
-    try {
-      const fresh = await listRoles();
-      const botRole = fresh
-        .filter((r) => r.managed)
-        .sort((a, b) => b.position - a.position)[0];
-      if (botRole) {
-        const top = botRole.position - 1;
-        const positions = ROLES.map((spec, i) => ({
-          id: roleIds.get(spec.key)!,
-          position: Math.max(1, top - i),
-        }));
-        await discord("PATCH", `/guilds/${gid}/roles`, positions, {
-          reason: "ADApolis setup: role order",
-        });
+  // Order roles as in the config (highest first), just under the bot's own role; only when out of order.
+  const liveRoles = await listRoles();
+  const ranked = ROLES.map((spec) => liveRoles.find((r) => r.id === roleIds.get(spec.key)));
+  const inOrder = ranked.every((r, i) => r !== undefined && (i === 0 || (ranked[i - 1] as { position: number }).position > r.position));
+  if (!inOrder) {
+    if (apply) {
+      try {
+        const botRole = liveRoles.filter((r) => r.managed).sort((a, b) => b.position - a.position)[0];
+        if (botRole) {
+          const top = botRole.position - 1;
+          const positions = ROLES.map((spec, i) => ({ id: roleIds.get(spec.key)!, position: Math.max(1, top - i) }));
+          await discord("PATCH", `/guilds/${gid}/roles`, positions, { reason: "ADApolis setup: role order" });
+          report.actions.push("Order roles as listed, under the ADApolis bot role");
+        }
+      } catch (e) {
+        report.warnings.push(
+          `Couldn't reorder roles (${e instanceof Error ? e.message : String(e)}). Drag them into order under Server Settings → Roles if you like.`,
+        );
       }
-    } catch (e) {
-      report.warnings.push(
-        `Couldn't reorder roles (${e instanceof Error ? e.message : String(e)}). Drag them into order under Server Settings → Roles if you like.`,
-      );
+    } else {
+      report.actions.push("Order roles as listed, under the ADApolis bot role");
     }
-  } else {
-    report.actions.push("Order roles as listed, under the ADApolis bot role");
   }
   const roleId = (k: RoleKey) => roleIds.get(k)!;
 
