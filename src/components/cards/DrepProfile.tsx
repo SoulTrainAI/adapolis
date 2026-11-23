@@ -100,6 +100,19 @@ export function DrepProfile({ drepId }: { drepId: string }) {
       <div className="mx-auto w-full max-w-[22rem] lg:sticky lg:top-24 lg:self-start">
         <TradingCard card={card} variant="scoreboard" />
         <p className="mt-2 text-center text-xs text-slate-500">Tap the card to flip it.</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <a href={`/api/cards/${drepId}/image?download=1`} className="border border-slate-700 bg-slate-900 py-2 text-center text-slate-200 hover:border-violet-500 hover:text-white">
+            Download card
+          </a>
+          <a
+            href={`https://x.com/intent/tweet?${new URLSearchParams({ text: `${cardName(card)}'s DRep card on @ADApolisdotnet`, url: `https://www.adapolis.net/dreps/${drepId}` })}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-slate-700 bg-slate-900 py-2 text-center text-slate-200 hover:border-violet-500 hover:text-white"
+          >
+            Share on X
+          </a>
+        </div>
       </div>
 
       <div className="min-w-0 space-y-8">

@@ -116,6 +116,7 @@ export interface Embed {
   color?: number;
   fields?: Array<{ name: string; value: string; inline?: boolean }>;
   thumbnail?: { url: string };
+  image?: { url: string };
   footer?: { text: string };
   timestamp?: string;
 }

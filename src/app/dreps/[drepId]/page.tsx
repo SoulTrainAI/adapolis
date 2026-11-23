@@ -5,9 +5,14 @@ import { DrepProfile } from '@/components/cards/DrepProfile';
 const DREP_ID = /^drep1[02-9ac-hj-np-z]{20,100}$/;
 
 export function generateMetadata({ params }: { params: { drepId: string } }): Metadata {
+  const description = `Trading card, GovScore, season history and voting record for Cardano DRep ${params.drepId.slice(0, 20)}…`;
+  // Shared links preview as the DRep's card.
+  const images = [{ url: `/api/cards/${params.drepId}/image`, width: 500, height: 700 }];
   return {
     title: 'DRep profile — ADApolis',
-    description: `Trading card, GovScore, season history and voting record for Cardano DRep ${params.drepId.slice(0, 20)}…`,
+    description,
+    openGraph: { title: 'DRep card — ADApolis', description, images },
+    twitter: { card: 'summary_large_image', images: images.map((i) => i.url) },
   };
 }
 

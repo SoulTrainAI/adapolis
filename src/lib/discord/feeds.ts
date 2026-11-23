@@ -16,7 +16,8 @@ import { COLORS, guildId, listChannels, listRoles, type Channel, type Embed } fr
 import { alreadyPosted, postOnce } from './posts';
 import { ACTION_TAGS } from './server-config';
 
-const SITE = 'https://adapolis.net';
+// The www host serves directly; Discord fetches embed images without following redirects reliably.
+const SITE = 'https://www.adapolis.net';
 
 export interface FeedReport {
   applied: boolean;
@@ -230,7 +231,9 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
           ],
           footer: { text: 'Collect, scout and draft at adapolis.net' },
         };
-        if (card.image && /^https:\/\//.test(card.image)) embed.thumbnail = { url: card.image };
+        // The whole card, rendered as an image, so the art and frame show in Discord.
+        embed.image = { url: `${SITE}/api/cards/${card.drep_id}/image?d=${today}` };
+        embed.url = `${SITE}/dreps/${card.drep_id}`;
         return { embeds: [embed] };
       },
     });
