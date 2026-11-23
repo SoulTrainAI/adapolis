@@ -106,7 +106,12 @@ export function CollectionView() {
           </p>
         ) : (
           <>
-            {roster.team_name && <p className="text-slate-300">{roster.team_name}</p>}
+            <p className="text-slate-300">
+              {roster.team_name && <strong className="text-white">{roster.team_name} · </strong>}
+              <Link href="/leaderboard" className="text-violet-300 hover:text-violet-200">
+                See where you rank →
+              </Link>
+            </p>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {roster.picks.map((p) => {
                 const d = pool.get(p.drep_id);

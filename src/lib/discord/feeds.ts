@@ -10,6 +10,7 @@ import { getHotTopics, type HotTopic } from '@/lib/hot-topics/data';
 import { getCards } from '@/lib/cards/data';
 import { getSeasonData } from '@/lib/season/data';
 import { draftSeason } from '@/lib/season/fantasy';
+import { getLeaderboard } from '@/lib/season/leaderboard';
 import { tierFor } from '@/lib/cards/types';
 import { COLORS, guildId, listChannels, listRoles, type Channel, type Embed } from './rest';
 import { alreadyPosted, postOnce } from './posts';
@@ -143,6 +144,11 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
       const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
       const label = season.season === null ? `Preview season (epochs ${season.start_epoch}–${season.end_epoch})` : `Season ${season.season}`;
       const lines = top.map((s, i) => `${medals[i]} **${s.profile.name ?? `${s.drep_id.slice(0, 14)}…`}** · ${s.points} pts · ${s.votes_cast} votes`);
+      const board = await getLeaderboard().catch(() => null);
+      const fantasy =
+        board && board.season.status !== 'upcoming' && board.teams.length
+          ? [{ name: `Fantasy leaderboard (${board.teams.length} teams)`, value: board.teams.slice(0, 3).map((t) => `${medals[t.rank - 1] ?? `${t.rank}.`} **${t.name}** · ${t.points} pts`).join('\n') + `\n${SITE}/leaderboard` }]
+          : [];
       return {
         embeds: [
           {
@@ -154,6 +160,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
               '',
               `${season.standings.length} DReps have scored this season. Points come from voting, explaining and voting on time, never from how they vote.`,
             ].join('\n'),
+            fields: fantasy,
           },
         ],
       };

@@ -52,6 +52,7 @@ vi.mock('@/lib/season/fantasy', () => ({
   draftSeason: async () => ({ season_number: 1, grid_window: 2, start_epoch: 678, end_epoch: 683, starts_at: '', draft_locks_at: new Date(Date.now() + 864e6).toISOString(), ends_at: '', reference_window: 1 }),
 }));
 vi.mock('@/lib/cards/data', () => ({ getCards: async () => ({ cards: [] }) }));
+vi.mock('@/lib/season/leaderboard', () => ({ getLeaderboard: async () => null }));
 
 describe('Discord feeds', () => {
   it('previews without posting, then posts each item once, neutrally', async () => {

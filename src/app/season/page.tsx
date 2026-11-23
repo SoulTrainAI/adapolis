@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getSeasonData, type SeasonData } from '@/lib/season/data';
 import { POINT_RULES } from '@/lib/season/points';
 import { SeasonBoard } from '@/components/season/SeasonBoard';
+import { SeasonTabs } from '@/components/season/SeasonTabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,7 @@ export default async function SeasonPage() {
   return (
     <div className="min-h-screen bg-brand-navy text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
+        <SeasonTabs active="standings" />
         <header className="space-y-3 max-w-3xl">
           <p className="text-sm uppercase tracking-wider text-violet-300">
             {isPreview ? 'Preview season' : data ? `Season ${data.season}` : 'Season standings'}
