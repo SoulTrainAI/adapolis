@@ -6,12 +6,12 @@ import { getRace, type Race } from '@/lib/season/race';
 import { POINT_RULES, SEASON_LENGTH_EPOCHS, epochStart, seasonLabel, seasonOneStartEpoch } from '@/lib/season/points';
 import { ScoreboardClient } from '@/components/scoreboard/ScoreboardClient';
 import { SeasonTabs } from '@/components/season/SeasonTabs';
-import { RaceView } from '@/components/season/RaceView';
+import { Cardanathon } from '@/components/season/Cardanathon';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'The Season Race — ADApolis',
+  title: 'Cardanathon — ADApolis',
   description:
     'Watch the top 20 DReps race through the season: points for voting, explaining votes and voting early, live commentary, replay any day. Never scored on which way they vote.',
 };
@@ -64,10 +64,10 @@ export default async function SeasonPage() {
             )}
           </div>
           <h1 className="mt-3 flex items-center gap-3 font-display text-4xl font-black sm:text-5xl">
-            <Flag className="h-9 w-9 text-amber-300" /> The Season Race
+            <Flag className="h-9 w-9 text-amber-300" /> Cardanathon
           </h1>
           <p className="mt-2 max-w-3xl text-slate-200">
-            Every DRep starts at zero. Points for voting, explaining their votes and voting early push them up the track;
+            The season-long DRep race. Every DRep starts at zero. Points for voting, explaining their votes and voting early push them up the track;
             missed actions pull them back. Yes, No and Abstain all score the same. Hit play to watch the season unfold.
           </p>
           {race && <p className="mt-2 max-w-3xl text-sm text-amber-100/90">{stage(race)}</p>}
@@ -75,13 +75,13 @@ export default async function SeasonPage() {
             <Link href="/draft" className="inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2 font-semibold text-amber-950 hover:bg-amber-300">
               <Swords className="h-4 w-4" /> Draft your team
             </Link>
-            <Link href="/leaderboard" className="inline-flex items-center gap-2 rounded-lg border border-slate-600 px-4 py-2 font-semibold text-slate-100 hover:border-slate-400">
-              Game leaderboard
+            <Link href="/leagues" className="inline-flex items-center gap-2 rounded-lg border border-slate-600 px-4 py-2 font-semibold text-slate-100 hover:border-slate-400">
+              Leagues
             </Link>
           </div>
         </header>
 
-        {race ? <RaceView race={race} /> : <p className="text-slate-400">The race is temporarily unavailable. Please try again in a minute.</p>}
+        {race ? <Cardanathon race={race} /> : <p className="text-slate-400">The race is temporarily unavailable. Please try again in a minute.</p>}
 
         <details className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 text-sm text-slate-300">
           <summary className="cursor-pointer font-semibold text-white">How points work</summary>

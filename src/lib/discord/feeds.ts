@@ -149,7 +149,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
       const board = await getLeaderboard().catch(() => null);
       const fantasy =
         board && board.season.status !== 'upcoming' && board.teams.length
-          ? [{ name: `Game leaderboard (${board.teams.length} teams)`, value: board.teams.slice(0, 3).map((t) => `${medals[t.rank - 1] ?? `${t.rank}.`} **${t.name}** · ${t.points} pts`).join('\n') + `\n${SITE}/leaderboard` }]
+          ? [{ name: `Team Leaderboard (${board.teams.length} teams)`, value: board.teams.slice(0, 3).map((t) => `${medals[t.rank - 1] ?? `${t.rank}.`} **${t.name}** · ${t.points} pts`).join('\n') + `\n${SITE}/leaderboard` }]
           : [];
       return {
         embeds: [

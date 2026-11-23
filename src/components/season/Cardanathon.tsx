@@ -11,6 +11,8 @@ import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Crown, Flag, Flame, Pause, Play, Radio, Rewind, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import type { Race } from '@/lib/season/race';
+import { TeamsPanel } from './TeamsPanel';
+import { Dashboard, useLayout } from './Dashboard';
 import { buildCommentary, DAY_S, displayName, orderAt, SHOWN, type CommentaryLine } from '@/lib/season/commentary';
 
 const EPOCH_S = 432_000;
@@ -43,7 +45,7 @@ function dayOf(race: Race, t: number): number {
   return Math.min(Math.floor((race.ends_at - race.starts_at) / DAY_S), Math.max(1, Math.ceil((t - race.starts_at) / DAY_S)));
 }
 
-export function RaceView({ race }: { race: Race }) {
+export function Cardanathon({ race }: { race: Race }) {
   const reduce = useReducedMotion();
   const until = Math.min(race.now, race.ends_at);
   const total = race.ends_at - race.starts_at;
@@ -51,6 +53,7 @@ export function RaceView({ race }: { race: Race }) {
   const [t, setT] = useState(until);
   const [playing, setPlaying] = useState(false);
   const [highlight, setHighlight] = useState<string[]>([]);
+  const [layout, setLayout] = useLayout();
   const raf = useRef<number | null>(null);
   const last = useRef<number>(0);
 
@@ -215,9 +218,42 @@ export function RaceView({ race }: { race: Race }) {
         </button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
-        {/* The track */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[linear-gradient(180deg,#0b1024,#121a3a)] p-3 sm:p-4">
+      {/* The dashboard: commentary bar, the DRep race and the Team Leaderboard. Resize, swap and move; saved per browser. */}
+      <Dashboard
+        layout={layout}
+        setLayout={setLayout}
+        commentaryCount={feed.length}
+        commentary={
+          <ol className="h-full space-y-1 overflow-y-auto p-2">
+            <AnimatePresence initial={false}>
+              {feed.map((c) => {
+                const { color, Icon } = TONE[c.tone];
+                return (
+                  <motion.li
+                    key={`${c.day}-${c.text}`}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="cursor-pointer rounded-lg px-2 py-1.5 hover:bg-white/5"
+                    onMouseEnter={() => setHighlight(c.drep_ids)}
+                    onMouseLeave={() => setHighlight([])}
+                    onClick={() => setHighlight(c.drep_ids)}
+                  >
+                    <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                      Day {c.day} · Epoch {c.epoch}
+                    </p>
+                    <p className={`flex gap-1.5 text-sm leading-snug ${color}`}>
+                      <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="text-slate-100">{c.text}</span>
+                    </p>
+                  </motion.li>
+                );
+              })}
+            </AnimatePresence>
+            {feed.length === 0 && <li className="px-2 py-3 text-sm text-slate-500">The gates are open. Waiting for the first vote…</li>}
+          </ol>
+        }
+        race={
+        <div className="relative h-full overflow-auto bg-[linear-gradient(180deg,#0b1024,#121a3a)] p-3 sm:p-4">
           <div
             className="pointer-events-none absolute inset-y-0 right-3 w-3 opacity-60 sm:right-4"
             style={{ backgroundImage: 'repeating-conic-gradient(#fff 0 25%, #111 0 50%)', backgroundSize: '6px 6px' }}
@@ -283,41 +319,9 @@ export function RaceView({ race }: { race: Race }) {
             <Flag className="h-3 w-3" /> Finish: end of epoch {race.end_epoch}
           </p>
         </div>
-
-        {/* Commentary */}
-        <aside className="flex max-h-[44rem] flex-col rounded-2xl border border-slate-800 bg-slate-900/70">
-          <p className="flex items-center gap-2 border-b border-slate-800 px-4 py-3 font-display font-bold text-white">
-            <Radio className="h-4 w-4 text-rose-400" /> Commentary
-          </p>
-          <ol className="flex-1 space-y-1 overflow-y-auto p-2">
-            <AnimatePresence initial={false}>
-              {feed.map((c) => {
-                const { color, Icon } = TONE[c.tone];
-                return (
-                  <motion.li
-                    key={`${c.day}-${c.text}`}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="cursor-pointer rounded-lg px-2 py-1.5 hover:bg-white/5"
-                    onMouseEnter={() => setHighlight(c.drep_ids)}
-                    onMouseLeave={() => setHighlight([])}
-                    onClick={() => setHighlight(c.drep_ids)}
-                  >
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                      Day {c.day} · Epoch {c.epoch}
-                    </p>
-                    <p className={`flex gap-1.5 text-sm leading-snug ${color}`}>
-                      <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="text-slate-100">{c.text}</span>
-                    </p>
-                  </motion.li>
-                );
-              })}
-            </AnimatePresence>
-            {feed.length === 0 && <li className="px-2 py-3 text-sm text-slate-500">The gates are open. Waiting for the first vote…</li>}
-          </ol>
-        </aside>
-      </div>
+        }
+        teams={<TeamsPanel />}
+      />
     </div>
   );
 }

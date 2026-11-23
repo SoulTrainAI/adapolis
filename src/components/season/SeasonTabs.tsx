@@ -1,14 +1,13 @@
 import Link from 'next/link';
 
 const TABS = [
-  ['standings', '/season', 'The race'],
-  ['leaderboard', '/leaderboard', 'Game leaderboard'],
+  ['standings', '/season', 'Cardanathon'],
   ['leagues', '/leagues', 'Leagues'],
   ['draft', '/draft', 'Draft'],
 ] as const;
 
 /** Switches between the season's views. */
-export function SeasonTabs({ active }: { active: (typeof TABS)[number][0] }) {
+export function SeasonTabs({ active }: { active: (typeof TABS)[number][0] | 'leaderboard' }) {
   return (
     <nav className="flex gap-1 border-b border-slate-800" aria-label="Season views">
       {TABS.map(([id, href, label]) => (

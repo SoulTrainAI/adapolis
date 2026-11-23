@@ -30,6 +30,11 @@ function TeamRow({ team, live }: { team: LeaderboardTeam; live: boolean }) {
           <p className="truncate font-semibold text-white">
             {team.name}
             {team.mine && <span className="ml-2 bg-brand-gold/20 px-1.5 py-0.5 text-xs font-bold text-amber-200">You</span>}
+            {team.eligible && (
+              <span className="ml-2 inline-flex align-middle" title="Competing for prizes: delegated since before the roster lock.">
+                <Trophy className="h-4 w-4 text-amber-300" />
+              </span>
+            )}
           </p>
           <div className="mt-1 flex gap-1">
             {team.picks.map((p) => (
@@ -91,7 +96,7 @@ async function globalBoard(): Promise<Leaderboard> {
  */
 export function LeaderboardView({
   fetchBoard = globalBoard,
-  title = 'Global game leaderboard',
+  title = 'Team Leaderboard',
   children,
 }: {
   fetchBoard?: () => Promise<Leaderboard>;

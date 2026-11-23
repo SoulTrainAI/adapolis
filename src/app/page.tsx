@@ -154,8 +154,8 @@ const PATHS: Path[] = [
     pitch: 'Scout DReps, draft a team of 5 and climb the leaderboard. Free, no wallet transaction.',
     links: [
       { href: SECTIONS.draft.href, label: 'Draft your team', tip: SECTIONS.draft.blurb },
-      { href: SECTIONS.season.href, label: 'Watch the season race', tip: SECTIONS.season.blurb },
-      { href: '/leaderboard', label: 'Game leaderboard', tip: 'Every team’s score, pick by pick.' },
+      { href: SECTIONS.season.href, label: 'Watch the Cardanathon', tip: SECTIONS.season.blurb },
+      { href: '/leaderboard', label: 'Team Leaderboard', tip: 'Every team’s score, pick by pick.' },
       { href: '/leagues', label: 'Leagues', tip: 'Play your team against friends in public or private leagues. Bragging rights only.' },
     ],
   },
@@ -280,7 +280,7 @@ export default async function Home() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="Scoreboard" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
           <GameTile href={SECTIONS.draft.href} icon={Swords} title="Draft" body={SECTIONS.draft.blurb} accent="bg-brand-gold/20 text-brand-gold-light" />
-          <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="The season race" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
+          <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="Cardanathon" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
           <GameTile href="/leaderboard" icon={Trophy} title="Leaderboard" body="Every team’s score, pick by pick, updated as the season unfolds." accent="bg-sky-500/15 text-sky-300" />
         </div>
       </section>

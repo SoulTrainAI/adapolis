@@ -25,8 +25,8 @@ export const SECTIONS = {
   },
   season: {
     href: '/season',
-    label: 'Season',
-    blurb: 'Watch the top 20 DReps race through the season, with live commentary. Seasons are 6 epochs, about a month.',
+    label: 'Cardanathon',
+    blurb: 'The Cardanathon: watch the top 20 DReps race through the season next to the Team Leaderboard, with live commentary.',
   },
   draft: {
     href: '/draft',
