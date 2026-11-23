@@ -16,6 +16,24 @@ import { tierFor } from '@/lib/cards/types';
 import { COLORS, guildId, listChannels, listRoles, type Channel, type Embed } from './rest';
 import { alreadyPosted, postOnce } from './posts';
 import { ACTION_TAGS } from './server-config';
+import { getRace } from '@/lib/season/race';
+import { buildCommentary, DAY_S } from '@/lib/season/commentary';
+import { tagOptOuts } from '@/lib/drep-profile/mentions';
+import { supabaseAdmin } from '@/lib/sync/supabase-admin';
+
+/** Discord accounts linked to DReps who allow tagging: drep_id → Discord user id. */
+async function taggableDReps(drepIds: string[]): Promise<Map<string, string>> {
+  if (!drepIds.length) return new Map();
+  const [optOut, links] = await Promise.all([
+    tagOptOuts(),
+    supabaseAdmin.from('discord_links').select('discord_user_id, drep_id').in('drep_id', drepIds),
+  ]);
+  const map = new Map<string, string>();
+  for (const r of (links.data ?? []) as Array<{ discord_user_id: string; drep_id: string | null }>) {
+    if (r.drep_id && !optOut.has(r.drep_id)) map.set(r.drep_id, r.discord_user_id);
+  }
+  return map;
+}
 
 // The www host serves directly; Discord fetches embed images without following redirects reliably.
 const SITE = 'https://www.adapolis.net';
@@ -168,6 +186,45 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
       };
     },
   });
+
+  /* ---- Cardanathon: yesterday's commentary, once a day, tagging DReps who allow it ---- */
+  const race = await getRace().catch(() => null);
+  if (race) {
+    const until = Math.min(race.now, race.ends_at);
+    const lastFullDay = Math.floor((until - race.starts_at) / DAY_S);
+    const lines = lastFullDay >= 1 ? buildCommentary(race.racers, { starts_at: race.starts_at, until, start_epoch: race.start_epoch }).filter((c) => c.day === lastFullDay) : [];
+    if (lines.length) {
+      jobs.push({
+        key: `commentary:${race.window}:${lastFullDay}`,
+        channel: 'season-feed',
+        build: async () => {
+          const shown = lines.slice(0, 8);
+          const tags = await taggableDReps(Array.from(new Set(shown.flatMap((l) => l.drep_ids))));
+          const text = shown.map((l) => {
+            const mentions = l.drep_ids.map((id) => tags.get(id)).filter((u): u is string => !!u).map((u) => `<@${u}>`);
+            return `• ${l.text}${mentions.length ? ` ${mentions.join(' ')}` : ''}`;
+          });
+          const top = race.racers.slice(0, 5).map((r, i) => `${['🥇', '🥈', '🥉', '4.', '5.'][i]} ${r.name ?? `${r.drep_id.slice(0, 14)}…`} · ${r.points}`);
+          const users = Array.from(new Set(Array.from(tags.values())));
+          return {
+            allowed_mentions: { users },
+            embeds: [
+              {
+                title: `🎙️ Cardanathon day ${lastFullDay} · ${race.label}`,
+                url: `${SITE}/season`,
+                color: COLORS.gold,
+                description: clip(text.join('\n'), 3500),
+                fields: [{ name: 'Standings', value: top.join('\n') || '—' }],
+                footer: { text: 'Points come from voting, explaining and voting on time, never from how DReps vote.' },
+              },
+            ],
+            // Mentions inside embeds don't notify, so the tags also go in the message itself.
+            content: users.length ? users.map((u) => `<@${u}>`).join(' ') : undefined,
+          };
+        },
+      });
+    }
+  }
 
   const draft = await draftSeason();
   if (draft) {

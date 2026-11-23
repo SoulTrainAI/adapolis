@@ -128,7 +128,7 @@ export interface WebhookMessage {
   thread_name?: string;
   applied_tags?: string[];
   /** Which mentions may ping; defaults to none */
-  allowed_mentions?: { parse?: Array<'roles' | 'users' | 'everyone'>; roles?: string[] };
+  allowed_mentions?: { parse?: Array<'roles' | 'users' | 'everyone'>; roles?: string[]; users?: string[] };
 }
 
 /** Posts through a channel's ADApolis webhook (no gateway connection needed). */

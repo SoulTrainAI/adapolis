@@ -45,6 +45,8 @@ export function DrepStudio() {
   const [image, setImage] = useState('');
   const [bio, setBio] = useState('');
   const [links, setLinks] = useState<Link[]>([]);
+  const [allowTags, setAllowTags] = useState<boolean | null>(null);
+  const [tagNote, setTagNote] = useState<string | null>(null);
   const { cards } = useCards();
 
   const load = useCallback(async () => {
@@ -57,6 +59,10 @@ export function DrepStudio() {
       setImage(o?.image ?? c?.image ?? '');
       setBio(o?.bio ?? c?.bio ?? '');
       setLinks(o?.links ?? c?.links ?? []);
+      fetch('/api/drep/mentions')
+        .then((r) => r.json())
+        .then((m: { allow: boolean | null }) => setAllowTags(m.allow ?? true))
+        .catch(() => setAllowTags(true));
     }
   }, []);
 
@@ -265,6 +271,33 @@ export function DrepStudio() {
             Reset to my on-chain profile
           </button>
         </div>
+        <label className="flex items-start gap-3 border border-slate-800 bg-slate-900/60 p-3">
+          <input
+            type="checkbox"
+            checked={allowTags ?? true}
+            disabled={allowTags === null}
+            onChange={async (e) => {
+              const allow = e.target.checked;
+              setAllowTags(allow);
+              setTagNote(null);
+              const res = await fetch('/api/drep/mentions', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ allow }) });
+              const body = (await res.json().catch(() => ({}))) as { error?: string };
+              if (!res.ok) {
+                setAllowTags(!allow);
+                setTagNote(body.error ?? `Couldn't save (HTTP ${res.status}).`);
+              } else setTagNote(allow ? 'Tagging on.' : 'Tagging off: you will still appear by name.');
+            }}
+            className="mt-1 h-4 w-4 accent-violet-500"
+          />
+          <span className="text-sm">
+            <span className="font-semibold text-white">Tag me in Cardanathon commentary posts</span>
+            <span className="block text-xs text-slate-400">
+              ADApolis posts race commentary and standings to its Discord (and later X). When on, we tag your linked Discord account
+              when you&apos;re in the news. Saved straight away.
+            </span>
+            {tagNote && <span className="block text-xs text-slate-300">{tagNote}</span>}
+          </span>
+        </label>
         {notice && <p className="text-emerald-300">{notice}</p>}
         {error && <p className="text-rose-300">{error}</p>}
         <p className="text-xs text-slate-500">
