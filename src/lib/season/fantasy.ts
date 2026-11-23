@@ -78,6 +78,9 @@ async function ensureSeasonRow(season: DraftSeason): Promise<void> {
   };
   const { error } = await supabaseAdmin.from('seasons').upsert(row, { onConflict: 'season_number', ignoreDuplicates: true });
   if (error) {
+    if (error.code === '23514' && season.season_number === 0) {
+      throw new DraftError('Preseason teams open in a moment: the site’s database update is still being applied. Please try again soon.', 503);
+    }
     throw new Error(`Couldn't create season ${season.season_number}: ${error.message}. Run supabase/migrations/010_fantasy_seasons.sql if the table is missing.`);
   }
 }

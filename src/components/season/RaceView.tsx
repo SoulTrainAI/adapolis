@@ -224,7 +224,7 @@ export function RaceView({ race }: { race: Race }) {
             title="Season end"
           />
           <ol className="relative space-y-1.5">
-            <AnimatePresence initial={false}>
+            <AnimatePresence initial={false} mode="popLayout">
               {shown.map((o, i) => {
                 const r = byId.get(o.drep_id)!;
                 const name = displayName(r);
