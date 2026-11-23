@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
-import { discord, ensureWebhook, postViaWebhook, type WebhookMessage } from './rest';
+import { DiscordError, discord, ensureWebhook, postViaWebhook, type WebhookMessage } from './rest';
 
 const MISSING_TABLE = 'Table discord_posts is missing: run supabase/migrations/012_discord_posts.sql in the Supabase SQL Editor, then retry.';
 
@@ -24,21 +24,38 @@ export async function postOnce(key: string, channelId: string, message: WebhookM
 
 /**
  * Brings an already-posted message in line with `message` (same webhook,
- * edited in place). Returns true when it changed something.
+ * edited in place). If the message was deleted in Discord, posts it again.
  * `channelId` is where the webhook lives; for a forum post, the thread is the row's channel_id.
  */
-export async function refreshPosted(key: string, channelId: string, message: WebhookMessage): Promise<boolean> {
+export async function refreshPosted(
+  key: string,
+  channelId: string,
+  message: WebhookMessage,
+  repost?: WebhookMessage
+): Promise<{ status: 'unchanged' | 'updated' } | { status: 'reposted'; id: string; channel_id: string }> {
   const { data, error } = await supabaseAdmin.from('discord_posts').select('channel_id, message_id').eq('key', key).maybeSingle();
   if (error) throw new Error(error.code === '42P01' ? MISSING_TABLE : `Couldn't read discord_posts: ${error.message}`);
-  if (!data) return false;
+  if (!data) return { status: 'unchanged' };
   const row = data as { channel_id: string; message_id: string };
   const hook = await ensureWebhook(channelId);
   const thread = row.channel_id !== channelId ? `?thread_id=${row.channel_id}` : '';
   const path = `/webhooks/${hook.id}/${hook.token}/messages/${row.message_id}${thread}`;
-  const current = (await discord('GET', path, undefined, { auth: false })) as { content?: string; embeds?: Array<{ title?: string; description?: string }> };
+  let current: { content?: string; embeds?: Array<{ title?: string; description?: string }> };
+  try {
+    current = (await discord('GET', path, undefined, { auth: false })) as typeof current;
+  } catch (e) {
+    // 10008 Unknown Message / 10003 Unknown Channel: it was deleted in Discord (or posted by an older webhook). Post it again.
+    if (!(e instanceof DiscordError) || e.status !== 404) throw e;
+    const sent = await postViaWebhook(channelId, repost ?? message);
+    const { error: upsertError } = await supabaseAdmin
+      .from('discord_posts')
+      .upsert({ key, channel_id: sent.channel_id, message_id: sent.id, posted_at: new Date().toISOString() });
+    if (upsertError) throw new Error(`Reposted ${key} but couldn't record it: ${upsertError.message}`);
+    return { status: 'reposted', ...sent };
+  }
   const want = { content: message.content ?? '', embeds: (message.embeds ?? []).map((e) => [e.title ?? '', e.description ?? '']) };
   const have = { content: current.content ?? '', embeds: (current.embeds ?? []).map((e) => [e.title ?? '', e.description ?? '']) };
-  if (JSON.stringify(want) === JSON.stringify(have)) return false;
+  if (JSON.stringify(want) === JSON.stringify(have)) return { status: 'unchanged' };
   await discord('PATCH', path, { content: message.content ?? '', embeds: message.embeds ?? [] }, { auth: false });
-  return true;
+  return { status: 'updated' };
 }

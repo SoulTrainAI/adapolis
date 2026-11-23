@@ -114,16 +114,16 @@ vi.mock('./posts', async () => {
     },
     refreshPosted: async (key: string, channelId: string, message: Parameters<typeof rest.postViaWebhook>[1]) => {
       const row = posted.get(key);
-      if (!row) return false;
+      if (!row) return { status: 'unchanged' };
       const hook = await rest.ensureWebhook(channelId);
       const path = `/webhooks/${hook.id}/${hook.token}/messages/${row.message_id}`;
       const current = (await rest.discord('GET', path, undefined, { auth: false })) as { content: string; embeds: Array<{ description?: string }> };
       const same =
         (current.content ?? '') === (message.content ?? '') &&
         JSON.stringify((current.embeds ?? []).map((e) => e.description)) === JSON.stringify((message.embeds ?? []).map((e) => e.description));
-      if (same) return false;
+      if (same) return { status: 'unchanged' };
       await rest.discord('PATCH', path, message, { auth: false });
-      return true;
+      return { status: 'updated' };
     },
   };
 });
@@ -175,5 +175,14 @@ describe('Discord setup', () => {
     const third = await setupServer({ apply: true });
     expect(third.actions).toEqual(['Update the welcome message']);
     expect(state.posts).toHaveLength(8);
+  });
+});
+
+describe('Discord errors', () => {
+  it('never include a webhook token', async () => {
+    const rest = await import('./rest');
+    const err = await rest.discord('GET', '/webhooks/123/SECRET-TOKEN/messages/999', undefined, { auth: false }).catch((e: Error) => e);
+    expect(String(err)).toContain('/webhooks/123/[token]/messages/999');
+    expect(String(err)).not.toContain('SECRET-TOKEN');
   });
 });

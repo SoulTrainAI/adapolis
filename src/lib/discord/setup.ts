@@ -634,8 +634,16 @@ export async function setupServer(options: {
               `Couldn't pin the #${name} message; pin it by hand.`,
             ),
           );
-      } else if (await refreshPosted(key, c.id, message)) {
-        report.actions.push(`Update the ${name} message`);
+      } else {
+        const r = await refreshPosted(key, c.id, message);
+        if (r.status === "updated") report.actions.push(`Update the ${name} message`);
+        if (r.status === "reposted") {
+          report.actions.push(`Repost the ${name} message (the old one was deleted)`);
+          if (pin)
+            await discord("PUT", `/channels/${c.id}/pins/${r.id}`).catch(() =>
+              report.warnings.push(`Couldn't pin the #${name} message; pin it by hand.`),
+            );
+        }
       }
     }
     const guides = byName.get("governance-guides");
@@ -649,8 +657,12 @@ export async function setupServer(options: {
           applied_tags: tag ? [tag.id] : [],
         });
         if (sent) report.actions.push(`Post guide "${g.title}"`);
-        else if (await refreshPosted(`seed:guide:${g.slug}`, guides.id, { content: g.body }))
-          report.actions.push(`Update guide "${g.title}"`);
+        else {
+          const full = { thread_name: g.title, content: g.body, applied_tags: tag ? [tag.id] : [] };
+          const r = await refreshPosted(`seed:guide:${g.slug}`, guides.id, { content: g.body }, full);
+          if (r.status === "updated") report.actions.push(`Update guide "${g.title}"`);
+          if (r.status === "reposted") report.actions.push(`Repost guide "${g.title}" (the old one was deleted)`);
+        }
       }
     }
   } else {

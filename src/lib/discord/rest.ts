@@ -58,7 +58,9 @@ export async function discord<T = unknown>(method: string, path: string, body?: 
           : res.status === 403
             ? ' The bot lacks permission: re-invite it with Administrator, and drag its role to the top of Server Settings → Roles.'
             : '';
-      throw new DiscordError(`Discord ${method} ${path} failed: HTTP ${res.status} ${detail}.${hint}`, res.status, json);
+      // Webhook URLs carry a secret token: never let one into an error message or log.
+      const redact = (t: string) => t.replace(/(\/webhooks\/\d+\/)[^/?"\s]+/g, '$1[token]');
+      throw new DiscordError(redact(`Discord ${method} ${path} failed: HTTP ${res.status} ${detail}.${hint}`), res.status, json);
     }
     return json as T;
   }
