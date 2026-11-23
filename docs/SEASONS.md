@@ -1,4 +1,6 @@
-# Seasons & Fantasy Draft — Working Design (2026-11-21)
+# Seasons & Draft — Working Design (2026-11-21)
+
+> Superseded for the game and NFTs by `docs/GAME.md` (2026-11-22). Kept for history.
 
 Refines CONCEPT.md section 7 (Fantasy DRep Draft). CONCEPT.md stays authoritative
 until Jason approves folding these changes into it.
