@@ -216,6 +216,15 @@ export function underdogScale(reference: DRepSize[]): (size: Omit<DRepSize, 'dre
   };
 }
 
+/**
+ * A drafted DRep's contribution to a team. The underdog multiplier boosts
+ * gains only: losses count at 1×, so drafting a small DRep never costs more
+ * in a bad window than drafting a big one would.
+ */
+export function pickContribution(points: number, multiplier: number): number {
+  return points > 0 ? points * multiplier : points;
+}
+
 export function underdogMultipliers(dreps: DRepSize[]): Map<string, number> {
   const scale = underdogScale(dreps);
   return new Map(dreps.map((d) => [d.drep_id, scale(d)]));

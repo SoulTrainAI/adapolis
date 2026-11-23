@@ -113,7 +113,7 @@ export function LeaderboardView() {
           <Trophy className="h-8 w-8 text-brand-gold" /> Fantasy leaderboard
         </h1>
         <p className="text-slate-300">
-          Team points are each drafted DRep&apos;s season points times the underdog multiplier locked in when it was picked. Season points come only from
+          Team points are each drafted DRep&apos;s season points, with gains multiplied by the underdog multiplier locked in when it was picked (losses count at 1×). Season points come only from
           voting, explaining votes and voting on time, never from how a DRep votes.
         </p>
         <p className="text-sm text-slate-400">

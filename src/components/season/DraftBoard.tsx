@@ -34,7 +34,7 @@ function UnderdogChip({ value }: { value: number }) {
       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
         strong ? 'bg-amber-900/50 text-amber-300 border border-amber-800/60' : 'bg-slate-800 text-slate-300'
       }`}
-      title="Underdog multiplier: smaller DReps (by ADA and delegators) earn your team more per point. Fixed when you pick them."
+      title="Underdog multiplier: smaller DReps (by ADA and delegators) multiply the points they gain for your team (losses count at 1×). Fixed when you pick them."
     >
       {value.toFixed(2)}×
     </span>
@@ -173,7 +173,7 @@ export function DraftBoard() {
         <h1 className="text-4xl font-bold text-white">Draft your team</h1>
         <p className="text-slate-300">
           Pick {ROSTER_SIZE} DReps. Your team scores their season points: voting, explaining votes and voting on time,
-          never which way they vote. Smaller DReps carry an underdog multiplier, fixed when you pick them.
+          never which way they vote. Smaller DReps carry an underdog multiplier on the points they gain, fixed when you pick them; losses are never multiplied.
         </p>
         <p className="text-sm text-slate-400">
           {started ? 'Season started' : `Season starts ${format(new Date(season.starts_at), 'PPp')}`} · Rosters lock{' '}

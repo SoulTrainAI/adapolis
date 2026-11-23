@@ -1,8 +1,8 @@
 /**
  * Fantasy leaderboard: every team's score for a season.
  *
- * Team points = Σ (each picked DRep's season points × the underdog multiplier
- * locked in when it was picked). Season points are process-only (voting,
+ * Team points = Σ each picked DRep's season points, with gains multiplied by
+ * the underdog multiplier locked in when it was picked (losses count at 1×). Season points are process-only (voting,
  * explaining, voting on time), so the leaderboard never rewards which way a
  * DRep voted (Cardinal Rule).
  */
@@ -11,6 +11,7 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { getSeasonData } from './data';
 import { getCards } from '@/lib/cards/data';
 import { draftSeason, type DraftSeason } from './fantasy';
+import { pickContribution } from './points';
 
 export type SeasonStatus = 'upcoming' | 'live' | 'final';
 
@@ -62,7 +63,7 @@ export function rankTeams(
     const picks = r.picks.map((p) => {
       const pts = points.get(p.drep_id) ?? 0;
       const who = people.get(p.drep_id);
-      return { drep_id: p.drep_id, name: who?.name ?? null, image: who?.image ?? null, points: pts, multiplier: p.underdog_multiplier, contribution: round1(pts * p.underdog_multiplier) };
+      return { drep_id: p.drep_id, name: who?.name ?? null, image: who?.image ?? null, points: pts, multiplier: p.underdog_multiplier, contribution: round1(pickContribution(pts, p.underdog_multiplier)) };
     });
     return { row: r, picks, points: round1(picks.reduce((s, p) => s + p.contribution, 0)) };
   });

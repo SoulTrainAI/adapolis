@@ -23,4 +23,14 @@ describe('fantasy leaderboard scoring', () => {
     // Never the whole stake address
     expect(teamName({ team_name: null, stake_address: 'stake1u' + 'x'.repeat(52) })).toBe('Team xxxxxx');
   });
+
+  it('applies the underdog multiplier to gains only', async () => {
+    const { rankTeams } = await import('./leaderboard');
+    const rosters = [
+      { stake_address: 'stake1u' + 'a'.repeat(52), team_name: 'Small', created_at: '2026-12-01T00:00:00Z', picks: [{ drep_id: 'small', underdog_multiplier: 1.5 }] },
+      { stake_address: 'stake1u' + 'b'.repeat(52), team_name: 'Big', created_at: '2026-12-02T00:00:00Z', picks: [{ drep_id: 'big', underdog_multiplier: 1 }] },
+    ];
+    const teams = rankTeams(rosters, new Map([['small', -20], ['big', -20]]), new Map(), null);
+    expect(teams.map((t) => t.points)).toEqual([-20, -20]);
+  });
 });
