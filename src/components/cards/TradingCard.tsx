@@ -476,7 +476,7 @@ function BackTitle({ children }: { children: ReactNode }) {
 /** Label … value line, like the stat lines on the back of a sports card. */
 function StatLine({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="flex items-baseline justify-between border-b border-white/10" style={{ fontSize: cq(2.75), padding: `${cq(0.45)} 0`, gap: cq(1) }}>
+    <div className="flex items-baseline justify-between border-b border-white/10" style={{ fontSize: cq(2.7), padding: `${cq(0.32)} 0`, gap: cq(1) }}>
       <span className="truncate text-slate-300">{label}</span>
       <span className={`font-bold ${tone ?? 'text-white'}`}>{value}</span>
     </div>
@@ -504,7 +504,7 @@ export function activeSeasons(seasons: SeasonLine[]): SeasonLine[] {
 function RecentSeasons({ seasons, rows }: { seasons: SeasonLine[]; rows: number }) {
   const recent = seasons.filter((s) => s.played || s.in_progress).slice(-rows).reverse();
   if (recent.length === 0) return <p className="text-slate-400" style={{ fontSize: cq(2.7) }}>No seasons played yet.</p>;
-  const cell = { padding: `${cq(0.35)} 0` };
+  const cell = { padding: `${cq(0.25)} 0` };
   return (
     <table className="w-full text-right" style={{ fontSize: cq(2.6) }}>
       <thead className="uppercase tracking-wider text-slate-400" style={{ fontSize: cq(2.2) }}>
@@ -562,7 +562,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
 
   return (
     <CardShell tier={tier}>
-      <div className="flex h-full flex-col overflow-hidden text-left" style={{ padding: `${cq(2.4)} ${cq(2.8)} ${cq(1.8)}`, gap: cq(1.6) }}>
+      <div className="flex h-full flex-col overflow-hidden text-left [&>*]:flex-shrink-0" style={{ padding: `${cq(2.4)} ${cq(2.8)} ${cq(1.8)}`, gap: cq(1.3) }}>
         {/* Header */}
         <div className="flex items-start" style={{ gap: cq(2.2) }}>
           <div className="relative flex-shrink-0 overflow-hidden bg-slate-900" style={{ width: cq(13), height: cq(13), boxShadow: '0 0 0 1px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.3)' }}>
@@ -662,7 +662,8 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
 
         {/* Bio, two lines */}
         {detail?.bio && (
-          <p className="text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          // The only part allowed to give up space if a card is unusually full.
+          <p className="text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', flexShrink: 1, minHeight: 0 }}>
             {detail.bio}
           </p>
         )}

@@ -90,7 +90,9 @@ export function toDisplayProfile(metadata: unknown, fetchStatus: string | null, 
       if (links.length >= MAX_LINKS || typeof ref !== 'object' || ref === null) continue;
       const r = ref as Record<string, unknown>;
       const url = safeHttpsUrl(r.uri);
-      if (url) links.push({ label: cleanText(r.label, 40) ?? hostLabel(url), url });
+      // Placeholder labels ("Label", "Link") left in by metadata tools read better as the site name.
+      const label = cleanText(r.label, 40);
+      if (url) links.push({ label: label && !/^(label|link|url|website)$/i.test(label) ? label : hostLabel(url), url });
     }
   }
 
