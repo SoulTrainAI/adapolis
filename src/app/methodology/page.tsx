@@ -603,11 +603,13 @@ pick contribution = points × multiplier   if points > 0
                 and no promise of value.
               </>,
               <>
-                <strong>Collector&apos;s Cup editions (from Season 2):</strong> a
-                winner whose wallet holds Champion Cards of the DReps involved
-                (earned or bought) may mint their Champion Card copy or Season
-                Trophy as the Collector&apos;s Cup edition: same item, own frame
-                and trait, replacing the regular one, never adding to supply.
+                <strong>Card traits (from Season 2):</strong> each Champion Card
+                copy is minted &ldquo;by&rdquo; a DRep (their own five), a Delegate
+                (wallet delegated to that DRep in the final snapshot) or a
+                Collector (wallet held that DRep&apos;s card in the final snapshot,
+                earned or bought). Top-3 teams holding cards of DReps on their
+                team may mint their Season Trophy as the Collector&apos;s Cup
+                edition, replacing the regular one. Rarity only, never supply.
               </>,
               <>
                 <strong>Season Trophies</strong> (top 3 qualifying global teams) are

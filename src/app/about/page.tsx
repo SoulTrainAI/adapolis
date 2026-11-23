@@ -360,11 +360,13 @@ export default function AboutPage() {
             ]}
           />
 
-          <H3>Collector&apos;s Cup editions (from Season 2)</H3>
+          <H3>Card traits and Collector&apos;s Cup Trophies (from Season 2)</H3>
           <p>
-            If you win a Champion Card or a Season Trophy while your wallet holds Champion Cards of the DReps involved,
-            you can mint your prize as its <B>Collector&apos;s Cup edition</B>: the same card or trophy with its own frame
-            and a Collector&apos;s Cup trait. It replaces your regular copy rather than adding one, so supply never grows.
+            Every Champion Card copy carries a <B>Minted by</B> trait: <B>DRep</B> for the DRep&apos;s own five,{" "}
+            <B>Delegate</B> if the winning team&apos;s wallet was delegated to that DRep in the season&apos;s final
+            snapshot, and <B>Collector</B> if it held one of that DRep&apos;s cards in that snapshot (a copy can be both).
+            A top-3 team holding cards of DReps on its team can mint its Season Trophy as the{" "}
+            <B>Collector&apos;s Cup edition</B>, replacing the regular trophy. Traits change rarity only, never supply.
           </p>
 
           <H3>What they are, and aren&apos;t</H3>

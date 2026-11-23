@@ -253,21 +253,34 @@ contest. Recommended: make the Collector's Cup memento **non-transferable**
 (a profile trophy, or a token locked to the winner's wallet), so it has
 recognition value but no market value. Earliest: Season 2.
 
-### 2.9a Collector's Cup editions — Decided (Jason, 2026-11-23), Season 2 earliest
+### 2.9a Champion Card traits and Collector's Cup Trophies — Decided (Jason, 2026-11-23), Season 2 earliest
 
-A trait, never an extra item: a prize can be minted as its **Collector's Cup
-edition** instead of the regular one.
-- **Champion Card copy:** a top-25 prize-eligible team whose wallet holds any
-  Champion Card of that DRep (earned or bought) at the season's end snapshot
-  may mint its copy of that DRep's new card as the Collector's Cup edition.
-- **Season Trophy:** a top-3 team whose wallet holds Champion Cards of DReps on
-  its team may mint its trophy as the Collector's Cup edition. Same mechanics.
-- **Same item, same supply:** the edition replaces the regular one (own frame,
-  "Collector's Cup" trait, the seasons it links). No second copies.
-- Bought cards count (Jason): the point is to support collecting and trading.
-- **Lawyer question:** holding a purchasable card lets a winner choose a rarer
-  edition of the same prize. Confirm this is acceptable in a free contest
-  before the first mint.
+Traits change rarity only: never points, eligibility, supply or what you can do
+with the card.
+
+**Champion Card copies get a "Minted by" trait** (no Collector's Cup edition
+for cards, so the Collector's Cup stays rare):
+- **DRep:** the DRep's own 5 copies.
+- **Delegate:** a top-25 team copy whose wallet is delegated to that DRep in
+  the season's end stake snapshot.
+- **Collector:** a top-25 team copy whose wallet holds any Champion Card of
+  that DRep (earned or bought) in the season's end snapshot.
+- A team copy can carry both Delegate and Collector. Holding or delegating has
+  to show in the snapshot; buying or delegating after it doesn't count.
+
+**Season Trophy, Collector's Cup edition:** a top-3 team whose wallet holds
+Champion Cards of DReps on its team in the end snapshot may mint its trophy as
+the Collector's Cup edition. Same item, same supply: it replaces the regular
+trophy (own frame, "Collector's Cup" trait). Bought cards count (Jason).
+
+**Open for Jason / the lawyer:**
+- The **Delegate** trait gives a small cosmetic reward for delegating to a
+  particular DRep. Prize eligibility is deliberately neutral (any DRep,
+  Abstain or No Confidence count), so this is the one place the game nudges
+  delegation toward someone. Cosmetic only, but worth a conscious yes.
+- Holding a purchasable card unlocks a rarer edition of the same prize, and a
+  rarer trait on a card. Confirm this is acceptable in a free contest before
+  the first mint.
 
 **All ADApolis cards and trophies are collectibles only, not financial
 instruments:** no yield, no revenue share, no governance rights, no promise of
