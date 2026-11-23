@@ -46,15 +46,35 @@ function niceRange(values: number[]): [number, number] {
   return [min, max];
 }
 
-/** Line chart with labelled ends, for GovScore over time. */
-export function LineChart({ points, color = '#8b5cf6', unit = '', height = 180 }: { points: Point[]; color?: string; unit?: string; height?: number }) {
+/**
+ * Line chart with labelled ends. Defaults suit GovScore (0–100); pass
+ * `fromZero` and `format` for other measures such as ADA or counts.
+ */
+export function LineChart({
+  points,
+  color = '#8b5cf6',
+  unit = '',
+  height = 180,
+  fromZero = false,
+  max100 = true,
+  format = (v: number) => String(Math.round(v)),
+}: {
+  points: Point[];
+  color?: string;
+  unit?: string;
+  height?: number;
+  fromZero?: boolean;
+  max100?: boolean;
+  format?: (v: number) => string;
+}) {
   const width = 560;
   const pad = { l: 36, r: 10, t: 10, b: 24 };
   const nums = points.map((p) => p.value).filter((v): v is number => v !== null);
   if (nums.length < 2) return <p className="text-sm text-slate-500">Not enough history yet.</p>;
   const [lo, hi] = [Math.min(...nums), Math.max(...nums)];
-  const min = Math.max(0, Math.floor(lo - (hi - lo) * 0.15));
-  const max = Math.min(100, Math.ceil(hi + (hi - lo) * 0.15)) || 1;
+  const min = fromZero ? 0 : Math.max(0, Math.floor(lo - (hi - lo) * 0.15));
+  const padded = hi + (hi - lo) * 0.15 || hi * 1.1 || 1;
+  const max = max100 ? Math.min(100, Math.ceil(padded)) || 1 : padded;
   const x = (i: number) => pad.l + (i / Math.max(1, points.length - 1)) * (width - pad.l - pad.r);
   const y = (v: number) => pad.t + (1 - (v - min) / (max - min || 1)) * (height - pad.t - pad.b);
   const path = points
@@ -68,7 +88,7 @@ export function LineChart({ points, color = '#8b5cf6', unit = '', height = 180 }
         <g key={t}>
           <line x1={pad.l} x2={width - pad.r} y1={y(t)} y2={y(t)} stroke={GRID} />
           <text x={pad.l - 6} y={y(t) + 4} fontSize="11" textAnchor="end" fill={TEXT}>
-            {Math.round(t)}
+            {format(t)}
           </text>
         </g>
       ))}
@@ -76,7 +96,7 @@ export function LineChart({ points, color = '#8b5cf6', unit = '', height = 180 }
       {points.map((p, i) =>
         p.value === null ? null : (
           <circle key={i} cx={x(i)} cy={y(p.value)} r="3.5" fill={color}>
-            <title>{`${p.label}: ${p.value}${unit}`}</title>
+            <title>{`${p.label}: ${format(p.value)}${unit}`}</title>
           </circle>
         )
       )}

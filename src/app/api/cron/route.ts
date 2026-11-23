@@ -6,6 +6,7 @@
  */
 
 import { finalizeEndedSeasons } from '@/lib/season/finalize';
+import { refreshSocialAvatars } from '@/lib/drep-profile/social-avatars';
 import { NextResponse } from 'next/server';
 import { syncDReps } from '@/lib/sync/sync-dreps';
 import { syncProposals } from '@/lib/sync/sync-proposals';
@@ -268,6 +269,13 @@ async function runPipeline(): Promise<void> {
       console.error(
         JSON.stringify({ event: 'cron_step_season_failed', error: error instanceof Error ? error.message : String(error) })
       );
+    }
+
+    try {
+      await step('social_avatars', () => refreshSocialAvatars());
+    } catch (error) {
+      demoteError();
+      console.error(JSON.stringify({ event: 'cron_step_social_avatars_failed', error: error instanceof Error ? error.message : String(error) }));
     }
 
     try {

@@ -76,6 +76,27 @@ export function cleanText(value: unknown, maxChars: number): string | null {
   return text.length > maxChars ? `${text.slice(0, maxChars - 1).trimEnd()}…` : text;
 }
 
+/** Same destination, ignoring protocol, www, a trailing slash, letter case and twitter.com vs x.com. */
+export function linkKey(url: string): string {
+  return url
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^(www\.|mobile\.)/, '')
+    .replace(/^twitter\.com\//, 'x.com/')
+    .replace(/[/?#]+$/, '');
+}
+
+/** Drops links that point to the same place as an earlier one. */
+export function uniqueLinks<T extends { url: string }>(links: T[]): T[] {
+  const seen = new Set<string>();
+  return links.filter((l) => {
+    const key = linkKey(l.url);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function hostLabel(url: string): string {
   return new URL(url).hostname.replace(/^www\./, '');
 }
@@ -92,7 +113,9 @@ export function toDisplayProfile(metadata: unknown, fetchStatus: string | null, 
       const url = safeHttpsUrl(r.uri);
       // Placeholder labels ("Label", "Link") left in by metadata tools read better as the site name.
       const label = cleanText(r.label, 40);
-      if (url) links.push({ label: label && !/^(label|link|url|website)$/i.test(label) ? label : hostLabel(url), url });
+      if (url && !links.some((l) => linkKey(l.url) === linkKey(url))) {
+        links.push({ label: label && !/^(label|link|url|website)$/i.test(label) ? label : hostLabel(url), url });
+      }
     }
   }
 

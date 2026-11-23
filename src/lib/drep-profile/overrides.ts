@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
-import { cleanText, hostLabel, safeHttpsUrl, safeImageUrl } from '@/lib/metadata/profile-display';
+import { uniqueLinks, cleanText, hostLabel, safeHttpsUrl, safeImageUrl } from '@/lib/metadata/profile-display';
 
 export interface ProfileOverride {
   image: string | null;
@@ -41,7 +41,7 @@ export function sanitize(input: z.infer<typeof OverrideInput>): { ok: true; valu
     if (!url) return { ok: false, error: `Links must start with https:// (check "${l.url.slice(0, 40)}").` };
     links.push({ label: cleanText(l.label, 40) ?? hostLabel(url), url });
   }
-  return { ok: true, value: { image, bio: cleanText(input.bio, 1500), links: input.links === null ? null : links } };
+  return { ok: true, value: { image, bio: cleanText(input.bio, 1500), links: input.links === null ? null : uniqueLinks(links) } };
 }
 
 const TTL_MS = 60 * 1000;

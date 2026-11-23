@@ -12,7 +12,9 @@ import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import { tierFor, type CardAbility, type SeasonLine } from '@/lib/cards/types';
 import { BarChart, LineChart } from './Charts';
 import { TradingCard, activeSeasons, cardName } from './TradingCard';
-import { placeholderCard, useCardDetail, useCards } from './useCards';
+import { placeholderCard, useCardDetail, useCards, useJourney } from './useCards';
+import { formatAda } from './TradingCard';
+import { TIPS } from '@/lib/site/glossary';
 
 const ICONS: Record<string, LucideIcon> = {
   scholar: BookOpen,
@@ -189,6 +191,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
                 </div>
               </div>
               <p className="text-xs text-slate-500">Points come only from voting, explaining votes and voting on time. Which way a DRep votes never counts.</p>
+              <JourneyTrends drepId={drepId} />
             </Section>
 
             <Section title="Every window played">
@@ -227,6 +230,51 @@ export function DrepProfile({ drepId }: { drepId: string }) {
             </Section>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+const JOURNEY: Array<{ key: 'power' | 'stamina' | 'xp' | 'charisma'; label: string; color: string; tip: string; format: (v: number) => string }> = [
+  { key: 'power', label: 'Power: ADA delegated', color: '#a78bfa', tip: TIPS.power, format: (v) => formatAda(v) },
+  { key: 'stamina', label: 'Stamina: career participation', color: '#34d399', tip: TIPS.stamina, format: (v) => `${Math.round(v)}%` },
+  { key: 'xp', label: 'XP: career votes', color: '#fbbf24', tip: TIPS.xp, format: (v) => String(Math.round(v)) },
+  {
+    key: 'charisma',
+    label: 'Charisma: delegators',
+    color: '#38bdf8',
+    tip: `${TIPS.charisma} History is estimated from when today's delegators joined; delegators who later left aren't counted.`,
+    format: (v) => Math.round(v).toLocaleString(),
+  },
+];
+
+/** The card back's four journey lines, one chart each, over the last 12 seasons. */
+function JourneyTrends({ drepId }: { drepId: string }) {
+  const journey = useJourney(drepId, true);
+  if (journey === 'error') return <p className="text-sm text-slate-500">Power and Charisma history is unavailable right now.</p>;
+  if (!journey) return <p className="text-sm text-slate-500">Loading the journey…</p>;
+  return (
+    <div className="mt-6 space-y-2">
+      <p className="text-sm font-semibold text-white">Journey over the last {journey.length} seasons</p>
+      <div className="grid gap-6 sm:grid-cols-2">
+        {JOURNEY.map((j) => (
+          <div key={j.key} title={j.tip}>
+            <p className="mb-1 flex items-center gap-2 text-sm text-slate-300">
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: j.color }} /> {j.label}
+            </p>
+            <LineChart
+              points={journey.map((p) => {
+                const v = p[j.key];
+                return { label: p.label, value: v === null ? null : j.key === 'stamina' ? v * 100 : v };
+              })}
+              color={j.color}
+              height={150}
+              fromZero
+              max100={j.key === 'stamina'}
+              format={j.format}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

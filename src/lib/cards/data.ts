@@ -6,9 +6,10 @@
 import { loadAll, proposalWindow } from '@/lib/scoring/govscore-v1';
 import { blockTimeToEpoch, fetchDRepRegistrationPeriods } from '@/lib/koios/drep-registrations';
 import { fetchCurrentEpoch } from '@/lib/koios';
-import { toDisplayProfile } from '@/lib/metadata/profile-display';
+import { toDisplayProfile, uniqueLinks } from '@/lib/metadata/profile-display';
 import { cardQuote, quoteSources } from './quote';
 import { flavorText } from './flavor';
+import { getSocialAvatars } from '@/lib/drep-profile/social-avatars';
 import { applyOverride, getOverride, getOverrides } from '@/lib/drep-profile/overrides';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { draftSeason } from '@/lib/season/fantasy';
@@ -46,7 +47,7 @@ async function ownership(): Promise<{ rosters: number; picks: Map<string, number
 }
 
 async function load(): Promise<Loaded> {
-  const [currentEpoch, dreps, proposalRows, voteRows, scoreRows, periods, own] = await Promise.all([
+  const [currentEpoch, dreps, proposalRows, voteRows, scoreRows, periods, own, socials] = await Promise.all([
     fetchCurrentEpoch(),
     loadAll<{
       drep_id: string;
@@ -83,6 +84,7 @@ async function load(): Promise<Loaded> {
     }>('drep_scores', 'drep_id, epoch, adjusted_govscore, participation_rate, votes_cast, votes_eligible, voting_streak_epochs'),
     fetchDRepRegistrationPeriods(),
     ownership(),
+    getSocialAvatars(),
   ]);
 
   const latestEpoch = scoreRows.reduce((m, r) => Math.max(m, r.epoch), 0);
@@ -111,7 +113,8 @@ async function load(): Promise<Loaded> {
       ada: Number(d.amount_lovelace ?? 0) / 1_000_000,
       delegators: d.delegator_count ?? 0,
       name: profile.name,
-      image: profile.image,
+      // Their own picture, else the one on the X or GitHub account they linked.
+      image: profile.image ?? socials.get(d.drep_id)?.url ?? null,
       do_not_list: profile.doNotList,
       profile_complete: Boolean(profile.name && profile.bio && profile.image && profile.links.length > 0),
     };
@@ -209,7 +212,7 @@ export async function getCardDetail(drepId: string): Promise<CardDetail | null> 
     bio: profile.bio,
     quote: own ?? flavorText(summary),
     quote_by: own ? 'drep' : 'adapolis',
-    links: profile.links,
+    links: uniqueLinks(profile.links),
     votes: data.tallies.get(drepId) ?? { yes: 0, no: 0, abstain: 0 },
     metadata: cardMetadata(summary, summary.season.label),
   };
