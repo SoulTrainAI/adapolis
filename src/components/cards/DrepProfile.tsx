@@ -97,7 +97,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-[22rem_1fr]">
-      <div className="lg:sticky lg:top-24 lg:self-start">
+      <div className="mx-auto w-full max-w-[22rem] lg:sticky lg:top-24 lg:self-start">
         <TradingCard card={card} variant="scoreboard" />
         <p className="mt-2 text-center text-xs text-slate-500">Tap the card to flip it.</p>
       </div>
