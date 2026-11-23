@@ -55,14 +55,18 @@ function useDrag(onMove: (dx: number, dy: number) => void) {
   const start = useRef<{ x: number; y: number } | null>(null);
   return {
     onPointerDown: (e: React.PointerEvent) => {
+      e.preventDefault();
       start.current = { x: e.clientX, y: e.clientY };
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      // Don't select page text while resizing.
+      document.body.style.userSelect = 'none';
     },
     onPointerMove: (e: React.PointerEvent) => {
       if (start.current) onMove(e.clientX - start.current.x, e.clientY - start.current.y);
     },
     onPointerUp: () => {
       start.current = null;
+      document.body.style.userSelect = '';
     },
   };
 }
