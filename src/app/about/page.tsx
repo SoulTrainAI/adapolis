@@ -387,14 +387,15 @@ export default function AboutPage() {
             items={[
               <>
                 <B>Champion Cards:</B> the top 10 DReps (Gold, Silver, Bronze, then 7 Holo). Each has up to 30 copies: 5
-                for the DRep and 1 for each of up to 25 qualifying teams that drafted them. At most 300.
+                for the DRep and 1 for each of up to 25 qualifying teams that drafted them. A team gets a copy of every
+                top-10 DRep on its team, so up to 5.
               </>,
               <>
                 <B>Season Trophies:</B> 6 one-of-ones: Gold, Silver and Bronze Team Trophies for the top 3 qualifying
                 teams, and DRep Trophies for the top 3 DReps.
               </>,
               <>
-                <B>At most 306 a season</B>, usually far fewer: unclaimed copies are never minted. The Preseason mints
+                <B>At most 181 a season</B> (50 DRep copies, up to 125 team copies, 6 trophies), usually far fewer: unclaimed copies are never minted. The Preseason mints
                 none.
               </>,
             ]}

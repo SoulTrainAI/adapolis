@@ -610,8 +610,8 @@ pick contribution = points × multiplier   if points > 0
                 season&apos;s end snapshot: a team copy needs a Champion Card of
                 that DRep; a Team Trophy needs a Champion Card of a top-10 DRep
                 the team drafted; a DRep needs an earlier card of their own.
-                Supply per season: at most 300 Champion Cards (10 DReps × 30)
-                and 6 Season Trophies.
+                Supply per season: at most 175 Champion Cards (50 DRep copies,
+                up to 125 team copies) and 6 Season Trophies.
               </>,
               <>
                 <strong>Season Trophies</strong> are one-of-one NFTs: Team Trophies

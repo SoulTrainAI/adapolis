@@ -296,8 +296,13 @@ prize. Confirm this is acceptable in a free contest before the first mint.
 | Champion Card, Holo (#4–10, 7 DReps) | each: DRep 5 + up to 25 teams | 210 |
 | Team Trophy, Gold / Silver / Bronze | top 3 prize-eligible global teams | 3 (one-of-one each) |
 | DRep Trophy, Gold / Silver / Bronze | top 3 DReps | 3 (one-of-one each) |
-| **Total** | | **306** |
+| **Total** | | **181** (see below) |
 
+- **Season maximum is 181, not the sum of the rows:** 50 DRep copies (10 × 5)
+  + at most 125 team copies (25 teams × the 5 DReps each drafted) + 6 trophies.
+  The per-card maximum of 30 only happens if all 25 teams drafted that DRep.
+  (Edge case: a team that swapped out a retired DRep who still finished top 10
+  can get a 6th copy.)
 - "Teams" means prize-eligible global teams in the top 25 that drafted (or
   swapped out) that DRep. Each copy is numbered against the real claimed supply.
 - Any of these can be minted as its Collector's Cup edition instead (2.9a); the
