@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { cardQuote } from './quote';
 
 describe('cardQuote', () => {
+  it('drops leading list marks', () => {
+    expect(cardQuote(['- Professional accountant and auditor for 12 years.'])).toBe('Professional accountant and auditor for 12 years.');
+  });
+
   it('keeps a short text whole', () => {
     expect(cardQuote(['Show up, explain every vote.'])).toBe('Show up, explain every vote.');
   });

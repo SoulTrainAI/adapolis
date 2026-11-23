@@ -11,14 +11,14 @@ const MIN_SENTENCE = 25;
 
 function clean(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  const text = value.replace(/\s+/g, ' ').trim();
+  const text = value.replace(/\s+/g, ' ').trim().replace(new RegExp('^[-–—•*·>#\\s]+'), '');
   return text || null;
 }
 
 /** Sentences ending in . ! or ? (a trailing fragment or "…" is dropped). */
 function sentences(text: string): string[] {
   const found = text.match(new RegExp('[^.!?…]+[.!?]+["”’)]*(?=\\s|$)', 'g')) ?? [];
-  return found.map((s) => s.trim()).filter(Boolean);
+  return found.map((s) => s.trim().replace(new RegExp('^[-–—•*·>#\\s]+'), '')).filter(Boolean);
 }
 
 function fromText(text: string, max: number): string | null {
