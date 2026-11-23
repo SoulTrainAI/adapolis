@@ -6,6 +6,7 @@
  */
 
 import { finalizeEndedSeasons } from '@/lib/season/finalize';
+import { recordLockEligibility } from '@/lib/season/eligibility-run';
 import { refreshSocialAvatars } from '@/lib/drep-profile/social-avatars';
 import { NextResponse } from 'next/server';
 import { syncDReps } from '@/lib/sync/sync-dreps';
@@ -269,6 +270,13 @@ async function runPipeline(): Promise<void> {
       console.error(
         JSON.stringify({ event: 'cron_step_season_failed', error: error instanceof Error ? error.message : String(error) })
       );
+    }
+
+    try {
+      await step('lock_eligibility', () => recordLockEligibility());
+    } catch (error) {
+      demoteError();
+      console.error(JSON.stringify({ event: 'cron_step_lock_eligibility_failed', error: error instanceof Error ? error.message : String(error) }));
     }
 
     try {

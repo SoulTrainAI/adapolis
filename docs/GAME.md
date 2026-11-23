@@ -168,15 +168,28 @@ The **top 10 DReps by season points** each season.
 For each of the 10 Champion DReps:
 - **The DRep: 5 copies** of their own card (to keep, gift or sell; this is how
   DReps can earn, through the market, not from ADApolis).
-- **Every team that drafted them: 1 copy**, claimable.
-- **Every wallet delegating to them at the season's end: 1 copy**, claimable for
-  7 days.
-- After the claim window, **supply is fixed forever.** Each copy is numbered
-  ("7 of 214").
+- **Each of the top 25 prize-eligible global teams that drafted them: 1 copy**
+  (Jason, 2026-11-23).
+- ~~Every wallet delegating to them~~: dropped 2026-11-23. It rewarded
+  delegating to particular DReps (against 1.2) and was easy to farm.
+- **A hard 7-day claim window for everyone, DReps included.** Unclaimed copies
+  are never minted; then **supply is fixed forever.** Each copy is numbered
+  ("3 of 12"). Typical supply: 5–15 per card.
+
+### 2.3a Prize eligibility — Decided (2026-11-23), built (migration 016)
+
+Anyone can play for fun. Only global teams whose wallet qualifies compete for
+Season Trophies and Champion Card copies:
+- delegates its vote (any DRep, Abstain or No Confidence; never which one)
+  since before the season's first epoch (checked by the cron after the lock), and
+- has at least 100 ADA in Cardano's stake snapshot at the season's end.
+Snapshots mean the same ADA can't qualify two wallets, so fake wallets cost
+real idle capital. Undelegated players are shown how to delegate.
+Lawyer question: a minimum holding isn't an entry fee, but confirm.
 
 ### 2.4 Game winners — Decided (2026-11-22)
 
-The top 3 teams in the **global game** each season get a one-of-one **Season
+The top 3 prize-eligible teams in the **global game** each season get a one-of-one **Season
 Trophy** NFT (gold, silver, bronze) with the team name, final points and their
 five picks. Top 10 global teams get a "Finalist" badge on their player profile
 (not an NFT). Trophies are given by ADApolis; players never pay or stake
@@ -226,6 +239,26 @@ season sponsors (name and art on a season only, never any say over scoring),
 and a Catalyst grant for the public-good parts.
 
 ---
+
+### 2.9 Collector's Cup — Proposed (Jason, 2026-11-23), after minting exists
+
+A separate version of the global game for collectors: you may only draft DReps
+whose Champion Card NFT your wallet holds. Its own leaderboard; winners earn a
+memento with a "Collector's Cup" trait. No money or ADA prizes.
+
+Legal note (for the lawyer review): entry requires holding NFTs that can be
+bought, so if the memento is a tradable NFT it is a prize of value in a contest
+you need to buy into: the one part of the design that looks like a paid
+contest. Recommended: make the Collector's Cup memento **non-transferable**
+(a profile trophy, or a token locked to the winner's wallet), so it has
+recognition value but no market value. Earliest: Season 2.
+
+### 2.10 Pools outside ADApolis
+
+ADApolis can't stop people running their own pools elsewhere, but it must not
+facilitate them: no pool features or integrations, no links to pool sites, and
+Discord rules forbid organising betting in the server. Promoting or aiding
+gambling is the operator's risk.
 
 ## Decisions needed from Jason
 

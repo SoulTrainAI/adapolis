@@ -32,6 +32,8 @@ export interface LeaderboardTeam {
   name: string;
   /** Server-only: the team's stake address. Stripped by publicBoard() before any response. */
   owner?: string;
+  /** Competing for prizes: delegated since before the lock (null before the check). */
+  eligible: boolean | null;
   mine: boolean;
   points: number;
   picks: LeaderboardPick[];
@@ -60,6 +62,10 @@ export interface RosterRow {
   team_name: string | null;
   created_at: string;
   in_global?: boolean;
+  /** Delegated since before the roster lock (null until checked after the lock). */
+  eligible_at_lock?: boolean | null;
+  /** Qualified for prizes at the season's end (null until the season is finalized). */
+  prize_eligible?: boolean | null;
   picks: RosterPickRow[];
 }
 
@@ -116,27 +122,26 @@ export function rankTeams(
   let rank = 0;
   return teams.map((t, i) => {
     if (i === 0 || t.points !== teams[i - 1].points) rank = i + 1;
-    return { rank, name: teamName(t.row), owner: t.row.stake_address, mine: me !== null && t.row.stake_address === me, points: t.points, picks: t.picks.sort((a, b) => b.contribution - a.contribution) };
+    return { rank, name: teamName(t.row), owner: t.row.stake_address, eligible: t.row.prize_eligible ?? t.row.eligible_at_lock ?? null, mine: me !== null && t.row.stake_address === me, points: t.points, picks: t.picks.sort((a, b) => b.contribution - a.contribution) };
   });
 }
 
 const PICK_COLUMNS = 'drep_id, underdog_multiplier, swapped_from, swapped_from_multiplier, swap_epoch';
 
 export async function loadRosters(seasonNumber: number): Promise<RosterRow[]> {
-  const first = await supabaseAdmin
-    .from('fantasy_rosters')
-    .select(`stake_address, team_name, created_at, in_global, fantasy_roster_picks(${PICK_COLUMNS})`)
-    .eq('season_number', seasonNumber);
-  let data: unknown[] | null = first.data;
-  let error = first.error;
-  if (isMissingSchema(error)) {
-    // Before migration 014: every team is global and nothing has been swapped.
-    const legacy = await supabaseAdmin
-      .from('fantasy_rosters')
-      .select('stake_address, team_name, created_at, fantasy_roster_picks(drep_id, underdog_multiplier)')
-      .eq('season_number', seasonNumber);
-    data = legacy.data;
-    error = legacy.error;
+  // Newest schema first; older column sets keep the game running until migrations 014/016 are applied.
+  const selects = [
+    `stake_address, team_name, created_at, in_global, eligible_at_lock, prize_eligible, fantasy_roster_picks(${PICK_COLUMNS})`,
+    `stake_address, team_name, created_at, in_global, fantasy_roster_picks(${PICK_COLUMNS})`,
+    'stake_address, team_name, created_at, fantasy_roster_picks(drep_id, underdog_multiplier)',
+  ];
+  let data: unknown[] | null = null;
+  let error: { code?: string; message: string } | null = null;
+  for (const columns of selects) {
+    const res = await supabaseAdmin.from('fantasy_rosters').select(columns).eq('season_number', seasonNumber);
+    data = res.data;
+    error = res.error;
+    if (!isMissingSchema(error)) break;
   }
   if (error) throw new Error(`Couldn't load game teams: ${error.message}`);
   return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
@@ -144,6 +149,8 @@ export async function loadRosters(seasonNumber: number): Promise<RosterRow[]> {
     team_name: (r.team_name as string | null) ?? null,
     created_at: r.created_at as string,
     in_global: r.in_global === undefined ? true : Boolean(r.in_global),
+    eligible_at_lock: (r.eligible_at_lock as boolean | null | undefined) ?? null,
+    prize_eligible: (r.prize_eligible as boolean | null | undefined) ?? null,
     picks: (r.fantasy_roster_picks as Array<Record<string, unknown>>).map((p) => ({
       drep_id: p.drep_id as string,
       underdog_multiplier: Number(p.underdog_multiplier),

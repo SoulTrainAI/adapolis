@@ -461,10 +461,18 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
                 rank; the team that drafted first is listed first.
               </>,
               <>
-                <strong>Rewards:</strong> the top 3 global teams each season win
-                a one-of-one Season Trophy NFT; the top 10 get a Finalist badge;
-                teams that drafted a top-10 DRep can claim that DRep&apos;s
-                Champion Card (next section).
+                <strong>Prize eligibility:</strong> anyone can play. Only global
+                teams whose wallet delegates its vote (to any DRep, Abstain or No
+                Confidence) since before the season&apos;s first epoch, with at
+                least 100 ADA in the stake snapshot at the season&apos;s end,
+                compete for prizes. Snapshots stop the same ADA from qualifying
+                two wallets; which DRep never matters.
+              </>,
+              <>
+                <strong>Rewards:</strong> the top 3 qualifying global teams win a
+                one-of-one Season Trophy NFT; the top 10 get a Finalist badge;
+                each of the top 25 qualifying teams can claim the Champion Card of
+                every top-10 DRep on their team (next section).
               </>,
               <>
                 <strong>No stakes.</strong> No ADA prizes, no paid entry and no
@@ -554,14 +562,15 @@ pick contribution = points × multiplier   if points > 0
           <Bullets
             items={[
               <>
-                <strong>Copies:</strong> the DRep gets 5 of their own card; every
-                team that drafted them can claim 1; every wallet delegating to them
-                at the season&apos;s last epoch can claim 1 within 7 days. Then the
-                supply is fixed forever and each copy is numbered.
+                <strong>Copies:</strong> the DRep gets 5 of their own card, and
+                each of the top 25 qualifying teams that drafted them gets 1. All
+                claims close 7 days after the season ends, DReps included;
+                unclaimed copies are never minted. Then the supply is fixed forever
+                and each copy is numbered. Delegators get nothing for delegating.
               </>,
               <>
-                <strong>Snapshots:</strong> the drafting teams and delegators
-                eligible to claim are recorded when the season ends. Each wallet
+                <strong>Snapshots:</strong> prize eligibility and claims are
+                recorded when the season ends. Each wallet
                 sees its own claims and the number of copies per card is public;
                 which wallet owns which team stays private.
               </>,
@@ -591,7 +600,7 @@ pick contribution = points × multiplier   if points > 0
                 ADApolis, no royalty share and no promise of value.
               </>,
               <>
-                <strong>Season Trophies</strong> (top 3 global teams) are
+                <strong>Season Trophies</strong> (top 3 qualifying global teams) are
                 one-of-one NFTs with the team name, final points and five picks.
               </>,
             ]}

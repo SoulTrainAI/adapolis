@@ -258,17 +258,31 @@ export default function AboutPage() {
             ]}
           />
 
+          <H3>Playing for prizes</H3>
+          <p>
+            Anyone can play for fun. To compete for Season Trophies and Champion Cards, your wallet must{" "}
+            <B>delegate its vote with at least 100 ADA</B>: to any DRep you like, or to Abstain or No Confidence. The
+            delegation must start before the season&apos;s first epoch, and the 100 ADA must still be there in the
+            snapshot when the season ends. It&apos;s checked from Cardano&apos;s own per-epoch stake snapshot, so the
+            same ADA can&apos;t qualify two wallets, and it never matters which DRep you chose. The draft page tells you
+            where you stand, and{" "}
+            <Link href="/match" className="text-blue-400 hover:text-blue-300">
+              Find My DRep
+            </Link>{" "}
+            helps you choose if you haven&apos;t delegated yet.
+          </p>
+
           <H3>What you can win</H3>
           <Bullets
             items={[
               <>
-                <B>Season Trophies:</B> the top 3 teams in the global game each season win a one-of-one trophy NFT
-                (gold, silver, bronze) with the team name, final points and their five picks. The top 10 get a Finalist
-                badge.
+                <B>Season Trophies:</B> the top 3 qualifying teams in the global game each season win a one-of-one
+                trophy NFT (gold, silver, bronze) with the team name, final points and their five picks. The top 10 get
+                a Finalist badge.
               </>,
               <>
-                <B>Champion Cards:</B> if a DRep you drafted finishes in the season&apos;s top 10, you can claim their
-                Champion Card (below).
+                <B>Champion Cards:</B> if your team finishes in the top 25 qualifying teams, you can claim the Champion
+                Card of every DRep on it who finished in the season&apos;s top 10 (below).
               </>,
               <>
                 <B>No ADA prizes and no paid entry.</B> The game is free to play, and it stays that way unless a lawyer
@@ -299,14 +313,16 @@ export default function AboutPage() {
                 <B>The DRep:</B> 5 copies of their own card, to keep, gift or sell.
               </>,
               <>
-                <B>Every team that drafted them:</B> 1 copy.
+                <B>Every top-25 qualifying team that drafted them:</B> 1 copy.
               </>,
               <>
-                <B>Every wallet delegating to them when the season ends:</B> 1 copy, claimable for 7 days.
+                <B>Claim within 7 days, or never.</B> One hard deadline for everyone, DReps included. Unclaimed copies
+                are never minted, and then the supply is fixed forever. Each copy is numbered (&ldquo;3 of 12&rdquo;),
+                and nobody, ADApolis included, can mint more.
               </>,
               <>
-                <B>Then the supply is fixed forever.</B> Each copy is numbered (&ldquo;7 of 214&rdquo;), and nobody,
-                ADApolis included, can mint more.
+                <B>Delegating earns nothing.</B> Where you delegate is your own choice; no DRep&apos;s delegators get
+                cards for backing them.
               </>,
             ]}
           />

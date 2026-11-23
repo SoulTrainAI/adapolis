@@ -10,6 +10,7 @@ import type { CardSummary } from '@/lib/cards/types';
 import { TradingCard } from '@/components/cards/TradingCard';
 import { placeholderCard, useCards } from '@/components/cards/useCards';
 import { LiveTeam } from './LiveTeam';
+import { EligibilityNote } from './EligibilityNote';
 import { seasonLabel } from '@/lib/season/points';
 
 type Response = ({ enabled: true } & DraftData) | { enabled: false };
@@ -234,6 +235,7 @@ export function DraftBoard() {
         </p>
         <h1 className="text-4xl font-bold text-white">Draft your team</h1>
         <LiveTeam />
+        {signedIn && <EligibilityNote />}
         <p className="text-slate-300">
           Pick {ROSTER_SIZE} DReps. Your team scores their season points: voting, explaining votes and voting on time,
           never which way they vote. Smaller DReps carry an underdog multiplier on the points they gain, fixed when you pick them; losses are never multiplied.

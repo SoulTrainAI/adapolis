@@ -42,7 +42,8 @@ export const RULES: Embed[] = [
       '**5. No financial advice, shilling or token promotion.** Project links are fine when they are relevant to a governance action.',
       '**6. Keep it on topic** for the channel you are in, and in English so moderators can follow (other languages are welcome in threads).',
       '**7. Drep-lounge and holders-lounge are off the record.** No screenshots without consent.',
-      '**8. Moderators have the final word.** Breaking these rules can get your messages removed, a timeout or a ban.',
+      '**8. No betting or prize pools.** Don\'t organise wagers, buy-ins or NFT pots on the game, here or by linking elsewhere. The game is free, and its prizes come only from ADApolis.',
+      '**9. Moderators have the final word.** Breaking these rules can get your messages removed, a timeout or a ban.',
     ].join('\n\n'),
   },
 ];
