@@ -83,6 +83,12 @@ export function formatAda(ada: number): string {
   return `${Math.round(ada)}`;
 }
 
+/** Name size that fits the bar: long names step down instead of being cut off. */
+function nameSize(name: string, base: number): string {
+  const n = name.length;
+  return cq(n <= 18 ? base : n <= 24 ? base * 0.86 : n <= 32 ? base * 0.74 : base * 0.64);
+}
+
 function pct(rate: number | null): string {
   return rate === null ? '—' : `${Math.round(rate * 100)}%`;
 }
@@ -358,7 +364,7 @@ function CardFront(props: TradingCardProps) {
       <div className="group flex h-full flex-col">
         {/* Name bar */}
         <div className="flex items-center" style={{ ...plate, gap: cq(1.5), padding: `${cq(1.8)} ${cq(3)}` }}>
-          <p className="min-w-0 flex-1 truncate text-left font-extrabold leading-tight text-white" style={{ fontSize: cq(5.6) }} title={cardName(c)}>
+          <p className="min-w-0 flex-1 truncate text-left font-extrabold leading-tight text-white" style={{ fontSize: nameSize(cardName(c), 5.6) }} title={cardName(c)}>
             {cardName(c)}
           </p>
           {c.rookie && (
@@ -438,7 +444,15 @@ function CardFront(props: TradingCardProps) {
         {/* Footer */}
         <div className="mt-auto flex items-center justify-between text-slate-300" style={{ fontSize: cq(3.6), padding: `${cq(1.2)} ${cq(3.4)} ${cq(1.6)}` }}>
           <span className={c.registered ? 'text-emerald-300' : 'text-red-300'}>{c.registered ? '● Active' : '● Retired'}</span>
-          <span>{c.do_not_list ? 'Not seeking delegation' : 'Tap to flip'}</span>
+          {c.do_not_list ? (
+            <span>Not seeking delegation</span>
+          ) : (
+            <span className="flex items-center font-semibold tracking-wide text-slate-200" style={{ gap: cq(1) }} title="Tap to flip">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static brand mark */}
+              <img src="/brand/adapolis-mark-small.svg" alt="" style={icon(4.6)} />
+              ADApolis
+            </span>
+          )}
           <span className="font-mono">{c.rank !== null ? `No. ${String(c.rank).padStart(3, '0')}` : ''}</span>
         </div>
 
@@ -470,17 +484,21 @@ const TABS: Array<[Tab, string]> = [
   ['traits', 'Traits'],
 ];
 
-function Tile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+/** Stat square: label, big value, and a caption that wraps (up to two lines) instead of being cut off. */
+function Tile({ label, value, sub, subClass = 'text-slate-400' }: { label: string; value: string; sub?: string; subClass?: string }) {
   return (
-    <div className="text-center" style={{ ...plate, padding: `${cq(1)} ${cq(0.8)}` }}>
-      <p className="font-bold uppercase tracking-wider text-slate-300" style={{ fontSize: cq(2.9) }}>
+    <div className="flex flex-col items-center justify-center text-center" style={{ ...plate, padding: `${cq(1.2)} ${cq(0.6)}` }}>
+      <p className="font-bold uppercase leading-none tracking-wide text-slate-300" style={{ fontSize: cq(2.6) }}>
         {label}
       </p>
-      <p className="font-extrabold leading-tight text-white" style={{ fontSize: cq(4.6) }}>
+      <p className="font-extrabold leading-tight text-white" style={{ fontSize: cq(4.8), marginTop: cq(0.6) }}>
         {value}
       </p>
       {sub && (
-        <p className="truncate leading-tight text-slate-400" style={{ fontSize: cq(2.8) }}>
+        <p
+          className={`text-balance leading-[1.15] ${subClass}`}
+          style={{ fontSize: cq(2.55), display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginTop: cq(0.3) }}
+        >
           {sub}
         </p>
       )}
@@ -581,7 +599,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose: () =>
               {tier.label}
               {c.rookie && ' · Rookie'}
             </p>
-            <h3 className="truncate font-display font-extrabold leading-tight text-white" style={{ fontSize: cq(5.8) }} title={cardName(c)}>
+            <h3 className="truncate font-display font-extrabold leading-tight text-white" style={{ fontSize: nameSize(cardName(c), 5.8) }} title={cardName(c)}>
               {cardName(c)}
             </h3>
             <p className="truncate font-mono text-slate-400" style={{ fontSize: cq(2.7) }} title={c.drep_id}>
@@ -598,11 +616,16 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose: () =>
           </div>
         </div>
 
-        <div className="grid grid-cols-4" style={{ gap: cq(1.2), marginTop: cq(2.2) }}>
-          <Tile label="GovScore" value={num(c.govscore, 1)} sub={c.delta1 !== null ? `${c.delta1 >= 0 ? '+' : ''}${c.delta1.toFixed(1)} last window` : undefined} />
-          <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `#${c.season.rank} this season` : 'pts'} />
-          <Tile label="Proj." value={num(c.projection)} sub="next season" />
-          <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="draft value" />
+        <div className="grid grid-cols-4" style={{ gap: cq(1.2), marginTop: cq(2.2), gridAutoRows: '1fr' }}>
+          <Tile
+            label="GovScore"
+            value={num(c.govscore, 1)}
+            sub={c.delta1 === null ? 'no history' : Math.abs(c.delta1) < 0.05 ? 'steady' : `${c.delta1 > 0 ? '▲' : '▼'} ${Math.abs(c.delta1).toFixed(1)} this window`}
+            subClass={c.delta1 === null || Math.abs(c.delta1) < 0.05 ? 'text-slate-400' : c.delta1 > 0 ? 'text-emerald-300' : 'text-rose-300'}
+          />
+          <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `rank #${c.season.rank}` : 'points'} />
+          <Tile label="Projected" value={num(c.projection)} sub="next season" />
+          <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="draft bonus" />
         </div>
 
         <div role="tablist" className="flex border-b border-white/15" style={{ gap: cq(1), marginTop: cq(2.4) }}>
@@ -705,21 +728,21 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose: () =>
           {tab === 'stats' && detail && (
             <div>
               <SectionTitle>As a representative</SectionTitle>
-              <div className="grid grid-cols-4" style={{ gap: cq(1.2) }}>
+              <div className="grid grid-cols-4" style={{ gap: cq(1.2), gridAutoRows: '1fr' }}>
                 <Tile label="Power" value={formatAda(c.ada)} sub="ADA delegated" />
                 <Tile label="Stamina" value={pct(c.participation)} sub="participation" />
-                <Tile label="XP" value={`${c.votes_cast}`} sub={`of ${c.votes_eligible}`} />
+                <Tile label="XP" value={`${c.votes_cast}`} sub={`votes of ${c.votes_eligible}`} />
                 <Tile label="Charisma" value={c.delegators.toLocaleString()} sub="delegators" />
-                <Tile label="Explains" value={pct(lt.rationale_rate)} sub="with rationale" />
-                <Tile label="Early" value={pct(lt.early_rate)} sub="first half" />
+                <Tile label="Explains" value={pct(lt.rationale_rate)} sub="of votes" />
+                <Tile label="Early" value={pct(lt.early_rate)} sub="of votes" />
                 <Tile label="Streak" value={`${c.streak}`} sub="epochs" />
                 <Tile label="Tenure" value={`${lt.tenure_epochs}`} sub="epochs" />
               </div>
               <SectionTitle>As a fantasy pick</SectionTitle>
-              <div className="grid grid-cols-4" style={{ gap: cq(1.2) }}>
+              <div className="grid grid-cols-4" style={{ gap: cq(1.2), gridAutoRows: '1fr' }}>
                 <Tile label="Last" value={num(c.last_points)} sub="last window" />
                 <Tile label="Form" value={num(c.form)} sub="avg last 3" />
-                <Tile label="Avg" value={num(c.avg_points)} sub="per window" />
+                <Tile label="Average" value={num(c.avg_points)} sub="per window" />
                 <Tile label="Best" value={`${c.best_points}`} sub="season high" />
                 <Tile label="Lifetime" value={`${lt.points}`} sub="total pts" />
                 <Tile label="Seasons" value={`${lt.seasons}`} sub="played" />
