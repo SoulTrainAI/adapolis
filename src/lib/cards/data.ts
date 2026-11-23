@@ -7,6 +7,7 @@ import { loadAll, proposalWindow } from '@/lib/scoring/govscore-v1';
 import { blockTimeToEpoch, fetchDRepRegistrationPeriods } from '@/lib/koios/drep-registrations';
 import { fetchCurrentEpoch } from '@/lib/koios';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
+import { cardQuote, quoteSources } from './quote';
 import { applyOverride, getOverride, getOverrides } from '@/lib/drep-profile/overrides';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { draftSeason } from '@/lib/season/fantasy';
@@ -18,7 +19,7 @@ const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 interface Loaded extends CardComputation {
   computedAt: string;
   currentEpoch: number;
-  profiles: Map<string, { bio: string | null; links: Array<{ label: string; url: string }> }>;
+  profiles: Map<string, { bio: string | null; quote: string | null; links: Array<{ label: string; url: string }> }>;
   tallies: Map<string, { yes: number; no: number; abstain: number }>;
 }
 
@@ -99,10 +100,10 @@ async function load(): Promise<Loaded> {
       ])
   );
 
-  const profiles = new Map<string, { bio: string | null; links: Array<{ label: string; url: string }> }>();
+  const profiles = new Map<string, { bio: string | null; quote: string | null; links: Array<{ label: string; url: string }> }>();
   const cardDreps = dreps.map((d) => {
     const profile = toDisplayProfile(d.metadata, d.metadata_fetch_status, d.drep_id);
-    profiles.set(d.drep_id, { bio: profile.bio, links: profile.links });
+    profiles.set(d.drep_id, { bio: profile.bio, quote: cardQuote(quoteSources(d.metadata)), links: profile.links });
     return {
       drep_id: d.drep_id,
       registered: d.is_registered !== false,
@@ -198,11 +199,13 @@ export async function getCardDetail(drepId: string): Promise<CardDetail | null> 
   const base = data.summaries.get(drepId);
   if (!base) return null;
   const summary = applyOverride(base, override);
-  const profile = applyOverride({ image: null, ...(data.profiles.get(drepId) ?? { bio: null, links: [] }) }, override);
+  const profile = applyOverride({ image: null, ...(data.profiles.get(drepId) ?? { bio: null, quote: null, links: [] }) }, override);
   return {
     summary,
     seasons: data.lines.get(drepId) ?? [],
     bio: profile.bio,
+    // A bio the DRep wrote here replaces the on-chain quote too.
+    quote: override?.bio ? cardQuote([override.bio]) : profile.quote,
     links: profile.links,
     votes: data.tallies.get(drepId) ?? { yes: 0, no: 0, abstain: 0 },
     metadata: cardMetadata(summary, summary.season.label),

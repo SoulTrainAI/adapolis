@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Loader2, LogOut, Plus, Trash2 } from 'lucide-react';
 import { TradingCard } from '@/components/cards/TradingCard';
 import { useCards } from '@/components/cards/useCards';
+import { CARD_QUOTE_MAX, cardQuote } from '@/lib/cards/quote';
 import { errorText, walletErrorText } from '@/components/auth/WalletSignIn';
 
 type Link = { label: string; url: string };
@@ -213,7 +214,19 @@ export function DrepStudio() {
             rows={6}
             className="w-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
           />
-          <span className="text-xs text-slate-500">{bio.length}/1500</span>
+          <span className="text-xs text-slate-500">{bio.length}/1500. Your full bio appears on your profile page.</span>
+          <span className="block border-l-2 border-amber-400/60 pl-3 text-xs text-slate-300">
+            {cardQuote([bio]) ? (
+              <>
+                <span className="font-semibold text-amber-200">On your card:</span> “{cardQuote([bio])}”
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-amber-200">On your card:</span> nothing yet. The card back fits a complete
+                quote of up to {CARD_QUOTE_MAX} characters, so start your bio with a short sentence that sums you up.
+              </>
+            )}
+          </span>
         </label>
 
         <div className="space-y-2">

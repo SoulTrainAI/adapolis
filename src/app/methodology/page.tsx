@@ -524,6 +524,13 @@ pick contribution = points × multiplier   if points > 0
                 and links. Stats can&apos;t be edited.
               </>,
               <>
+                <strong>Quote:</strong> the card back prints a complete quote of
+                up to 120 characters, never a cut-off one: the whole bio if it
+                fits, otherwise its opening sentences, otherwise another whole
+                sentence from the profile. If nothing fits, the card has no
+                quote until the DRep writes one.
+              </>,
+              <>
                 <strong>Not seeking delegation:</strong> DReps that set CIP-119{" "}
                 <code>doNotList</code> are labelled so and left out of Find My
                 DRep.

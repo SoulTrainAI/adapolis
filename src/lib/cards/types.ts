@@ -87,6 +87,8 @@ export interface CardDetail {
   summary: CardSummary;
   seasons: SeasonLine[];
   bio: string | null;
+  /** Complete quote that fits the card back, or null (never truncated). */
+  quote: string | null;
   links: Array<{ label: string; url: string }>;
   votes: { yes: number; no: number; abstain: number };
   /** Attributes a minted card would carry (CIP-25 / CIP-68 metadata) */

@@ -663,11 +663,10 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
           </div>
         )}
 
-        {/* Bio, two lines */}
-        {detail?.bio && (
-          // The only part allowed to give up space if a card is unusually full.
-          <p className="text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', flexShrink: 1, minHeight: 0 }}>
-            {detail.bio}
+        {/* Quote: always complete (picked to fit two lines), never cut off */}
+        {detail?.quote && (
+          <p className="italic text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3 }} title="In the DRep's own words, from its on-chain profile or its claimed card.">
+            “{detail.quote}”
           </p>
         )}
 
