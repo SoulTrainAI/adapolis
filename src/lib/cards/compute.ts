@@ -81,6 +81,8 @@ export function computeCards(input: CardInputs): CardComputation {
     votesByDRep.set(v.drep_id, list);
   }
   const govscoreAt = new Map<string, Array<number | null>>();
+  /** Career votes and participation at the end of each window, for the journey chart. */
+  const careerAt = new Map<string, Array<{ votes: number; participation: number | null }>>();
   const sizeById = new Map(dreps.map((d) => [d.drep_id, d]));
   for (const d of dreps) {
     const own = periods.get(d.drep_id) ?? [{ from: 0, to: null }];
@@ -100,6 +102,7 @@ export function computeCards(input: CardInputs): CardComputation {
     const voted = Array.from(voteEpoch.values()).sort((a, b) => a - b);
     const damp = calculateDampener(d.ada * 1_000_000);
     const series: Array<number | null> = [];
+    const career: Array<{ votes: number; participation: number | null }> = [];
     let ci = 0;
     let vi = 0;
     for (const w of windows) {
@@ -107,8 +110,10 @@ export function computeCards(input: CardInputs): CardComputation {
       while (ci < counted.length && counted[ci] <= e) ci++;
       while (vi < voted.length && voted[vi] <= e) vi++;
       series.push(ci > 0 ? Math.round(wilsonLowerBound(vi, ci) * 1000 * damp) / 10 : null);
+      career.push({ votes: vi, participation: ci > 0 ? Math.min(1, vi / ci) : null });
     }
     govscoreAt.set(d.drep_id, series);
+    careerAt.set(d.drep_id, career);
   }
 
   // Draft multiplier scale: DReps active in the latest finished window.
@@ -143,6 +148,7 @@ export function computeCards(input: CardInputs): CardComputation {
   const lines = new Map<string, SeasonLine[]>();
   for (const d of dreps) {
     const gs = govscoreAt.get(d.drep_id) ?? [];
+    const career = careerAt.get(d.drep_id) ?? [];
     const myLines: SeasonLine[] = windows.map((w, i) => {
       const r = pointsByWindow.get(w)!.get(d.drep_id)!;
       const { start, end } = windowEpochs(w);
@@ -160,6 +166,8 @@ export function computeCards(input: CardInputs): CardComputation {
         missed: r.actions_missed,
         streak_points: r.breakdown.streak,
         govscore_end: gs[i] ?? null,
+        career_votes_end: career[i]?.votes ?? 0,
+        participation_end: career[i]?.participation ?? null,
       };
     });
     lines.set(d.drep_id, myLines);

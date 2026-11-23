@@ -81,6 +81,10 @@ export interface SeasonLine {
   missed: number;
   streak_points: number;
   govscore_end: number | null;
+  /** Career votes cast by the end of this window (XP). */
+  career_votes_end: number;
+  /** Career participation by the end of this window (Stamina). */
+  participation_end: number | null;
 }
 
 export interface CardDetail {
@@ -89,6 +93,8 @@ export interface CardDetail {
   bio: string | null;
   /** Complete quote that fits the card back, or null (never truncated). */
   quote: string | null;
+  /** Who wrote the quote: the DRep, or ADApolis flavor text for DReps without one. */
+  quote_by: 'drep' | 'adapolis';
   links: Array<{ label: string; url: string }>;
   votes: { yes: number; no: number; abstain: number };
   /** Attributes a minted card would carry (CIP-25 / CIP-68 metadata) */

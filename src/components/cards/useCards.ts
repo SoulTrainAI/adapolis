@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { CardDetail, CardsPayload, CardSummary } from '@/lib/cards/types';
+import type { JourneyPoint } from '@/lib/cards/journey';
 
 // One fetch per page load, shared by every card on the page.
 interface Loaded {
@@ -109,4 +110,30 @@ export function placeholderCard(p: { drep_id: string; name: string | null; image
     archetype: null,
     abilities: [],
   };
+}
+
+const journeyCache = new Map<string, Promise<JourneyPoint[]>>();
+
+/** The card-back journey chart's data, loaded separately so the card never waits on Koios. */
+export function useJourney(drepId: string, enabled: boolean): JourneyPoint[] | null | 'error' {
+  const [journey, setJourney] = useState<JourneyPoint[] | null | 'error'>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let live = true;
+    let p = journeyCache.get(drepId);
+    if (!p) {
+      p = fetch(`/api/cards/${drepId}/journey`).then(async (r) => {
+        const body = (await r.json()) as { journey?: JourneyPoint[]; error?: string };
+        if (!r.ok || !body.journey) throw new Error(body.error ?? `HTTP ${r.status}`);
+        return body.journey;
+      });
+      journeyCache.set(drepId, p);
+      p.catch(() => journeyCache.delete(drepId));
+    }
+    p.then((j) => live && setJourney(j)).catch(() => live && setJourney('error'));
+    return () => {
+      live = false;
+    };
+  }, [drepId, enabled]);
+  return journey;
 }

@@ -37,7 +37,8 @@ import { TIPS } from '@/lib/site/glossary';
 import { PROVISIONAL_BELOW_ELIGIBLE } from '@/lib/scoring/confidence';
 import { tierFor, type CardAbility, type CardSummary, type SeasonLine, type Tier } from '@/lib/cards/types';
 import { Sparkline } from './Charts';
-import { useCardDetail } from './useCards';
+import { useCardDetail, useJourney } from './useCards';
+import type { JourneyPoint } from '@/lib/cards/journey';
 
 export type CardVariant = 'scoreboard' | 'draft' | 'season';
 
@@ -485,11 +486,11 @@ function StatLine({ label, value, tone, tip }: { label: string; value: string; t
   );
 }
 
-function AbilityChip({ a }: { a: CardAbility }) {
+function AbilityChip({ a, size = 2.55 }: { a: CardAbility; size?: number }) {
   const Icon = ABILITY_ICONS[a.id] ?? Sparkles;
   const style = TIER_STYLE[a.tier ?? 0];
   return (
-    <span className={`inline-flex items-center border ${style.box} ${style.text} font-semibold`} style={{ gap: cq(0.7), fontSize: cq(2.55), padding: `${cq(0.35)} ${cq(1.2)}` }} title={`${a.label}: ${a.detail}`}>
+    <span className={`inline-flex items-center border ${style.box} ${style.text} font-semibold`} style={{ gap: cq(0.7), fontSize: cq(size), padding: `${cq(0.35)} ${cq(size < 2.5 ? 1 : 1.2)}` }} title={`${a.label}: ${a.detail}`}>
       <Icon style={icon(2.9)} />
       {a.label}
     </span>
@@ -502,49 +503,73 @@ export function activeSeasons(seasons: SeasonLine[]): SeasonLine[] {
   return first === -1 ? seasons.slice(-1) : seasons.slice(first);
 }
 
-/** Recent windows, newest first: the season-by-season line of the card back. */
-function RecentSeasons({ seasons, rows }: { seasons: SeasonLine[]; rows: number }) {
-  const recent = seasons.filter((s) => s.played || s.in_progress).slice(-rows).reverse();
-  if (recent.length === 0) return <p className="text-slate-400" style={{ fontSize: cq(2.7) }}>No seasons played yet.</p>;
-  const cell = { padding: `${cq(0.25)} 0` };
+type JourneyKey = 'power' | 'stamina' | 'xp' | 'charisma';
+
+const JOURNEY_LINES: Array<{ key: JourneyKey; label: string; color: string; tip: string; format: (v: number) => string }> = [
+  { key: 'power', label: 'Power', color: '#a78bfa', tip: TIPS.power, format: (v) => formatAda(v) },
+  { key: 'stamina', label: 'Stamina', color: '#34d399', tip: TIPS.stamina, format: (v) => `${Math.round(v * 100)}%` },
+  { key: 'xp', label: 'XP', color: '#fbbf24', tip: TIPS.xp, format: (v) => `${Math.round(v)}` },
+  { key: 'charisma', label: 'Charisma', color: '#38bdf8', tip: `${TIPS.charisma} History is estimated from when today's delegators joined; delegators who later left aren't counted.`, format: (v) => Math.round(v).toLocaleString() },
+];
+
+/**
+ * The four card stats over the last 12 seasons. Each line is drawn on its own
+ * scale from zero (Stamina on 0–100%), so the shape shows growth honestly;
+ * the legend gives the current value and the change over the period.
+ */
+function JourneyChart({ points }: { points: JourneyPoint[] }) {
+  const W = 100;
+  const H = 30;
+  const n = points.length;
+  const x = (i: number) => (n <= 1 ? W / 2 : (i / (n - 1)) * W);
   return (
-    <table className="w-full text-right" style={{ fontSize: cq(2.6) }}>
-      <thead className="uppercase tracking-wider text-slate-400" style={{ fontSize: cq(2.2) }}>
-        <tr>
-          <th className="text-left font-semibold" title={TIPS.seasonEpochs}>Epochs</th>
-          <th className="font-semibold" title={TIPS.seasonPoints}>Pts</th>
-          <th className="font-semibold" title={TIPS.seasonVotes}>Votes</th>
-          <th className="font-semibold" title={TIPS.seasonExplained}>Expl.</th>
-          <th className="font-semibold" title={TIPS.seasonEarly}>Early</th>
-          <th className="font-semibold" title={TIPS.seasonMissed}>Miss</th>
-          <th className="font-semibold" title={TIPS.seasonScore}>Score</th>
-        </tr>
-      </thead>
-      <tbody className="text-slate-100">
-        {recent.map((s) => (
-          <tr key={s.window} className="border-t border-white/10">
-            <td className="text-left" style={cell}>
-              {s.start_epoch}–{s.end_epoch}
-              {s.in_progress && <span className="text-violet-200"> •</span>}
-            </td>
-            <td className={`font-bold ${s.points < 0 ? 'text-rose-300' : 'text-white'}`} style={cell}>
-              {s.points}
-            </td>
-            <td style={cell}>{s.votes}</td>
-            <td style={cell}>{s.rationales}</td>
-            <td style={cell}>{s.early}</td>
-            <td className={s.missed > 0 ? 'text-rose-300' : ''} style={cell}>
-              {s.missed}
-            </td>
-            <td style={cell}>{num(s.govscore_end, 1)}</td>
-          </tr>
+    <div>
+      <div className="grid grid-cols-4" style={{ gap: cq(0.8), marginBottom: cq(0.6) }}>
+        {JOURNEY_LINES.map((l) => {
+          const vals = points.map((p) => p[l.key]).filter((v): v is number => v !== null);
+          const last = vals[vals.length - 1];
+          const first = vals[0];
+          const change = vals.length > 1 ? last - first : 0;
+          const up = change > 0;
+          const steady = Math.abs(change) < (l.key === 'stamina' ? 0.005 : 0.5);
+          return (
+            <div key={l.key} className="min-w-0 leading-tight" title={l.tip} style={{ fontSize: cq(2.3) }}>
+              <p className="flex items-center font-bold uppercase tracking-wide text-slate-300" style={{ gap: cq(0.6) }}>
+                <span className="inline-block flex-shrink-0 rounded-full" style={{ width: cq(1.6), height: cq(1.6), background: l.color }} />
+                {l.label}
+              </p>
+              <p className="truncate font-bold text-white">
+                {last === undefined ? '—' : l.format(last)}{' '}
+                {last !== undefined && !steady && (
+                  <span className={up ? 'text-emerald-300' : 'text-rose-300'}>{up ? '▲' : '▼'}</span>
+                )}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block w-full" style={{ height: cq(12) }} aria-label="Power, Stamina, XP and Charisma over the last 12 seasons">
+        {[0.25, 0.5, 0.75].map((g) => (
+          <line key={g} x1="0" x2={W} y1={H * g} y2={H * g} stroke="rgba(255,255,255,0.08)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         ))}
-      </tbody>
-    </table>
+        {JOURNEY_LINES.map((l) => {
+          const vals = points.map((p) => p[l.key]);
+          const max = l.key === 'stamina' ? 1 : Math.max(0, ...vals.filter((v): v is number => v !== null)) || 1;
+          const pts = vals
+            .map((v, i) => (v === null ? null : `${x(i).toFixed(2)},${(H - 1 - (v / max) * (H - 2)).toFixed(2)}`))
+            .filter((p): p is string => p !== null);
+          if (pts.length < 2) return null;
+          return <polyline key={l.key} points={pts.join(' ')} fill="none" stroke={l.color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />;
+        })}
+      </svg>
+      <div className="flex justify-between text-slate-400" style={{ fontSize: cq(2.1) }}>
+        <span>{points[0]?.label ?? ''}</span>
+        <span>now</span>
+      </div>
+    </div>
   );
 }
 
-const MAX_CHIPS = 6;
 
 /**
  * The back of the card: one fixed face with everything that matters, no tabs
@@ -553,12 +578,14 @@ const MAX_CHIPS = 6;
  */
 function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () => void; onFlip?: () => void }) {
   const { detail } = useCardDetail(card.drep_id, true);
+  const journey = useJourney(card.drep_id, true);
   const c = detail?.summary ?? card;
   const tier = tierFor(c.rank);
   const lt = c.lifetime;
   const profileHref = `/dreps/${c.drep_id}`;
   const iconButton = 'flex items-center justify-center bg-black/40 text-slate-100 hover:bg-black/60 hover:text-white';
-  const chips = c.abilities.slice(0, MAX_CHIPS);
+  const chips = c.abilities;
+  const chipSize = chips.length > 6 ? 2.3 : 2.55;
   const links = detail?.links ?? [];
   const votes = detail?.votes;
 
@@ -637,14 +664,22 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
           </div>
         </div>
 
-        {/* Season by season */}
+        {/* Journey: the four stats over the last 12 seasons */}
         <div>
-          <BackTitle>Recent windows</BackTitle>
-          {detail ? (
-            <RecentSeasons seasons={detail.seasons} rows={4} />
+          <BackTitle>Journey · last 12 seasons</BackTitle>
+          {journey && journey !== 'error' && journey.length > 1 ? (
+            <JourneyChart points={journey} />
           ) : (
-            <p className="flex items-center text-slate-300" style={{ gap: cq(1), fontSize: cq(2.7) }}>
-              <Loader2 className="animate-spin" style={icon(3)} /> Loading…
+            <p className="flex items-center text-slate-300" style={{ gap: cq(1), fontSize: cq(2.7), height: cq(18.5) }}>
+              {journey === 'error' ? (
+                'Journey unavailable right now.'
+              ) : journey ? (
+                'Not enough seasons yet.'
+              ) : (
+                <>
+                  <Loader2 className="animate-spin" style={icon(3)} /> Loading journey…
+                </>
+              )}
             </p>
           )}
         </div>
@@ -653,21 +688,22 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
         {chips.length > 0 && (
           <div className="flex flex-wrap" style={{ gap: cq(0.9) }}>
             {chips.map((a) => (
-              <AbilityChip key={a.id} a={a} />
+              <AbilityChip key={a.id} a={a} size={chipSize} />
             ))}
-            {c.abilities.length > MAX_CHIPS && (
-              <span className="text-slate-300" style={{ fontSize: cq(2.55) }} title={c.abilities.slice(MAX_CHIPS).map((a) => `${a.label}: ${a.detail}`).join('\n')}>
-                +{c.abilities.length - MAX_CHIPS} more
-              </span>
-            )}
           </div>
         )}
 
         {/* Quote: always complete (picked to fit two lines), never cut off */}
         {detail?.quote && (
-          <p className="italic text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3 }} title="In the DRep's own words, from its on-chain profile or its claimed card.">
-            “{detail.quote}”
-          </p>
+          detail.quote_by === 'drep' ? (
+            <p className="italic text-slate-200" style={{ fontSize: cq(2.7), lineHeight: 1.3 }} title="In the DRep's own words, from its on-chain profile or its claimed card.">
+              “{detail.quote}”
+            </p>
+          ) : (
+            <p className="italic text-slate-400" style={{ fontSize: cq(2.6), lineHeight: 1.3 }} title="Flavor text by ADApolis, based only on this card's record. The DRep can replace it with its own words by claiming the card.">
+              {detail.quote}
+            </p>
+          )
         )}
 
         {/* Links and record, pinned to the bottom */}

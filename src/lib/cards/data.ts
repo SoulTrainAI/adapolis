@@ -8,6 +8,7 @@ import { blockTimeToEpoch, fetchDRepRegistrationPeriods } from '@/lib/koios/drep
 import { fetchCurrentEpoch } from '@/lib/koios';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
 import { cardQuote, quoteSources } from './quote';
+import { flavorText } from './flavor';
 import { applyOverride, getOverride, getOverrides } from '@/lib/drep-profile/overrides';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { draftSeason } from '@/lib/season/fantasy';
@@ -200,12 +201,14 @@ export async function getCardDetail(drepId: string): Promise<CardDetail | null> 
   if (!base) return null;
   const summary = applyOverride(base, override);
   const profile = applyOverride({ image: null, ...(data.profiles.get(drepId) ?? { bio: null, quote: null, links: [] }) }, override);
+  // A bio the DRep wrote here replaces the on-chain quote too.
+  const own = override?.bio ? cardQuote([override.bio]) : profile.quote;
   return {
     summary,
     seasons: data.lines.get(drepId) ?? [],
     bio: profile.bio,
-    // A bio the DRep wrote here replaces the on-chain quote too.
-    quote: override?.bio ? cardQuote([override.bio]) : profile.quote,
+    quote: own ?? flavorText(summary),
+    quote_by: own ? 'drep' : 'adapolis',
     links: profile.links,
     votes: data.tallies.get(drepId) ?? { yes: 0, no: 0, abstain: 0 },
     metadata: cardMetadata(summary, summary.season.label),
