@@ -218,7 +218,7 @@ export function Cardanathon({ race }: { race: Race }) {
         </button>
       </div>
 
-      {/* The dashboard: commentary bar, the DRep race and the Team Leaderboard. Resize, swap and move; saved per browser. */}
+      {/* The dashboard: the DRep race, and the commentary above the Team Leaderboard. Resize, swap and move; saved per browser. */}
       <Dashboard
         layout={layout}
         setLayout={setLayout}
@@ -233,17 +233,17 @@ export function Cardanathon({ race }: { race: Race }) {
                     key={`${c.day}-${c.text}`}
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="cursor-pointer rounded-lg px-2 py-1.5 hover:bg-white/5"
+                    className="cursor-pointer rounded-lg px-2 py-1 hover:bg-white/5"
                     onMouseEnter={() => setHighlight(c.drep_ids)}
                     onMouseLeave={() => setHighlight([])}
                     onClick={() => setHighlight(c.drep_ids)}
                   >
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                    <p className="text-[9px] uppercase tracking-wider text-slate-500">
                       Day {c.day} · Epoch {c.epoch}
                     </p>
-                    <p className={`flex gap-1.5 text-sm leading-snug ${color}`}>
-                      <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="text-slate-100">{c.text}</span>
+                    <p className={`flex gap-1.5 text-xs leading-snug ${color}`} title={c.text}>
+                      <Icon className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                      <span className="line-clamp-2 text-slate-100">{c.text}</span>
                     </p>
                   </motion.li>
                 );

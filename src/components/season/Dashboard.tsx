@@ -1,11 +1,10 @@
 'use client';
 
 /**
- * The Cardanathon dashboard: a commentary bar plus two side-by-side panels
- * (the DRep race and the Team Leaderboard). Players can drag the divider to
- * resize, stretch the commentary and panels, drag a panel's header onto the
- * other to swap them, and move the commentary above or below. The layout is
- * remembered in this browser.
+ * The Cardanathon dashboard: the DRep race in a wide column, and a narrow
+ * column with the commentary above the Team Leaderboard. Players can drag the
+ * divider to resize, stretch the commentary and panels, swap the columns, and
+ * move the commentary below the teams. The layout is remembered in this browser.
  */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -22,10 +21,10 @@ export interface Layout {
   panelsHeight: number;
 }
 
-const DEFAULT: Layout = { order: ['race', 'teams'], split: 0.66, commentary: 'top', commentaryHeight: 230, panelsHeight: 900 };
-const KEY = 'adapolis:cardanathon-layout';
+const DEFAULT: Layout = { order: ['race', 'teams'], split: 0.68, commentary: 'top', commentaryHeight: 320, panelsHeight: 900 };
+// v2: the commentary moved into the teams column, so older saved layouts don't apply.
+const KEY = 'adapolis:cardanathon-layout-v2';
 const PANEL_DRAG = 'application/x-adapolis-panel';
-const COMMENTARY_DRAG = 'application/x-adapolis-commentary';
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 /** Layout state, saved to this browser (storage can be unavailable; then it just isn't remembered). */
@@ -71,16 +70,16 @@ function useDrag(onMove: (dx: number, dy: number) => void) {
   };
 }
 
-function PanelHeader({ id, title, icon, onSwap }: { id: PanelId | 'commentary'; title: string; icon: ReactNode; onSwap?: () => void }) {
+function PanelHeader({ id, title, icon, onSwap }: { id: PanelId; title: string; icon: ReactNode; onSwap?: () => void }) {
   return (
     <div
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData(id === 'commentary' ? COMMENTARY_DRAG : PANEL_DRAG, id);
+        e.dataTransfer.setData(PANEL_DRAG, id);
         e.dataTransfer.effectAllowed = 'move';
       }}
       className="flex cursor-grab items-center gap-2 border-b border-slate-800 bg-slate-900/90 px-3 py-2 active:cursor-grabbing"
-      title="Drag to move this section"
+      title="Drag onto the other column to swap sides"
     >
       <GripVertical className="h-4 w-4 text-slate-500" />
       {icon}
@@ -111,8 +110,8 @@ export function Dashboard({
 }) {
   const row = useRef<HTMLDivElement>(null);
   const base = useRef(layout);
-  const [over, setOver] = useState<PanelId | 'top' | 'bottom' | null>(null);
-  const expanded = layout.commentaryHeight > 300;
+  const [over, setOver] = useState<PanelId | null>(null);
+  const expanded = layout.commentaryHeight > 420;
 
   const swap = () => setLayout({ ...layout, order: [layout.order[1], layout.order[0]], split: 1 - layout.split });
   const begin = () => {
@@ -124,71 +123,59 @@ export function Dashboard({
     setLayout({ ...base.current, split: clamp(base.current.split + dx / width, 0.3, 0.8) });
   });
   const commentaryHandle = useDrag((_, dy) =>
-    setLayout({ ...base.current, commentaryHeight: clamp(base.current.commentaryHeight + (base.current.commentary === 'top' ? dy : -dy), 90, 700) })
+    setLayout({ ...base.current, commentaryHeight: clamp(base.current.commentaryHeight + (base.current.commentary === 'top' ? dy : -dy), 120, 760) })
   );
-  const panelsHandle = useDrag((_, dy) => setLayout({ ...base.current, panelsHeight: clamp(base.current.panelsHeight + dy, 360, 1600) }));
+  const panelsHandle = useDrag((_, dy) => setLayout({ ...base.current, panelsHeight: clamp(base.current.panelsHeight + dy, 480, 1600) }));
 
-  const panel = (id: PanelId) => (
+  const dropTarget = (id: PanelId) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!e.dataTransfer.types.includes(PANEL_DRAG)) return;
+      e.preventDefault();
+      setOver(id);
+    },
+    onDragLeave: () => setOver(null),
+    onDrop: (e: React.DragEvent) => {
+      const from = e.dataTransfer.getData(PANEL_DRAG) as PanelId;
+      setOver(null);
+      if (from && from !== id) swap();
+    },
+  });
+  const basis = (id: PanelId) => ({ ['--basis' as string]: `${(id === layout.order[0] ? layout.split : 1 - layout.split) * 100}%` });
+  const box = (id: PanelId) => `overflow-hidden rounded-2xl border bg-slate-900/60 ${over === id ? 'border-amber-400' : 'border-slate-800'}`;
+
+  const raceColumn = (
     <section
-      key={id}
-      onDragOver={(e) => {
-        if (!e.dataTransfer.types.includes(PANEL_DRAG)) return;
-        e.preventDefault();
-        setOver(id);
-      }}
-      onDragLeave={() => setOver(null)}
-      onDrop={(e) => {
-        const from = e.dataTransfer.getData(PANEL_DRAG) as PanelId;
-        setOver(null);
-        if (from && from !== id) swap();
-      }}
-      className={`flex max-h-[80vh] min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border bg-slate-900/60 lg:max-h-none lg:basis-[var(--basis)] ${over === id ? 'border-amber-400' : 'border-slate-800'}`}
-      style={{ ['--basis' as string]: `${(id === layout.order[0] ? layout.split : 1 - layout.split) * 100}%` }}
+      key="race"
+      {...dropTarget('race')}
+      className={`flex max-h-[80vh] min-h-0 min-w-0 flex-col lg:max-h-none lg:basis-[var(--basis)] ${box('race')}`}
+      style={basis('race')}
     >
-      {id === 'race' ? (
-        <PanelHeader id="race" title="DRep race" icon={<Flag className="h-4 w-4 text-amber-300" />} onSwap={swap} />
-      ) : (
-        <PanelHeader id="teams" title="Team Leaderboard" icon={<Users className="h-4 w-4 text-sky-300" />} onSwap={swap} />
-      )}
-      <div className="min-h-0 flex-1">{id === 'race' ? race : teams}</div>
+      <PanelHeader id="race" title="DRep race" icon={<Flag className="h-4 w-4 text-amber-300" />} onSwap={swap} />
+      <div className="min-h-0 flex-1">{race}</div>
     </section>
   );
 
-  const commentaryBar = (
-    <section
-      className={`flex flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 ${layout.commentary === 'bottom' ? 'mt-3' : 'mb-3'}`}
-      style={{ height: layout.commentaryHeight }}
-    >
+  const commentaryBox = (
+    <section className="flex flex-shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70" style={{ height: layout.commentaryHeight }}>
       <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/90 px-3 py-1.5">
-        <div
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData(COMMENTARY_DRAG, 'commentary');
-            e.dataTransfer.effectAllowed = 'move';
-          }}
-          className="flex cursor-grab items-center gap-2"
-          title="Drag above or below the race to move the commentary"
-        >
-          <GripVertical className="h-4 w-4 text-slate-500" />
-          <Radio className="h-4 w-4 text-rose-400" />
-          <span className="font-display text-sm font-bold text-white">Commentary</span>
-          <span className="text-xs text-slate-500">{commentaryCount} calls</span>
-        </div>
+        <Radio className="h-4 w-4 text-rose-400" />
+        <span className="font-display text-sm font-bold text-white">Commentary</span>
+        <span className="text-xs text-slate-500">{commentaryCount} calls</span>
         <span className="ml-auto flex items-center gap-3 text-slate-400">
           <button
             type="button"
             onClick={() => setLayout({ ...layout, commentary: layout.commentary === 'top' ? 'bottom' : 'top' })}
             className="hover:text-white"
-            title={layout.commentary === 'top' ? 'Move below the race' : 'Move above the race'}
+            title={layout.commentary === 'top' ? 'Move below the teams' : 'Move above the teams'}
             aria-label="Move commentary"
           >
             <ArrowUpDown className="h-4 w-4" />
           </button>
           <button
             type="button"
-            onClick={() => setLayout({ ...layout, commentaryHeight: expanded ? DEFAULT.commentaryHeight : 480 })}
+            onClick={() => setLayout({ ...layout, commentaryHeight: expanded ? DEFAULT.commentaryHeight : 560 })}
             className="hover:text-white"
-            title={expanded ? 'Show the latest few' : 'Open wider'}
+            title={expanded ? 'Show the latest few' : 'Open taller'}
             aria-label={expanded ? 'Collapse commentary' : 'Expand commentary'}
           >
             {expanded ? <ChevronsDownUp className="h-4 w-4" /> : <ChevronsUpDown className="h-4 w-4" />}
@@ -202,48 +189,49 @@ export function Dashboard({
     <div
       {...commentaryHandle}
       onPointerDownCapture={begin}
-      className="mx-auto -my-2 h-3 w-24 cursor-row-resize touch-none rounded-full bg-slate-700/60 hover:bg-amber-400/70"
+      className="mx-auto my-0.5 h-2 w-20 flex-shrink-0 cursor-row-resize touch-none rounded-full bg-slate-700/60 hover:bg-amber-400/70"
       title="Drag to resize the commentary"
     />
   );
-
-  const dropZone = (where: 'top' | 'bottom') => ({
-    onDragOver: (e: React.DragEvent) => {
-      if (!e.dataTransfer.types.includes(COMMENTARY_DRAG)) return;
-      e.preventDefault();
-      setOver(where);
-    },
-    onDragLeave: () => setOver(null),
-    onDrop: () => {
-      setOver(null);
-      setLayout({ ...layout, commentary: where });
-    },
-  });
+  const teamsPanel = (
+    <section className={`flex max-h-[80vh] min-h-0 flex-1 flex-col lg:max-h-none ${box('teams')}`}>
+      <PanelHeader id="teams" title="Team Leaderboard" icon={<Users className="h-4 w-4 text-sky-300" />} onSwap={swap} />
+      <div className="min-h-0 flex-1">{teams}</div>
+    </section>
+  );
+  const sideColumn = (
+    <div key="teams" {...dropTarget('teams')} className="flex min-h-0 min-w-0 flex-col lg:basis-[var(--basis)]" style={basis('teams')}>
+      {layout.commentary === 'top' ? (
+        <>
+          {commentaryBox}
+          {commentaryResize}
+          {teamsPanel}
+        </>
+      ) : (
+        <>
+          {teamsPanel}
+          {commentaryResize}
+          {commentaryBox}
+        </>
+      )}
+    </div>
+  );
+  const column = (id: PanelId) => (id === 'race' ? raceColumn : sideColumn);
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-end gap-3 text-xs text-slate-500">
-        <span className="hidden sm:inline">Drag headers to move sections, and the handles to resize.</span>
+        <span className="hidden sm:inline">Drag the handles to resize; drag a header across to swap sides.</span>
         <button type="button" onClick={() => setLayout(DEFAULT)} className="flex items-center gap-1 hover:text-white" title="Reset the layout">
           <RotateCcw className="h-3.5 w-3.5" /> Reset layout
         </button>
-      </div>
-      <div {...dropZone('top')} className={`rounded-2xl ${over === 'top' ? 'outline outline-2 outline-dashed outline-amber-400/70' : ''}`}>
-        {layout.commentary === 'top' ? (
-          <>
-            {commentaryBar}
-            {commentaryResize}
-          </>
-        ) : (
-          <div className="h-2" />
-        )}
       </div>
       <div
         ref={row}
         className="flex flex-col gap-3 lg:h-[var(--panels-h)] lg:flex-row lg:gap-0"
         style={{ ['--panels-h' as string]: `${layout.panelsHeight}px` }}
       >
-        {panel(layout.order[0])}
+        {column(layout.order[0])}
         <div
           {...divider}
           onPointerDownCapture={begin}
@@ -252,24 +240,14 @@ export function Dashboard({
         >
           <div className="h-16 w-1 rounded-full bg-slate-700 hover:bg-amber-400" />
         </div>
-        {panel(layout.order[1])}
+        {column(layout.order[1])}
       </div>
       <div
         {...panelsHandle}
         onPointerDownCapture={begin}
         className="mx-auto mt-1 hidden h-3 w-24 cursor-row-resize touch-none rounded-full bg-slate-700/60 hover:bg-amber-400/70 lg:block"
-        title="Drag to make the race and teams taller or shorter"
+        title="Drag to make the dashboard taller or shorter"
       />
-      <div {...dropZone('bottom')} className={`rounded-2xl ${over === 'bottom' ? 'outline outline-2 outline-dashed outline-amber-400/70' : ''}`}>
-        {layout.commentary === 'bottom' ? (
-          <>
-            {commentaryResize}
-            {commentaryBar}
-          </>
-        ) : (
-          <div className="h-2" />
-        )}
-      </div>
     </div>
   );
 }

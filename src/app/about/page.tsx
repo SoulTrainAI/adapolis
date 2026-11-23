@@ -360,14 +360,31 @@ export default function AboutPage() {
             ]}
           />
 
-          <H3>Card traits and Collector&apos;s Cup Trophies (from Season 2)</H3>
+          <H3>Collector&apos;s Cup editions (from Season 2)</H3>
           <p>
-            Every Champion Card copy carries a <B>Minted by</B> trait: <B>DRep</B> for the DRep&apos;s own five,{" "}
-            <B>Delegate</B> if the winning team&apos;s wallet was delegated to that DRep in the season&apos;s final
-            snapshot, and <B>Collector</B> if it held one of that DRep&apos;s cards in that snapshot (a copy can be both).
-            A top-3 team holding cards of DReps on its team can mint its Season Trophy as the{" "}
-            <B>Collector&apos;s Cup edition</B>, replacing the regular trophy. Traits change rarity only, never supply.
+            Every copy of a Champion Card is the same, except the <B>Collector&apos;s Cup edition</B>: the same card or
+            trophy with its own frame and trait. You can mint your prize as one if your wallet holds earlier Champion
+            Cards in the season&apos;s final snapshot: a card of that DRep for a Champion Card copy (DReps too, holding
+            their own earlier card), or cards of DReps on your team for a Season Trophy. It replaces your regular copy,
+            so supply never grows.
           </p>
+
+          <H3>Every NFT in a season</H3>
+          <Bullets
+            items={[
+              <>
+                <B>Champion Cards:</B> the top 10 DReps (Gold, Silver, Bronze, then 7 Holo). Each has up to 30 copies: 5
+                for the DRep and 1 for each of up to 25 qualifying teams that drafted them. At most 300.
+              </>,
+              <>
+                <B>Season Trophies:</B> 3 one-of-ones (Gold, Silver, Bronze) for the top 3 qualifying teams.
+              </>,
+              <>
+                <B>At most 303 a season</B>, usually far fewer: unclaimed copies are never minted. The Preseason mints
+                none.
+              </>,
+            ]}
+          />
 
           <H3>What they are, and aren&apos;t</H3>
           <p>

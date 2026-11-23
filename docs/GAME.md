@@ -253,34 +253,48 @@ contest. Recommended: make the Collector's Cup memento **non-transferable**
 (a profile trophy, or a token locked to the winner's wallet), so it has
 recognition value but no market value. Earliest: Season 2.
 
-### 2.9a Champion Card traits and Collector's Cup Trophies — Decided (Jason, 2026-11-23), Season 2 earliest
+### 2.9a Collector's Cup editions — Decided (Jason, 2026-11-23), Season 2 earliest
 
-Traits change rarity only: never points, eligibility, supply or what you can do
-with the card.
+Every minted copy of a card is identical (edition set by rank) except the
+**Collector's Cup edition**: same card or trophy, own frame and a
+"Collector's Cup" trait. It **replaces** the regular one, so supply never
+grows. No other traits ("Minted by" was considered and dropped: needless
+complexity). Holding is checked in the season's end snapshot; buying after it
+doesn't count. Bought cards count (Jason).
+- **Champion Card, DRep copies:** a Champion DRep whose wallet holds any earlier
+  Champion Card of their own may mint their 5 copies as Collector's Cup
+  editions.
+- **Champion Card, team copies:** a top-25 team whose wallet holds any
+  Champion Card of that DRep may mint its copy as the Collector's Cup edition.
+- **Season Trophy:** a top-3 team whose wallet holds Champion Cards of DReps on
+  its team may mint its trophy as the Collector's Cup edition.
+- Season 1 (Genesis) can't have any: no Champion Cards exist before it.
 
-**Champion Card copies get a "Minted by" trait** (no Collector's Cup edition
-for cards, so the Collector's Cup stays rare):
-- **DRep:** the DRep's own 5 copies.
-- **Delegate:** a top-25 team copy whose wallet is delegated to that DRep in
-  the season's end stake snapshot.
-- **Collector:** a top-25 team copy whose wallet holds any Champion Card of
-  that DRep (earned or bought) in the season's end snapshot.
-- A team copy can carry both Delegate and Collector. Holding or delegating has
-  to show in the snapshot; buying or delegating after it doesn't count.
+**Lawyer question:** holding a purchasable card unlocks a rarer edition of
+the same prize. Confirm this is acceptable in a free contest before the first
+mint.
 
-**Season Trophy, Collector's Cup edition:** a top-3 team whose wallet holds
-Champion Cards of DReps on its team in the end snapshot may mint its trophy as
-the Collector's Cup edition. Same item, same supply: it replaces the regular
-trophy (own frame, "Collector's Cup" trait). Bought cards count (Jason).
+### 2.9b Every NFT in a season — Decided summary
 
-**Open for Jason / the lawyer:**
-- The **Delegate** trait gives a small cosmetic reward for delegating to a
-  particular DRep. Prize eligibility is deliberately neutral (any DRep,
-  Abstain or No Confidence count), so this is the one place the game nudges
-  delegation toward someone. Cosmetic only, but worth a conscious yes.
-- Holding a purchasable card unlocks a rarer edition of the same prize, and a
-  rarer trait on a card. Confirm this is acceptable in a free contest before
-  the first mint.
+| NFT | Who gets it | Max per season |
+|---|---|---|
+| Champion Card, Gold (#1 DRep) | DRep 5 + up to 25 teams | 30 |
+| Champion Card, Silver (#2) | DRep 5 + up to 25 teams | 30 |
+| Champion Card, Bronze (#3) | DRep 5 + up to 25 teams | 30 |
+| Champion Card, Holo (#4–10, 7 DReps) | each: DRep 5 + up to 25 teams | 210 |
+| Season Trophy, Gold / Silver / Bronze | top 3 prize-eligible global teams | 3 (one-of-one each) |
+| **Total** | | **303** |
+
+- "Teams" means prize-eligible global teams in the top 25 that drafted (or
+  swapped out) that DRep. Each copy is numbered against the real claimed supply.
+- Any of these can be minted as its Collector's Cup edition instead (2.9a); the
+  total stays the same.
+- Unclaimed after the 7-day window: never minted. Real supply is usually far
+  below the maximum.
+- Not NFTs: the Finalist badge (top 10 teams) and the live cards on the site.
+- Preseason (season 0): no NFTs; its cards are test-only.
+- Delegators get nothing for delegating; claimers pay their own mint fee; 5%
+  CIP-27 royalty on resales to the ADApolis wallet.
 
 **All ADApolis cards and trophies are collectibles only, not financial
 instruments:** no yield, no revenue share, no governance rights, no promise of
