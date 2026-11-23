@@ -40,6 +40,8 @@ interface ApiResponse {
 
 interface ScoreboardClientProps {
   initialEpoch: number;
+  /** Which column to rank by on load (the Season view opens on season points) */
+  initialSort?: string;
 }
 
 function SkeletonCard() {
@@ -52,10 +54,10 @@ function SkeletonCard() {
   );
 }
 
-export function ScoreboardClient({ initialEpoch }: ScoreboardClientProps) {
+export function ScoreboardClient({ initialEpoch, initialSort = 'adjusted_govscore' }: ScoreboardClientProps) {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
-    sort: 'adjusted_govscore',
+    sort: initialSort,
     order: 'desc',
     minParticipation: 0,
     minAda: 0,

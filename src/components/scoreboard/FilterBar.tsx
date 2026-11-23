@@ -21,8 +21,10 @@ interface FilterBarProps {
 }
 
 const SORT_OPTIONS = [
-  { value: 'adjusted_govscore', label: 'Adjusted Score' },
-  { value: 'raw_govscore', label: 'Raw Score' },
+  { value: 'adjusted_govscore', label: 'GovScore (career)' },
+  { value: 'season_points', label: 'Season points' },
+  { value: 'projection', label: 'Projected points' },
+  { value: 'raw_govscore', label: 'GovScore before ADA dampening' },
   { value: 'participation_rate', label: 'Participation %' },
   { value: 'amount_lovelace', label: 'ADA Delegated' },
   { value: 'delegator_count', label: 'Delegators' },
@@ -81,7 +83,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
     setShowFiltersPanel(false);
   };
 
-  const currentSortLabel = SORT_OPTIONS.find(o => o.value === filters.sort)?.label || 'Adjusted Score';
+  const currentSortLabel = SORT_OPTIONS.find(o => o.value === filters.sort)?.label || 'GovScore (career)';
 
   return (
     <div className="mb-6">
@@ -105,7 +107,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
             onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 text-sm flex items-center justify-between hover:border-slate-600 transition-colors"
           >
-            <span>{currentSortLabel}</span>
+            <span><span className="text-slate-400">Rank by:</span> {currentSortLabel}</span>
             <ChevronDown size={16} className={sortDropdownOpen ? 'rotate-180' : ''} />
           </button>
 

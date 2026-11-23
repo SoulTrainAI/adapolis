@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSeasonData, type SeasonData } from '@/lib/season/data';
 import { POINT_RULES } from '@/lib/season/points';
-import { SeasonBoard } from '@/components/season/SeasonBoard';
+import { ScoreboardClient } from '@/components/scoreboard/ScoreboardClient';
 import { SeasonTabs } from '@/components/season/SeasonTabs';
 
 export const dynamic = 'force-dynamic';
@@ -82,10 +82,9 @@ export default async function SeasonPage() {
 
         {data === null ? (
           <p className="text-slate-400">Standings are temporarily unavailable. Please try again in a minute.</p>
-        ) : data.standings.length === 0 ? (
-          <p className="text-slate-400">No DRep has voted yet this season.</p>
         ) : (
-          <SeasonBoard standings={data.standings} />
+          // The same scoreboard and cards as /scoreboard, opened ranked by this season's points.
+          <ScoreboardClient initialEpoch={data.current_epoch} initialSort="season_points" />
         )}
       </div>
     </div>

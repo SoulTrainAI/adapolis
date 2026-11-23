@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { toDisplayProfile, type DisplayProfile } from '@/lib/metadata/profile-display';
 import { applyOverride, getOverrides } from '@/lib/drep-profile/overrides';
+import { getCards } from '@/lib/cards/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,12 @@ interface DRepScoreRow {
 
 type Pool = 'active' | 'registered' | 'all';
 
+/** Season points and projections come from the card engine (one cached computation for the whole site). */
+let fantasy: Map<string, { season_points: number; projection: number | null }> = new Map();
+
 const SORTS = {
+  season_points: (r: DRepScoreRow) => fantasy.get(r.drep_id)?.season_points ?? -1,
+  projection: (r: DRepScoreRow) => fantasy.get(r.drep_id)?.projection ?? -1,
   adjusted_govscore: (r: DRepScoreRow) => r.adjusted_govscore ?? -1,
   raw_govscore: (r: DRepScoreRow) => r.raw_govscore ?? -1,
   participation_rate: (r: DRepScoreRow) => r.participation_rate ?? -1,
@@ -131,6 +137,10 @@ export async function GET(request: Request) {
     const perPage = Math.min(100, Math.max(1, parseInt(searchParams.get('per_page') || '50', 10)));
 
     const { epoch, rows } = await loadRows();
+    if (sort === 'season_points' || sort === 'projection') {
+      const cards = await getCards();
+      fantasy = new Map(cards.cards.map((c) => [c.drep_id, { season_points: c.season.points, projection: c.projection }]));
+    }
     const minLovelace = minAda * 1e12;
     const maxLovelace = maxAda * 1e12;
     const key = SORTS[sort];
