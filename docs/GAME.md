@@ -189,11 +189,16 @@ Lawyer question: a minimum holding isn't an entry fee, but confirm.
 
 ### 2.4 Game winners — Decided (2026-11-22)
 
-The top 3 prize-eligible teams in the **global game** each season get a one-of-one **Season
-Trophy** NFT (gold, silver, bronze) with the team name, final points and their
-five picks. Top 10 global teams get a "Finalist" badge on their player profile
-(not an NFT). Trophies are given by ADApolis; players never pay or stake
-anything to compete for them.
+Season Trophies are one-of-one NFTs (gold, silver, bronze), six a season
+(Jason, 2026-11-23):
+- **Team Trophies:** the top 3 prize-eligible teams in the **global game**, with
+  the team name, final points and their five picks.
+- **DRep Trophies:** the top 3 DReps by season points, with their name, rank
+  and season points.
+
+Top 10 global teams get a "Finalist" badge on their player profile (not an
+NFT). Trophies are given by ADApolis; players never pay or stake anything to
+compete for them.
 
 ### 2.5 What's on a card — Proposed
 
@@ -255,24 +260,31 @@ recognition value but no market value. Earliest: Season 2.
 
 ### 2.9a Collector's Cup editions — Decided (Jason, 2026-11-23), Season 2 earliest
 
-Every minted copy of a card is identical (edition set by rank) except the
-**Collector's Cup edition**: same card or trophy, own frame and a
-"Collector's Cup" trait. It **replaces** the regular one, so supply never
-grows. No other traits ("Minted by" was considered and dropped: needless
-complexity). Holding is checked in the season's end snapshot; buying after it
-doesn't count. Bought cards count (Jason).
-- **Champion Card, DRep copies:** a Champion DRep whose wallet holds any earlier
-  Champion Card of their own may mint their 5 copies as Collector's Cup
-  editions.
-- **Champion Card, team copies:** a top-25 team whose wallet holds any
-  Champion Card of that DRep may mint its copy as the Collector's Cup edition.
-- **Season Trophy:** a top-3 team whose wallet holds Champion Cards of DReps on
-  its team may mint its trophy as the Collector's Cup edition.
-- Season 1 (Genesis) can't have any: no Champion Cards exist before it.
+Every minted copy is identical (edition set by rank) except the **Collector's
+Cup edition**: the same card or trophy with its own frame and a "Collector's
+Cup" trait. It **replaces** the regular one, so supply never grows. No other
+traits.
 
-**Lawyer question:** holding a purchasable card unlocks a rarer edition of
-the same prize. Confirm this is acceptable in a free contest before the first
-mint.
+**Checked at the season's end snapshot**, the same one used for prize
+eligibility. Cards bought or claimed after it don't count. Because claims
+open after the snapshot, a winner's new prizes can never unlock their own
+Collector's Cup, and a card sits in one wallet at the snapshot, so it can't be
+passed around to unlock several. Bought cards count if held at the snapshot.
+
+| Prize | Collector's Cup if, at the snapshot, the wallet holds… |
+|---|---|
+| Team copy of a Champion Card | a Champion Card of that DRep (any season) |
+| Team Trophy | a Champion Card (any season) of a DRep the team drafted this season who finished in the top 10 |
+| DRep's own 5 Champion Cards | an earlier Champion Card of their own |
+| DRep Trophy | an earlier Champion Card of their own |
+
+Holding without drafting: no prize, so no Collector's Cup. Drafting without
+holding: the regular prize. Season 1 (Genesis) can't have any: no Champion
+Cards exist before its snapshot.
+
+**Lawyer question:** holding a purchasable card (bought before the season
+ends, never after the result is known) unlocks a rarer edition of the same
+prize. Confirm this is acceptable in a free contest before the first mint.
 
 ### 2.9b Every NFT in a season — Decided summary
 
@@ -282,8 +294,9 @@ mint.
 | Champion Card, Silver (#2) | DRep 5 + up to 25 teams | 30 |
 | Champion Card, Bronze (#3) | DRep 5 + up to 25 teams | 30 |
 | Champion Card, Holo (#4–10, 7 DReps) | each: DRep 5 + up to 25 teams | 210 |
-| Season Trophy, Gold / Silver / Bronze | top 3 prize-eligible global teams | 3 (one-of-one each) |
-| **Total** | | **303** |
+| Team Trophy, Gold / Silver / Bronze | top 3 prize-eligible global teams | 3 (one-of-one each) |
+| DRep Trophy, Gold / Silver / Bronze | top 3 DReps | 3 (one-of-one each) |
+| **Total** | | **306** |
 
 - "Teams" means prize-eligible global teams in the top 25 that drafted (or
   swapped out) that DRep. Each copy is numbered against the real claimed supply.

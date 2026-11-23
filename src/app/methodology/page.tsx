@@ -471,7 +471,8 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
               </>,
               <>
                 <strong>Rewards:</strong> the top 3 qualifying global teams win a
-                one-of-one Season Trophy NFT; the top 10 get a Finalist badge;
+                one-of-one Team Trophy NFT (the top 3 DReps get a DRep Trophy);
+                the top 10 teams get a Finalist badge;
                 each of the top 25 qualifying teams can claim the Champion Card of
                 every top-10 DRep on their team (next section).
               </>,
@@ -605,16 +606,17 @@ pick contribution = points × multiplier   if points > 0
               <>
                 <strong>Collector&apos;s Cup editions (from Season 2):</strong>{" "}
                 every copy is identical except this edition: same item, own
-                frame and trait, replacing the regular one. It&apos;s open to a
-                claimer whose wallet holds earlier Champion Cards in the final
-                snapshot (that DRep&apos;s card for a card copy, including the
-                DRep&apos;s own; cards of their DReps for a Season Trophy).
+                frame and trait, replacing the regular one. Checked at the
+                season&apos;s end snapshot: a team copy needs a Champion Card of
+                that DRep; a Team Trophy needs a Champion Card of a top-10 DRep
+                the team drafted; a DRep needs an earlier card of their own.
                 Supply per season: at most 300 Champion Cards (10 DReps × 30)
-                and 3 Season Trophies.
+                and 6 Season Trophies.
               </>,
               <>
-                <strong>Season Trophies</strong> (top 3 qualifying global teams) are
-                one-of-one NFTs with the team name, final points and five picks.
+                <strong>Season Trophies</strong> are one-of-one NFTs: Team Trophies
+                (top 3 qualifying global teams, with the team name, final points
+                and five picks) and DRep Trophies (top 3 DReps).
               </>,
             ]}
           />

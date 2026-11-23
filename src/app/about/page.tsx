@@ -278,8 +278,8 @@ export default function AboutPage() {
             items={[
               <>
                 <B>Season Trophies:</B> the top 3 qualifying teams in the global game each season win a one-of-one
-                trophy NFT (gold, silver, bronze) with the team name, final points and their five picks. The top 10 get
-                a Finalist badge.
+                Team Trophy NFT (gold, silver, bronze) with the team name, final points and their five picks. The top 3
+                DReps get a DRep Trophy. The top 10 teams get a Finalist badge.
               </>,
               <>
                 <B>Champion Cards:</B> if your team finishes in the top 25 qualifying teams, you can claim the Champion
@@ -362,12 +362,25 @@ export default function AboutPage() {
 
           <H3>Collector&apos;s Cup editions (from Season 2)</H3>
           <p>
-            Every copy of a Champion Card is the same, except the <B>Collector&apos;s Cup edition</B>: the same card or
-            trophy with its own frame and trait. You can mint your prize as one if your wallet holds earlier Champion
-            Cards in the season&apos;s final snapshot: a card of that DRep for a Champion Card copy (DReps too, holding
-            their own earlier card), or cards of DReps on your team for a Season Trophy. It replaces your regular copy,
-            so supply never grows.
+            Every copy of a prize is the same, except the <B>Collector&apos;s Cup edition</B>: the same card or trophy
+            with its own frame and trait. It replaces your regular copy, so supply never grows. You qualify if your
+            wallet holds the right Champion Card in the snapshot at the season&apos;s end (cards bought after that
+            don&apos;t count):
           </p>
+          <Bullets
+            items={[
+              <>
+                <B>Team copy of a Champion Card:</B> any Champion Card of that DRep.
+              </>,
+              <>
+                <B>Team Trophy:</B> a Champion Card of a DRep you drafted that season who finished in the top 10. Holding
+                without drafting doesn&apos;t count; drafting without holding gets the regular trophy.
+              </>,
+              <>
+                <B>DReps</B> (their own cards and DRep Trophy): an earlier Champion Card of their own.
+              </>,
+            ]}
+          />
 
           <H3>Every NFT in a season</H3>
           <Bullets
@@ -377,10 +390,11 @@ export default function AboutPage() {
                 for the DRep and 1 for each of up to 25 qualifying teams that drafted them. At most 300.
               </>,
               <>
-                <B>Season Trophies:</B> 3 one-of-ones (Gold, Silver, Bronze) for the top 3 qualifying teams.
+                <B>Season Trophies:</B> 6 one-of-ones: Gold, Silver and Bronze Team Trophies for the top 3 qualifying
+                teams, and DRep Trophies for the top 3 DReps.
               </>,
               <>
-                <B>At most 303 a season</B>, usually far fewer: unclaimed copies are never minted. The Preseason mints
+                <B>At most 306 a season</B>, usually far fewer: unclaimed copies are never minted. The Preseason mints
                 none.
               </>,
             ]}
