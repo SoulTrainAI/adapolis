@@ -1,5 +1,6 @@
 'use client';
 
+import { SAVED_QUIZ_KEY, type SavedQuiz } from '@/lib/match/personal';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Cloud, CloudOff, ExternalLink, Loader2, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
@@ -16,14 +17,7 @@ type Step =
   | { kind: 'deeper-offer' }
   | { kind: 'results' };
 
-const SAVED_KEY = 'adapolis.quiz.v1';
-
-interface SavedQuiz {
-  v: 1;
-  answers: Answers;
-  includeDeeper: boolean;
-  savedAt: string;
-}
+const SAVED_KEY = SAVED_QUIZ_KEY;
 
 const CORE_TOPICS = TOPICS.filter((t) => t.group !== 'deeper');
 const DEEPER_TOPICS = TOPICS.filter((t) => t.group === 'deeper');

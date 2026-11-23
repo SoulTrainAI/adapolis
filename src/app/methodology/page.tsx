@@ -169,7 +169,7 @@ export default function MethodologyPage() {
               <>
                 <strong>GovScore</strong> (career): how reliably a DRep has
                 voted over their whole record. It drives the{" "}
-                <A href="/scoreboard">Scoreboard</A>, the card tiers and the
+                <A href="/scoreboard">DRep Hall of Fame</A>, the card tiers and the
                 DRep&apos;s rank.
               </>,
               <>
@@ -230,9 +230,9 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
                 provisional.
               </>,
               <>
-                <strong>Who is ranked:</strong> by default the Scoreboard and
+                <strong>Who is ranked:</strong> by default the Hall of Fame and
                 card ranks cover <em>active</em> DReps: registered, at least one
-                vote cast, and some ADA delegated. The Scoreboard&apos;s Show
+                vote cast, and some ADA delegated. The Hall of Fame&apos;s Show
                 filter can include all registered or retired DReps.
               </>,
             ]}
@@ -895,7 +895,7 @@ pick contribution = points × multiplier   if points > 0
               </>,
               <>
                 <strong>Open data:</strong> the JSON behind the site is public,
-                for example <A href="/api/dreps">/api/dreps</A> (Scoreboard) and{" "}
+                for example <A href="/api/dreps">/api/dreps</A> (Hall of Fame) and{" "}
                 <A href="/api/cards">/api/cards</A> (every card&apos;s stats).
                 No key needed; please cache and be gentle.
               </>,

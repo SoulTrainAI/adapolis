@@ -43,6 +43,10 @@ export const TIPS = {
   delegators: 'Wallets currently delegating to this DRep.',
   votes: 'Governance actions voted on, out of all they were eligible for.',
   participation: 'Votes cast ÷ governance actions open while the DRep was registered.',
+  alignment:
+    'Alignment: how closely this DRep’s real votes match your Find My DRep answers, 0–100%. Worked out in your browser from your answers; only you see it.',
+  personalGovscore:
+    'Personal GovScore: GovScore adjusted by your Alignment. 50% alignment leaves it unchanged; 100% raises it by a quarter, 0% lowers it by a quarter (max 100). Only you see it; the public GovScore never depends on how DReps vote.',
   seasonEpochs: 'The six epochs of the season. • marks the season in progress.',
   seasonVotes: 'Votes cast that season.',
   seasonExplained: 'Votes with a rationale that season.',

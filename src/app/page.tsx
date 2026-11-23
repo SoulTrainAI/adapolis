@@ -166,7 +166,7 @@ const PATHS: Path[] = [
     who: 'Collectors and NFT holders',
     pitch: 'Every active DRep is a card with stats, tiers and abilities. Collectible editions are planned.',
     links: [
-      { href: SECTIONS.scoreboard.href, label: 'Browse every card', tip: 'The Scoreboard shows every DRep as a card. Tap one to flip it.' },
+      { href: SECTIONS.scoreboard.href, label: 'Browse every card', tip: 'The DRep Hall of Fame shows every DRep as a card. Tap one to flip it.' },
       { href: SECTIONS.collection.href, label: 'Your collection', tip: SECTIONS.collection.blurb },
       { href: `${SECTIONS.methodology.href}#card-abilities`, label: 'Tiers and abilities', tip: 'How card tiers and abilities are earned.' },
     ],
@@ -278,7 +278,7 @@ export default async function Home() {
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="Scoreboard" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
+          <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="DRep Hall of Fame" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
           <GameTile href={SECTIONS.draft.href} icon={Swords} title="Draft" body={SECTIONS.draft.blurb} accent="bg-brand-gold/20 text-brand-gold-light" />
           <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="Cardanathon" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
           <GameTile href="/leaderboard" icon={Trophy} title="Leaderboard" body="Every team’s score, pick by pick, updated as the season unfolds." accent="bg-sky-500/15 text-sky-300" />

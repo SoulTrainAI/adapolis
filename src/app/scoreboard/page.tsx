@@ -1,5 +1,5 @@
 /**
- * Scoreboard Page
+ * DRep Hall of Fame (lifetime stats; route kept at /scoreboard)
  * Server-rendered shell with client-side filtering, sorting, and pagination
  */
 
@@ -7,6 +7,11 @@ import { createClient } from '@supabase/supabase-js';
 import { ScoreboardClient } from '@/components/scoreboard/ScoreboardClient';
 
 export const revalidate = 300;
+
+export const metadata = {
+  title: 'DRep Hall of Fame',
+  description: 'Every Cardano DRep ranked by lifetime GovScore, with your own Alignment after the Find My DRep quiz.',
+};
 
 async function getCurrentEpoch(): Promise<number> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -37,9 +42,9 @@ export default async function ScoreboardPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-5xl font-bold mb-4">DRep Scoreboard</h1>
+          <h1 className="text-5xl font-bold mb-4">DRep Hall of Fame</h1>
           <p className="text-lg text-slate-300 mb-4">
-            Live ranking of every Cardano DRep, scored on long-term participation and adjusted for ADA-power dampening.
+            Every Cardano DRep&apos;s lifetime record, ranked by GovScore: long-term participation, adjusted for ADA-power dampening. Took the Find My DRep quiz? Rank by your own Alignment too.
           </p>
         </div>
 

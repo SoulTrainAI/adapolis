@@ -10,8 +10,8 @@ export interface SiteSection {
 export const SECTIONS = {
   scoreboard: {
     href: '/scoreboard',
-    label: 'Scoreboard',
-    blurb: 'Every active DRep ranked by GovScore: how reliably they vote, over their whole record. Sort by season points or projections.',
+    label: 'DRep Hall of Fame',
+    blurb: 'Every active DRep ranked by lifetime GovScore: how reliably they vote, over their whole record. Rank by season points, projections, or your own Alignment after the quiz.',
   },
   match: {
     href: '/match',

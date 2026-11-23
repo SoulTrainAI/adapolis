@@ -19,7 +19,13 @@ interface FilterBarProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   onSearch: (search: string) => void;
+  /** The visitor has taken the Find My DRep quiz, so Alignment sorts can be used */
+  alignmentAvailable?: boolean;
 }
+
+/** Sorts worked out in the browser from the visitor's quiz answers. */
+export const ALIGNMENT_SORTS = ['alignment', 'personal_govscore'];
+const QUIZ_FIRST = 'Take the Find My DRep quiz first: Alignment ranks DReps by how well their real votes match your values.';
 
 const SORT_OPTIONS = [
   { value: 'adjusted_govscore', label: 'GovScore (career)', tip: TIPS.govscore },
@@ -30,9 +36,11 @@ const SORT_OPTIONS = [
   { value: 'amount_lovelace', label: 'ADA Delegated', tip: TIPS.ada },
   { value: 'delegator_count', label: 'Delegators', tip: TIPS.delegators },
   { value: 'voting_streak_epochs', label: 'Voting Streak', tip: TIPS.streak },
+  { value: 'alignment', label: 'Alignment (your values)', tip: TIPS.alignment },
+  { value: 'personal_govscore', label: 'Personal GovScore', tip: TIPS.personalGovscore },
 ];
 
-export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps) {
+export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailable = false }: FilterBarProps) {
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
 
@@ -49,6 +57,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
   }, [filters, onFiltersChange, onSearch]);
 
   const handleSortChange = (value: string) => {
+    if (ALIGNMENT_SORTS.includes(value) && !alignmentAvailable) return;
     onFiltersChange({ ...filters, sort: value });
     setSortDropdownOpen(false);
   };
@@ -119,9 +128,12 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
                 <button
                   key={option.value}
                   onClick={() => handleSortChange(option.value)}
-                  title={option.tip}
+                  title={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable ? QUIZ_FIRST : option.tip}
+                  aria-disabled={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable}
                   className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                    filters.sort === option.value
+                    ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable
+                      ? 'cursor-not-allowed text-slate-500'
+                      : filters.sort === option.value
                       ? 'bg-slate-600 text-slate-100 font-semibold'
                       : 'text-slate-300 hover:bg-slate-600'
                   }`}
@@ -177,9 +189,12 @@ export function FilterBar({ filters, onFiltersChange, onSearch }: FilterBarProps
                   <button
                     key={option.value}
                     onClick={() => handleSortChange(option.value)}
-                  title={option.tip}
+                    title={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable ? QUIZ_FIRST : option.tip}
+                    aria-disabled={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                      filters.sort === option.value
+                      ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable
+                        ? 'cursor-not-allowed text-slate-500'
+                        : filters.sort === option.value
                         ? 'bg-slate-600 text-slate-100 font-semibold'
                         : 'text-slate-300 hover:bg-slate-600'
                     }`}

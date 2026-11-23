@@ -101,7 +101,7 @@ export const GUIDES: Guide[] = [
       '• explains their reasoning in their own words,',
       '• is reachable: a profile, links, and answers to questions (see #ask-a-drep).',
       '',
-      'Anyone can register as a DRep, and many people hold delegations they never use. ADApolis tracks that: the scoreboard at https://adapolis.net/scoreboard ranks DReps on participation, never on which way they vote.',
+      'Anyone can register as a DRep, and many people hold delegations they never use. ADApolis tracks that: the DRep Hall of Fame at https://adapolis.net/scoreboard ranks DReps on participation, never on which way they vote.',
     ].join('\n'),
   },
   {
@@ -109,7 +109,7 @@ export const GUIDES: Guide[] = [
     title: 'How to delegate your voting power',
     tag: 'Delegation',
     body: [
-      '1. Find a DRep: take the quiz at https://adapolis.net/match or browse the scoreboard.',
+      '1. Find a DRep: take the quiz at https://adapolis.net/match or browse the DRep Hall of Fame.',
       '2. In your wallet (Eternl, Lace, Yoroi and others), open the governance or voting section and search for the DRep\'s ID or name. You can also delegate on gov.tools.',
       '3. Sign the transaction. It costs a small network fee.',
       '',

@@ -19,8 +19,8 @@ const GITHUB_URL = "https://github.com/SoulTrainAI/adapolis";
 const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
   {
     href: "/scoreboard",
-    title: "Scoreboard",
-    body: "Every active DRep ranked by GovScore: how reliably they have voted over their whole record, adjusted for how long that record is and gently dampened for very large ADA holdings. Sort by season points or projections too.",
+    title: "DRep Hall of Fame",
+    body: "Every active DRep's lifetime record, ranked by GovScore: how reliably they have voted over their whole record, adjusted for how long that record is and gently dampened for very large ADA holdings. Sort by season points or projections too, or, after the Find My DRep quiz, by your own Alignment.",
   },
   {
     href: "/season",
@@ -456,7 +456,7 @@ export default function AboutPage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-6 text-sm">
             <Link href="/scoreboard" className="text-slate-400 hover:text-slate-300 transition-colors">
-              Scoreboard
+              DRep Hall of Fame
             </Link>
             <Link href="/methodology" className="text-slate-400 hover:text-slate-300 transition-colors">
               Methodology
