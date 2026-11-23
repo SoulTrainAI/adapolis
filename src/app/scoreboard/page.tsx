@@ -39,7 +39,7 @@ export default async function ScoreboardPage() {
         <div className="mb-12">
           <h1 className="text-5xl font-bold mb-4">DRep Scoreboard</h1>
           <p className="text-lg text-slate-300 mb-4">
-            Live ranking of every Cardano DRep, scored on participation and adjusted for ADA-power dampening.
+            Live ranking of every Cardano DRep, scored on long-term participation and adjusted for ADA-power dampening.
           </p>
         </div>
 
