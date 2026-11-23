@@ -159,16 +159,17 @@ async function pickSeason(requested: number | null, now: Date): Promise<(DraftSe
   const { data, error } = await supabaseAdmin.from('seasons').select('*').order('season_number', { ascending: false });
   if (error) throw new Error(`Couldn't load seasons: ${error.message}`);
   const rows = (data ?? []) as DraftSeason[];
-  // No team saved yet means no season row yet: fall back to the season open for drafting.
-  if (rows.length === 0) {
-    const next = await draftSeason(now);
-    if (next) rows.push(next);
-  }
+  // The season open for drafting may not have a row yet (no team saved): include it.
+  const next = await draftSeason(now);
+  if (next && !rows.some((s) => s.season_number === next.season_number)) rows.push(next);
   const status = (s: DraftSeason): SeasonStatus => (now < new Date(s.starts_at) ? 'upcoming' : now < new Date(s.ends_at) ? 'live' : 'final');
+  const upcoming = rows.filter((s) => status(s) === 'upcoming').sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const finals = rows.filter((s) => status(s) === 'final').sort((a, b) => b.ends_at.localeCompare(a.ends_at));
+  // Show the season being played, else the next one to start, else the last one played.
   const chosen =
     requested !== null
       ? rows.find((s) => s.season_number === requested)
-      : rows.find((s) => status(s) === 'live') ?? rows.find((s) => status(s) === 'final') ?? rows[rows.length - 1];
+      : rows.find((s) => status(s) === 'live') ?? upcoming[0] ?? finals[0];
   return chosen ? { ...chosen, status: status(chosen) } : null;
 }
 

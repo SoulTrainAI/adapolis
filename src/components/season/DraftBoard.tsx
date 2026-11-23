@@ -17,6 +17,9 @@ type Sort = 'points' | 'projection' | 'form' | 'underdog' | 'smallest' | 'drafte
 
 const ROSTER_SIZE = 5;
 const PAGE = 24;
+// Drag types: a card dragged from the pool onto the team, or a pick dragged off the team.
+const PICK = 'application/x-adapolis-pick';
+const UNPICK = 'application/x-adapolis-unpick';
 
 function formatAda(ada: number): string {
   if (ada >= 1e9) return `₳${(ada / 1e9).toFixed(1)}B`;
@@ -57,6 +60,7 @@ export function DraftBoard() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [view, setView] = useState<'cards' | 'list'>('cards');
+  const [dropTarget, setDropTarget] = useState<'team' | 'pool' | null>(null);
   const { cards } = useCards();
 
   const load = useCallback(() => {
@@ -151,6 +155,57 @@ export function DraftBoard() {
     setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < ROSTER_SIZE ? [...prev, id] : prev));
   };
 
+  const addPick = (id: string) => {
+    setMessage(null);
+    setPicked((prev) => (prev.includes(id) || prev.length >= ROSTER_SIZE ? prev : [...prev, id]));
+  };
+  const removePick = (id: string) => {
+    setMessage(null);
+    setPicked((prev) => prev.filter((x) => x !== id));
+  };
+  const dropOnTeam = {
+    onDragOver: (e: React.DragEvent) => {
+      if (locked || !e.dataTransfer.types.includes(PICK)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = full ? 'none' : 'move';
+      setDropTarget('team');
+    },
+    onDragLeave: () => setDropTarget(null),
+    onDrop: (e: React.DragEvent) => {
+      const id = e.dataTransfer.getData(PICK);
+      setDropTarget(null);
+      if (!id) return;
+      e.preventDefault();
+      if (full && !picked.includes(id)) setMessage({ kind: 'error', text: `Your team is full. Drag a DRep out first.` });
+      else addPick(id);
+    },
+  };
+  const dropOnPool = {
+    onDragOver: (e: React.DragEvent) => {
+      if (locked || !e.dataTransfer.types.includes(UNPICK)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setDropTarget('pool');
+    },
+    onDragLeave: () => setDropTarget(null),
+    onDrop: (e: React.DragEvent) => {
+      const id = e.dataTransfer.getData(UNPICK);
+      setDropTarget(null);
+      if (id) {
+        e.preventDefault();
+        removePick(id);
+      }
+    },
+  };
+  const dragFrom = (type: string, id: string) => ({
+    draggable: !locked,
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.setData(type, id);
+      e.dataTransfer.effectAllowed = 'move';
+    },
+    onDragEnd: () => setDropTarget(null),
+  });
+
   const save = async () => {
     setSaving(true);
     setMessage(null);
@@ -190,8 +245,37 @@ export function DraftBoard() {
         </p>
       </header>
 
+      {(data.saved_teams ?? []).map((team) => (
+        <div
+          key={team.season_number}
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-sky-700/50 bg-sky-950/30 px-4 py-3 text-sm text-slate-200"
+        >
+          <p className="min-w-0 flex-1">
+            Your <strong>{seasonLabel(team.season_number)}</strong> team{team.team_name ? ` “${team.team_name}”` : ''} is saved:{' '}
+            {team.drep_ids.map((id) => (byId.get(id) ? displayName(byId.get(id)!) : id.slice(0, 12))).join(', ')}. This draft is
+            for the <strong>{seasonLabel(season.season_number)}</strong>, a separate season, so it needs its own team.
+          </p>
+          {!locked && (
+            <button
+              type="button"
+              onClick={() => {
+                setPicked(team.drep_ids.slice(0, ROSTER_SIZE));
+                if (!teamName && team.team_name) setTeamName(team.team_name);
+                setMessage({ kind: 'ok', text: 'Picks copied. Multipliers are recalculated for this season when you save.' });
+              }}
+              className="rounded-lg bg-sky-700 px-3 py-1.5 font-semibold text-white hover:bg-sky-600"
+            >
+              Use the same picks here
+            </button>
+          )}
+        </div>
+      ))}
+
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <section className="order-2 lg:order-1 space-y-3">
+        <section
+          className={`order-2 lg:order-1 space-y-3 rounded-xl transition-colors ${dropTarget === 'pool' ? 'bg-rose-500/10 outline outline-2 outline-dashed outline-rose-400/60' : ''}`}
+          {...dropOnPool}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <label className="relative flex-1 min-w-[12rem]">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
@@ -252,8 +336,13 @@ export function DraftBoard() {
               {filtered.slice(0, shown).map((d) => {
                 const isPicked = picked.includes(d.drep_id);
                 return (
-                  <TradingCard
+                  <div
                     key={d.drep_id}
+                    {...(isPicked ? {} : dragFrom(PICK, d.drep_id))}
+                    className={!locked && !isPicked ? 'cursor-grab active:cursor-grabbing' : undefined}
+                    title={!locked && !isPicked ? 'Drag onto your team to pick' : undefined}
+                  >
+                  <TradingCard
                     variant="draft"
                     card={cardFor(d)}
                     lockedUnderdog={snapshot.get(d.drep_id)}
@@ -272,6 +361,7 @@ export function DraftBoard() {
                       </button>
                     }
                   />
+                  </div>
                 );
               })}
             </div>
@@ -283,7 +373,8 @@ export function DraftBoard() {
               return (
                 <li
                   key={d.drep_id}
-                  className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${
+                  {...(isPicked ? {} : dragFrom(PICK, d.drep_id))}
+                  className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${!locked && !isPicked ? 'cursor-grab ' : ''}${
                     isPicked ? 'border-violet-600 bg-violet-950/40' : 'border-slate-800 bg-slate-900/60'
                   }`}
                 >
@@ -320,8 +411,12 @@ export function DraftBoard() {
           )}
         </section>
 
-        <aside className="order-1 lg:order-2">
-          <div className="sticky top-20 space-y-3 rounded-2xl border border-slate-700 bg-slate-900/80 p-4">
+        <aside className="order-1 lg:order-2" {...dropOnTeam}>
+          <div
+            className={`sticky top-20 space-y-3 rounded-2xl border bg-slate-900/80 p-4 transition-colors ${
+              dropTarget === 'team' ? 'border-violet-400 bg-violet-950/60 shadow-lg shadow-violet-900/40' : 'border-slate-700'
+            }`}
+          >
             <p className="flex items-center gap-2 font-semibold text-white">
               {locked && <Lock className="h-4 w-4 text-amber-300" />} Your team ({picked.length}/{ROSTER_SIZE})
             </p>
@@ -337,7 +432,12 @@ export function DraftBoard() {
                 const id = picked[i];
                 const d = id ? byId.get(id) : undefined;
                 return (
-                  <li key={i} className="flex items-center gap-2 rounded-lg bg-slate-800/60 px-2 py-1.5 text-sm">
+                  <li
+                    key={i}
+                    {...(id ? dragFrom(UNPICK, id) : {})}
+                    className={`flex items-center gap-2 rounded-lg bg-slate-800/60 px-2 py-1.5 text-sm ${id && !locked ? 'cursor-grab' : ''}`}
+                    title={id && !locked ? 'Drag back to the pool to remove' : undefined}
+                  >
                     <span className="w-4 text-slate-500">{i + 1}</span>
                     {id ? (
                       <>
@@ -351,7 +451,7 @@ export function DraftBoard() {
                       </>
                     ) : (
                       <span className="flex items-center gap-1 text-slate-500">
-                        <Plus className="h-3.5 w-3.5" /> Pick a DRep
+                        <Plus className="h-3.5 w-3.5" /> Drag a card here, or tap Pick
                       </span>
                     )}
                   </li>

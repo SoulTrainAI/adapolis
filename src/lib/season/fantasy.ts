@@ -118,11 +118,36 @@ export interface Roster {
   picks: RosterPick[];
 }
 
+export interface SavedTeam {
+  season_number: number;
+  team_name: string | null;
+  drep_ids: string[];
+}
+
 export interface DraftData {
   season: DraftSeason & { reference_window: number };
   reference_window: { start_epoch: number; end_epoch: number };
   pool: PoolDRep[];
   roster: Roster | null;
+  /** The wallet's teams for other seasons that haven't finished (e.g. Season 1 while drafting the Preseason). */
+  saved_teams: SavedTeam[];
+}
+
+async function otherTeams(stakeAddress: string, exceptSeason: number): Promise<SavedTeam[]> {
+  const { data, error } = await supabaseAdmin
+    .from('fantasy_rosters')
+    .select('season_number, team_name, seasons!inner(ends_at), fantasy_roster_picks(drep_id, slot)')
+    .eq('stake_address', stakeAddress)
+    .neq('season_number', exceptSeason)
+    .gt('seasons.ends_at', new Date().toISOString());
+  if (error) return [];
+  return ((data ?? []) as Array<{ season_number: number; team_name: string | null; fantasy_roster_picks: Array<{ drep_id: string; slot: number }> }>)
+    .map((r) => ({
+      season_number: r.season_number,
+      team_name: r.team_name,
+      drep_ids: r.fantasy_roster_picks.slice().sort((a, b) => a.slot - b.slot).map((p) => p.drep_id),
+    }))
+    .sort((a, b) => a.season_number - b.season_number);
 }
 
 async function loadRoster(seasonNumber: number, stakeAddress: string): Promise<Roster | null> {
@@ -201,6 +226,7 @@ export async function getDraftData(stakeAddress: string | null): Promise<DraftDa
     draftCounts(season.season_number),
     stakeAddress ? loadRoster(season.season_number, stakeAddress) : Promise.resolve(null),
   ]);
+  const saved_teams = stakeAddress ? await otherTeams(stakeAddress, season.season_number) : [];
   const standings = new Map(reference.standings.map((s) => [s.drep_id, s]));
 
   const pool = dreps
@@ -229,6 +255,7 @@ export async function getDraftData(stakeAddress: string | null): Promise<DraftDa
     reference_window: { start_epoch: reference.start_epoch, end_epoch: reference.end_epoch },
     pool,
     roster,
+    saved_teams,
   };
 }
 
