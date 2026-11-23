@@ -292,8 +292,8 @@ export function DrepStudio() {
           <span className="text-sm">
             <span className="font-semibold text-white">Tag me in Cardanathon commentary posts</span>
             <span className="block text-xs text-slate-400">
-              ADApolis posts race commentary and standings to its Discord (and later X). When on, we tag your linked Discord account
-              when you&apos;re in the news. Saved straight away.
+              ADApolis posts race commentary and standings to its Discord, and anyone can share them on X. When on, we tag your linked
+              Discord account, and X share links include the X handle from your profile links. Saved straight away.
             </span>
             {tagNote && <span className="block text-xs text-slate-300">{tagNote}</span>}
           </span>

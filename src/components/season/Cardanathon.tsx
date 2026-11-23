@@ -9,9 +9,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Crown, Flag, Flame, Pause, Play, Radio, Rewind, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import { Crown, Flag, Flame, Pause, Play, Radio, Rewind, Share2, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import type { Race } from '@/lib/season/race';
 import { TeamsPanel } from './TeamsPanel';
+
+/** A prefilled X post (no account or API needed): the visitor edits and posts it themselves. */
+function shareOnX(text: string, handles: Array<string | null | undefined>): string {
+  const tags = Array.from(new Set(handles.filter((h): h is string => !!h))).map((h) => `@${h}`).join(' ');
+  const body = `${text}${tags ? ` ${tags}` : ''} #Cardanathon via @ADApolisdotnet`;
+  // X counts the link as 23 characters; keep the whole post under 280.
+  const clipped = body.length > 250 ? `${body.slice(0, 249)}…` : body;
+  return `https://x.com/intent/tweet?${new URLSearchParams({ text: clipped, url: 'https://www.adapolis.net/season' })}`;
+}
 import { Dashboard, useLayout } from './Dashboard';
 import { buildCommentary, DAY_S, displayName, orderAt, SHOWN, type CommentaryLine } from '@/lib/season/commentary';
 
@@ -154,6 +163,24 @@ export function Cardanathon({ race }: { race: Race }) {
             {race.field} DReps
             <br />
             in the race
+            <br />
+            <a
+              href={shareOnX(
+                `${race.label} Cardanathon, day ${day}: ${orderAt(race.racers, t)
+                  .slice(0, 3)
+                  .map((o, i) => `${['🥇', '🥈', '🥉'][i]} ${byId.get(o.drep_id) ? displayName(byId.get(o.drep_id)!) : ''} ${o.points}`)
+                  .join(' ')}`,
+                orderAt(race.racers, t)
+                  .slice(0, 3)
+                  .map((o) => byId.get(o.drep_id)?.x_handle)
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-amber-200 hover:text-white"
+              title="Share the current top 3 on X"
+            >
+              <Share2 className="h-3 w-3" /> Share
+            </a>
           </p>
         </div>
       </div>
@@ -241,9 +268,20 @@ export function Cardanathon({ race }: { race: Race }) {
                     <p className="text-[9px] uppercase tracking-wider text-slate-500">
                       Day {c.day} · Epoch {c.epoch}
                     </p>
-                    <p className={`flex gap-1.5 text-xs leading-snug ${color}`} title={c.text}>
+                    <p className={`group flex gap-1.5 text-xs leading-snug ${color}`} title={c.text}>
                       <Icon className="mt-0.5 h-3 w-3 flex-shrink-0" />
-                      <span className="line-clamp-2 text-slate-100">{c.text}</span>
+                      <span className="line-clamp-2 flex-1 text-slate-100">{c.text}</span>
+                      <a
+                        href={shareOnX(c.text, c.drep_ids.map((id) => byId.get(id)?.x_handle))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-0.5 flex-shrink-0 text-slate-500 opacity-60 hover:text-white group-hover:opacity-100"
+                        title="Share this on X"
+                        aria-label="Share this on X"
+                      >
+                        <Share2 className="h-3 w-3" />
+                      </a>
                     </p>
                   </motion.li>
                 );

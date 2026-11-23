@@ -1,5 +1,5 @@
--- Whether ADApolis may tag a DRep in its automatic commentary posts (Discord
--- now, X later). On by default; a DRep turns it off on their claimed card.
+-- Whether ADApolis may tag a DRep in its commentary posts on Discord and in
+-- the X share links it prefills. On by default; a DRep turns it off on their claimed card.
 -- Server-only, like drep_profile_overrides. Safe to run more than once.
 -- Created: 2026-11-23
 

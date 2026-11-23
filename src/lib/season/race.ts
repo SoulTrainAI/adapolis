@@ -4,6 +4,8 @@
  * here knows or says which way anyone voted (Cardinal Rule).
  */
 
+import { socialHandle } from '@/lib/drep-profile/social-avatars';
+import { tagOptOuts } from '@/lib/drep-profile/mentions';
 import { getSeasonData } from './data';
 import { epochStart, seasonLabel, type PointEvent } from './points';
 
@@ -15,6 +17,8 @@ export interface Racer {
   image: string | null;
   points: number;
   events: PointEvent[];
+  /** X handle from the DRep's profile links, for share text; null if none or they opted out of tags */
+  x_handle: string | null;
 }
 
 export interface Race {
@@ -35,7 +39,11 @@ export interface Race {
 }
 
 export async function getRace(window?: number): Promise<Race> {
-  const data = await getSeasonData({ window });
+  const [data, optOut] = await Promise.all([getSeasonData({ window }), tagOptOuts()]);
+  const handle = (drepId: string, links: Array<{ url: string }>) => {
+    const h = socialHandle(links);
+    return h && h.source === 'x' && !optOut.has(drepId) ? h.handle : null;
+  };
   const toSec = (d: Date) => Math.floor(d.getTime() / 1000);
   return {
     window: data.window,
@@ -54,6 +62,7 @@ export async function getRace(window?: number): Promise<Race> {
       image: s.profile.image,
       points: s.points,
       events: s.events,
+      x_handle: handle(s.drep_id, s.profile.links ?? []),
     })),
     computed_at: data.computed_at,
   };
