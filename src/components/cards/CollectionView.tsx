@@ -8,6 +8,7 @@ import { useMyDRep } from '@/components/auth/MyDRepBadge';
 import { TradingCard } from './TradingCard';
 import { placeholderCard, useCards } from './useCards';
 import { DRepCheckup } from './DRepCheckup';
+import { ClaimsSection } from './ClaimsSection';
 
 type DraftResponse = (({ enabled: true } & DraftData) | { enabled: false }) & { signed_in?: boolean };
 
@@ -55,8 +56,9 @@ export function CollectionView() {
         <p className="text-sm uppercase tracking-wider text-violet-300">My Collection</p>
         <h1 className="font-display text-4xl font-bold">Your cards</h1>
         <p className="max-w-3xl text-slate-300">
-          Every DRep has a card. Collectible editions will be minted as Cardano NFTs, starting with a Genesis set from the
-          Season 1 champions. Cards are pure collectibles: they never change how anyone scores or votes.
+          Every DRep has a card. At the end of each season the top 10 DReps become Champion Cards, Cardano NFTs that preserve
+          their season; Season 1&apos;s are the Genesis set. Cards are pure collectibles: they never change how anyone scores
+          or votes.
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <button
@@ -90,6 +92,8 @@ export function CollectionView() {
           </div>
         )}
       </Section>
+
+      <ClaimsSection />
 
       <Section title="Your game team" icon={<span className="text-brand-gold-light">★</span>}>
         {!draft ? (

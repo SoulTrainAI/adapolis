@@ -13,6 +13,8 @@ import { fetchCurrentEpoch } from '@/lib/koios';
 import { loadAll } from '@/lib/scoring/govscore-v1';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
 import { getSeasonData } from './data';
+import { clearLeaderboardCache } from './leaderboard';
+import { isMissingSchema } from './schema';
 import { seasonOneStartEpoch, underdogScale, windowEpochs, windowForEpoch } from './points';
 
 export const ROSTER_SIZE = 5;
@@ -105,11 +107,17 @@ export interface RosterPick {
   drep_id: string;
   underdog_multiplier: number;
   picked_at: string;
+  swapped_from: string | null;
+  swap_epoch: number | null;
 }
 
 export interface Roster {
   roster_id: string;
   team_name: string | null;
+  /** Competes in the global game (Season Trophies). */
+  in_global: boolean;
+  /** The one free replacement for a retired DRep has been used. */
+  swap_used: boolean;
   picks: RosterPick[];
 }
 
@@ -121,18 +129,43 @@ export interface DraftData {
 }
 
 async function loadRoster(seasonNumber: number, stakeAddress: string): Promise<Roster | null> {
-  const { data, error } = await supabaseAdmin
+  const full = await supabaseAdmin
     .from('fantasy_rosters')
-    .select('roster_id, team_name, fantasy_roster_picks(slot, drep_id, underdog_multiplier, picked_at)')
+    .select('roster_id, team_name, in_global, swap_used, fantasy_roster_picks(slot, drep_id, underdog_multiplier, picked_at, swapped_from, swap_epoch)')
     .eq('season_number', seasonNumber)
     .eq('stake_address', stakeAddress)
     .maybeSingle();
+  let data: Record<string, unknown> | null = full.data;
+  let error = full.error;
+  if (isMissingSchema(error)) {
+    const legacy = await supabaseAdmin
+      .from('fantasy_rosters')
+      .select('roster_id, team_name, fantasy_roster_picks(slot, drep_id, underdog_multiplier, picked_at)')
+      .eq('season_number', seasonNumber)
+      .eq('stake_address', stakeAddress)
+      .maybeSingle();
+    data = legacy.data;
+    error = legacy.error;
+  }
   if (error) throw new Error(`Couldn't load your roster: ${error.message}`);
   if (!data) return null;
-  const picks = (data.fantasy_roster_picks as Array<{ slot: number; drep_id: string; underdog_multiplier: number | string; picked_at: string }>)
-    .map((p) => ({ slot: p.slot, drep_id: p.drep_id, underdog_multiplier: Number(p.underdog_multiplier), picked_at: p.picked_at }))
+  const picks = (data.fantasy_roster_picks as Array<Record<string, unknown>>)
+    .map((p) => ({
+      slot: Number(p.slot),
+      drep_id: p.drep_id as string,
+      underdog_multiplier: Number(p.underdog_multiplier),
+      picked_at: p.picked_at as string,
+      swapped_from: (p.swapped_from as string | null | undefined) ?? null,
+      swap_epoch: p.swap_epoch == null ? null : Number(p.swap_epoch),
+    }))
     .sort((a, b) => a.slot - b.slot);
-  return { roster_id: data.roster_id as string, team_name: (data.team_name as string | null) ?? null, picks };
+  return {
+    roster_id: data.roster_id as string,
+    team_name: (data.team_name as string | null) ?? null,
+    in_global: data.in_global === undefined ? true : Boolean(data.in_global),
+    swap_used: Boolean(data.swap_used),
+    picks,
+  };
 }
 
 async function draftCounts(seasonNumber: number): Promise<Map<string, number>> {
@@ -213,7 +246,7 @@ export class DraftError extends Error {
  * save keep their slot and their original multiplier; new picks are
  * snapshotted now. One upsert, so the roster is never left half-written.
  */
-export async function saveRoster(stakeAddress: string, input: { team_name: string | null; drep_ids: string[] }): Promise<Roster> {
+export async function saveRoster(stakeAddress: string, input: { team_name: string | null; drep_ids: string[]; in_global?: boolean }): Promise<Roster> {
   const season = await draftSeason();
   if (!season) throw new DraftError('Drafting opens when Season 1 is scheduled.', 409);
   if (Date.now() >= new Date(season.draft_locks_at).getTime()) {
@@ -249,6 +282,10 @@ export async function saveRoster(stakeAddress: string, input: { team_name: strin
     .single();
   if (rosterError || !rosterRow) throw new Error(`Couldn't save your team: ${rosterError?.message ?? 'no row returned'}`);
   const rosterId = rosterRow.roster_id as string;
+  if (input.in_global !== undefined) {
+    const { error: globalError } = await supabaseAdmin.from('fantasy_rosters').update({ in_global: input.in_global }).eq('roster_id', rosterId);
+    if (globalError && !isMissingSchema(globalError)) throw new Error(`Couldn't save your global-game choice: ${globalError.message}`);
+  }
 
   const existing = (await loadRoster(season.season_number, stakeAddress))?.picks ?? [];
   const kept = existing.filter((p) => ids.includes(p.drep_id));
@@ -280,6 +317,88 @@ export async function saveRoster(stakeAddress: string, input: { team_name: strin
   if (picksError) throw new Error(`Couldn't save your picks: ${picksError.message}. Your previous roster is unchanged; try again.`);
 
   console.log(JSON.stringify({ event: 'roster_saved', season: season.season_number, stake_address: stakeAddress, kept: kept.length }));
+  clearLeaderboardCache();
+  return (await loadRoster(season.season_number, stakeAddress))!;
+}
+
+/** The season being played right now (rosters locked), if any. */
+export async function liveSeason(now = new Date()): Promise<DraftSeason | null> {
+  const { data, error } = await supabaseAdmin
+    .from('seasons')
+    .select('season_number, grid_window, start_epoch, end_epoch, starts_at, draft_locks_at, ends_at')
+    .lte('draft_locks_at', now.toISOString())
+    .gt('ends_at', now.toISOString())
+    .maybeSingle();
+  if (error) throw new Error(`Couldn't load the live season: ${error.message}`);
+  return (data as DraftSeason | null) ?? null;
+}
+
+export interface SwapState {
+  season: DraftSeason;
+  roster: Roster;
+  /** Slots whose DRep has deregistered (eligible for the swap). */
+  retired_slots: number[];
+}
+
+/** The signed-in player's live team and which picks have retired. */
+export async function getSwapState(stakeAddress: string): Promise<SwapState | null> {
+  const season = await liveSeason();
+  if (!season) return null;
+  const roster = await loadRoster(season.season_number, stakeAddress);
+  if (!roster) return null;
+  const { data, error } = await supabaseAdmin
+    .from('dreps')
+    .select('drep_id, is_registered')
+    .in('drep_id', roster.picks.map((p) => p.drep_id));
+  if (error) throw new Error(`Couldn't check your DReps: ${error.message}`);
+  const retired = new Set((data ?? []).filter((d) => d.is_registered === false).map((d) => d.drep_id as string));
+  return { season, roster, retired_slots: roster.picks.filter((p) => retired.has(p.drep_id)).map((p) => p.slot) };
+}
+
+/**
+ * Replaces a retired DRep, once per team per season. The slot keeps the
+ * retired DRep's points from before this epoch; the replacement scores from
+ * this epoch on, at their multiplier now.
+ */
+export async function swapRetired(stakeAddress: string, slot: number, newDrepId: string): Promise<Roster> {
+  const state = await getSwapState(stakeAddress);
+  if (!state) throw new DraftError('Swaps are only possible while a season is being played and you have a team in it.', 409);
+  const { season, roster } = state;
+  if (roster.swap_used) throw new DraftError('You have already used your one replacement this season.', 409);
+  if (!state.retired_slots.includes(slot)) throw new DraftError('Only a DRep who has retired (deregistered) can be replaced.', 400);
+  if (roster.picks.some((p) => p.drep_id === newDrepId)) throw new DraftError('That DRep is already on your team.', 400);
+
+  const { data: d, error: drepError } = await supabaseAdmin
+    .from('dreps')
+    .select('drep_id, is_registered, amount_lovelace, delegator_count')
+    .eq('drep_id', newDrepId)
+    .maybeSingle();
+  if (drepError) throw new Error(`Couldn't check the replacement: ${drepError.message}`);
+  if (!d || d.is_registered === false) throw new DraftError('The replacement must be a registered DRep.', 400);
+
+  const old = roster.picks.find((p) => p.slot === slot)!;
+  const { scale } = await draftScale({ reference_window: season.grid_window - 1 });
+  const epoch = await fetchCurrentEpoch();
+  const { error: pickError } = await supabaseAdmin
+    .from('fantasy_roster_picks')
+    .update({
+      drep_id: newDrepId,
+      underdog_multiplier: scale({ amount_lovelace: Number(d.amount_lovelace ?? 0), delegator_count: d.delegator_count ?? 0 }),
+      picked_at: new Date().toISOString(),
+      swapped_from: old.drep_id,
+      swapped_from_multiplier: old.underdog_multiplier,
+      swap_epoch: epoch,
+    })
+    .eq('roster_id', roster.roster_id)
+    .eq('slot', slot);
+  if (pickError) {
+    if (isMissingSchema(pickError)) throw new DraftError('Replacements open once the site’s database update (migration 014) is applied.', 503);
+    throw new Error(`Couldn't save the replacement: ${pickError.message}. Your team is unchanged.`);
+  }
+  const { error: usedError } = await supabaseAdmin.from('fantasy_rosters').update({ swap_used: true }).eq('roster_id', roster.roster_id);
+  if (usedError) throw new Error(`Replacement saved, but marking it used failed: ${usedError.message}`);
+  console.log(JSON.stringify({ event: 'roster_swap', season: season.season_number, stake_address: stakeAddress, slot, from: old.drep_id, to: newDrepId, epoch }));
+  clearLeaderboardCache();
   return (await loadRoster(season.season_number, stakeAddress))!;
 }
 

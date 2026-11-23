@@ -45,3 +45,12 @@ describe('flavorText', () => {
     expect(flavorText(c)).not.toMatch(new RegExp('\\b(yes|no|abstain|treasury|against|support)\\b', 'i'));
   });
 });
+
+describe('editionFor', () => {
+  it('maps season rank to the Champion Card edition', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??= 'http://localhost';
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test';
+    const { editionFor } = await import('@/lib/season/finalize');
+    expect([1, 2, 3, 4, 10].map(editionFor)).toEqual(['gold', 'silver', 'bronze', 'holo', 'holo']);
+  });
+});

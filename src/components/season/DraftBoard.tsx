@@ -9,6 +9,7 @@ import type { DraftData, PoolDRep } from '@/lib/season/fantasy';
 import type { CardSummary } from '@/lib/cards/types';
 import { TradingCard } from '@/components/cards/TradingCard';
 import { placeholderCard, useCards } from '@/components/cards/useCards';
+import { LiveTeam } from './LiveTeam';
 
 type Response = ({ enabled: true } & DraftData) | { enabled: false };
 type Sort = 'points' | 'projection' | 'form' | 'underdog' | 'smallest' | 'drafted';
@@ -47,6 +48,7 @@ export function DraftBoard() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [teamName, setTeamName] = useState('');
+  const [inGlobal, setInGlobal] = useState(true);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('points');
   const [activeOnly, setActiveOnly] = useState(true);
@@ -66,6 +68,7 @@ export function DraftBoard() {
         if (body.enabled && body.roster) {
           setPicked(body.roster.picks.map((p) => p.drep_id));
           setTeamName(body.roster.team_name ?? '');
+          setInGlobal(body.roster.in_global !== false);
         }
       })
       .catch((e: unknown) => setLoadError(e instanceof Error ? e.message : String(e)));
@@ -137,7 +140,10 @@ export function DraftBoard() {
   const started = now >= new Date(season.starts_at).getTime();
   const full = picked.length >= ROSTER_SIZE;
   const savedIds = (data.roster?.picks ?? []).map((p) => p.drep_id).sort().join();
-  const dirty = picked.slice().sort().join() !== savedIds || (teamName.trim() || null) !== (data.roster?.team_name ?? null);
+  const dirty =
+    picked.slice().sort().join() !== savedIds ||
+    (teamName.trim() || null) !== (data.roster?.team_name ?? null) ||
+    (data.roster !== null && inGlobal !== (data.roster.in_global !== false));
 
   const toggle = (id: string) => {
     setMessage(null);
@@ -151,7 +157,7 @@ export function DraftBoard() {
       const res = await fetch('/api/fantasy/roster', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team_name: teamName, drep_ids: picked }),
+        body: JSON.stringify({ team_name: teamName, drep_ids: picked, in_global: inGlobal }),
       });
       const body = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
@@ -171,6 +177,7 @@ export function DraftBoard() {
           Season {season.season_number} · epochs {season.start_epoch}–{season.end_epoch}
         </p>
         <h1 className="text-4xl font-bold text-white">Draft your team</h1>
+        <LiveTeam />
         <p className="text-slate-300">
           Pick {ROSTER_SIZE} DReps. Your team scores their season points: voting, explaining votes and voting on time,
           never which way they vote. Smaller DReps carry an underdog multiplier on the points they gain, fixed when you pick them; losses are never multiplied.
@@ -350,6 +357,22 @@ export function DraftBoard() {
                 );
               })}
             </ol>
+            <label
+              className="flex items-start gap-2 text-sm text-slate-200"
+              title="The global game is the main leaderboard and the only one that wins Season Trophy NFTs. Your team still plays in any leagues you join either way."
+            >
+              <input
+                type="checkbox"
+                checked={inGlobal}
+                onChange={(e) => setInGlobal(e.target.checked)}
+                disabled={locked}
+                className="mt-0.5 h-4 w-4 accent-violet-500"
+              />
+              <span>
+                Compete in the global game
+                <span className="block text-xs text-slate-400">Top 3 win Season Trophy NFTs. Leagues are separate.</span>
+              </span>
+            </label>
             {locked ? (
               <p className="text-sm text-amber-300">Rosters are locked for this season.</p>
             ) : !signedIn ? (

@@ -90,7 +90,7 @@ player gets **one free replacement** for that slot, at the replacement's current
 multiplier, any time before the season ends. Points already earned by the
 retired DRep stay on the team.
 
-### 1.11 Leagues — Decided (2026-11-22), to build
+### 1.11 Leagues — Decided (2026-11-22), built (needs migration 014)
 
 Three ways to compete, all with the same one team per wallet per season:
 
@@ -197,14 +197,23 @@ anything to compete for them.
 - **Testnet first.** Every mainnet mint is signed by Jason (hard checkpoint),
   after the lawyer review (Gate 4).
 
+### 2.6a Built so far (2026-11-22)
+
+Season-end snapshots run on the cron (`src/lib/season/finalize.ts`): champions
+with their card stats, every claim (DRep 5, drafting teams 1, delegators 1 with a
+7-day window) and the global top 10. Players see their claims on /collection;
+champions are public at /api/seasons/champions. **Minting is not built**:
+Jason asked to hold off on testnet.
+
 ### 2.7 How minting works — Proposed
 
 - One minting policy per season, **time-locked** to close when the claim window
   ends, so nobody (ADApolis included) can mint more afterwards.
 - Claims happen on /collection: connect, see what you're eligible for, sign one
   transaction that pays your own fee. The policy key co-signs on the server.
-- Eligibility snapshots (teams, delegators) are taken at the season's last
-  epoch and published, so anyone can check who could claim.
+- Eligibility snapshots (teams, delegators) are taken when the season ends.
+  Each wallet sees its own claims; per-card totals are public. Wallet-to-team
+  links stay private.
 
 ### 2.8 Money — Decided
 

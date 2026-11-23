@@ -19,6 +19,8 @@ export interface SeasonStanding {
   breakdown: PointBreakdown;
   votes_cast: number;
   actions_missed: number;
+  /** Points per epoch, for scoring a slot whose DRep was swapped mid-season. */
+  by_epoch: Record<number, number>;
   underdog: number;
   amount_lovelace: number;
   delegator_count: number;
@@ -114,6 +116,7 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
         breakdown: p.breakdown,
         votes_cast: p.votes_cast,
         actions_missed: p.actions_missed,
+        by_epoch: p.by_epoch,
         underdog: underdog.get(p.drep_id) ?? 1,
         amount_lovelace: s?.amount_lovelace ?? 0,
         delegator_count: s?.delegator_count ?? 0,

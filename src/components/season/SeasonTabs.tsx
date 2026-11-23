@@ -3,10 +3,11 @@ import Link from 'next/link';
 const TABS = [
   ['standings', '/season', 'DRep standings'],
   ['leaderboard', '/leaderboard', 'Game leaderboard'],
+  ['leagues', '/leagues', 'Leagues'],
   ['draft', '/draft', 'Draft'],
 ] as const;
 
-/** Switches between the season's three views. */
+/** Switches between the season's views. */
 export function SeasonTabs({ active }: { active: (typeof TABS)[number][0] }) {
   return (
     <nav className="flex gap-1 border-b border-slate-800" aria-label="Season views">

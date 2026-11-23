@@ -12,6 +12,7 @@ import { getSeasonData } from './data';
 import { getCards } from '@/lib/cards/data';
 import { draftSeason, type DraftSeason } from './fantasy';
 import { pickContribution } from './points';
+import { isMissingSchema } from './schema';
 
 export type SeasonStatus = 'upcoming' | 'live' | 'final';
 
@@ -22,11 +23,15 @@ export interface LeaderboardPick {
   points: number;
   multiplier: number;
   contribution: number;
+  /** Set when this slot replaced a retired DRep mid-season. */
+  swapped_from?: { drep_id: string; name: string | null; points: number; multiplier: number; swap_epoch: number };
 }
 
 export interface LeaderboardTeam {
   rank: number;
   name: string;
+  /** Server-only: the team's stake address. Stripped by publicBoard() before any response. */
+  owner?: string;
   mine: boolean;
   points: number;
   picks: LeaderboardPick[];
@@ -36,13 +41,36 @@ export interface Leaderboard {
   season: Pick<DraftSeason, 'season_number' | 'start_epoch' | 'end_epoch' | 'starts_at' | 'draft_locks_at' | 'ends_at'> & { status: SeasonStatus };
   teams: LeaderboardTeam[];
   computed_at: string;
+  scope: LeaderboardScope;
+}
+
+/** 'global' = teams in the global game; otherwise the members of one league. */
+export type LeaderboardScope = { kind: 'global' } | { kind: 'league'; league_id: string; name: string };
+
+export interface RosterPickRow {
+  drep_id: string;
+  underdog_multiplier: number;
+  swapped_from?: string | null;
+  swapped_from_multiplier?: number | null;
+  swap_epoch?: number | null;
 }
 
 export interface RosterRow {
   stake_address: string;
   team_name: string | null;
   created_at: string;
-  picks: Array<{ drep_id: string; underdog_multiplier: number }>;
+  in_global?: boolean;
+  picks: RosterPickRow[];
+}
+
+/** Points a DRep earned in epochs [from, to). */
+function pointsBetween(byEpoch: Record<number, number> | undefined, from: number, to: number): number {
+  let sum = 0;
+  for (const [e, pts] of Object.entries(byEpoch ?? {})) {
+    const epoch = Number(e);
+    if (epoch >= from && epoch < to) sum += pts;
+  }
+  return sum;
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -57,12 +85,28 @@ export function rankTeams(
   rosters: RosterRow[],
   points: Map<string, number>,
   people: Map<string, { name: string | null; image: string | null }>,
-  me: string | null
+  me: string | null,
+  byEpoch: Map<string, Record<number, number>> = new Map()
 ): LeaderboardTeam[] {
   const teams = rosters.map((r) => {
-    const picks = r.picks.map((p) => {
-      const pts = points.get(p.drep_id) ?? 0;
+    const picks = r.picks.map((p): LeaderboardPick => {
       const who = people.get(p.drep_id);
+      if (p.swapped_from && p.swap_epoch != null) {
+        // The slot keeps the retired DRep's points from before the swap and the replacement's after it.
+        const oldPts = pointsBetween(byEpoch.get(p.swapped_from), -Infinity, p.swap_epoch);
+        const newPts = pointsBetween(byEpoch.get(p.drep_id), p.swap_epoch, Infinity);
+        const oldMult = p.swapped_from_multiplier ?? 1;
+        return {
+          drep_id: p.drep_id,
+          name: who?.name ?? null,
+          image: who?.image ?? null,
+          points: newPts,
+          multiplier: p.underdog_multiplier,
+          contribution: round1(pickContribution(oldPts, oldMult) + pickContribution(newPts, p.underdog_multiplier)),
+          swapped_from: { drep_id: p.swapped_from, name: people.get(p.swapped_from)?.name ?? null, points: oldPts, multiplier: oldMult, swap_epoch: p.swap_epoch },
+        };
+      }
+      const pts = points.get(p.drep_id) ?? 0;
       return { drep_id: p.drep_id, name: who?.name ?? null, image: who?.image ?? null, points: pts, multiplier: p.underdog_multiplier, contribution: round1(pickContribution(pts, p.underdog_multiplier)) };
     });
     return { row: r, picks, points: round1(picks.reduce((s, p) => s + p.contribution, 0)) };
@@ -72,23 +116,40 @@ export function rankTeams(
   let rank = 0;
   return teams.map((t, i) => {
     if (i === 0 || t.points !== teams[i - 1].points) rank = i + 1;
-    return { rank, name: teamName(t.row), mine: me !== null && t.row.stake_address === me, points: t.points, picks: t.picks.sort((a, b) => b.contribution - a.contribution) };
+    return { rank, name: teamName(t.row), owner: t.row.stake_address, mine: me !== null && t.row.stake_address === me, points: t.points, picks: t.picks.sort((a, b) => b.contribution - a.contribution) };
   });
 }
 
-async function loadRosters(seasonNumber: number): Promise<RosterRow[]> {
-  const { data, error } = await supabaseAdmin
+const PICK_COLUMNS = 'drep_id, underdog_multiplier, swapped_from, swapped_from_multiplier, swap_epoch';
+
+export async function loadRosters(seasonNumber: number): Promise<RosterRow[]> {
+  const first = await supabaseAdmin
     .from('fantasy_rosters')
-    .select('stake_address, team_name, created_at, fantasy_roster_picks(drep_id, underdog_multiplier)')
+    .select(`stake_address, team_name, created_at, in_global, fantasy_roster_picks(${PICK_COLUMNS})`)
     .eq('season_number', seasonNumber);
+  let data: unknown[] | null = first.data;
+  let error = first.error;
+  if (isMissingSchema(error)) {
+    // Before migration 014: every team is global and nothing has been swapped.
+    const legacy = await supabaseAdmin
+      .from('fantasy_rosters')
+      .select('stake_address, team_name, created_at, fantasy_roster_picks(drep_id, underdog_multiplier)')
+      .eq('season_number', seasonNumber);
+    data = legacy.data;
+    error = legacy.error;
+  }
   if (error) throw new Error(`Couldn't load game teams: ${error.message}`);
-  return (data ?? []).map((r) => ({
+  return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
     stake_address: r.stake_address as string,
     team_name: (r.team_name as string | null) ?? null,
     created_at: r.created_at as string,
-    picks: (r.fantasy_roster_picks as Array<{ drep_id: string; underdog_multiplier: number | string }>).map((p) => ({
-      drep_id: p.drep_id,
+    in_global: r.in_global === undefined ? true : Boolean(r.in_global),
+    picks: (r.fantasy_roster_picks as Array<Record<string, unknown>>).map((p) => ({
+      drep_id: p.drep_id as string,
       underdog_multiplier: Number(p.underdog_multiplier),
+      swapped_from: (p.swapped_from as string | null | undefined) ?? null,
+      swapped_from_multiplier: p.swapped_from_multiplier == null ? null : Number(p.swapped_from_multiplier),
+      swap_epoch: p.swap_epoch == null ? null : Number(p.swap_epoch),
     })),
   }));
 }
@@ -112,9 +173,11 @@ async function pickSeason(requested: number | null, now: Date): Promise<(DraftSe
 }
 
 const TTL_MS = 10 * 60 * 1000;
-const cache = new Map<string, { at: number; data: Omit<Leaderboard, 'teams'> & { rosters: RosterRow[]; points: Map<string, number>; people: Map<string, { name: string | null; image: string | null }> } }>();
+const cache = new Map<string, { at: number; data: Omit<Leaderboard, 'teams' | 'scope'> & { rosters: RosterRow[]; points: Map<string, number>; byEpoch: Map<string, Record<number, number>>; people: Map<string, { name: string | null; image: string | null }> } }>();
 
-export async function getLeaderboard(options: { season?: number | null; me?: string | null } = {}): Promise<Leaderboard | null> {
+export async function getLeaderboard(
+  options: { season?: number | null; me?: string | null; scope?: LeaderboardScope; members?: Set<string> } = {}
+): Promise<Leaderboard | null> {
   const key = String(options.season ?? 'current');
   let entry = cache.get(key);
   if (!entry || Date.now() - entry.at > TTL_MS) {
@@ -122,9 +185,13 @@ export async function getLeaderboard(options: { season?: number | null; me?: str
     if (!season) return null;
     const [rosters, cards] = await Promise.all([loadRosters(season.season_number), getCards()]);
     const points = new Map<string, number>();
+    const byEpoch = new Map<string, Record<number, number>>();
     if (season.status !== 'upcoming') {
       const data = await getSeasonData({ window: season.grid_window });
-      for (const s of data.standings) points.set(s.drep_id, s.points);
+      for (const s of data.standings) {
+        points.set(s.drep_id, s.points);
+        byEpoch.set(s.drep_id, s.by_epoch);
+      }
     }
     const people = new Map(cards.cards.map((c) => [c.drep_id, { name: c.name, image: c.image }]));
     const shown = {
@@ -136,9 +203,29 @@ export async function getLeaderboard(options: { season?: number | null; me?: str
       ends_at: season.ends_at,
       status: season.status,
     };
-    entry = { at: Date.now(), data: { season: shown, computed_at: new Date().toISOString(), rosters, points, people } };
+    entry = { at: Date.now(), data: { season: shown, computed_at: new Date().toISOString(), rosters, points, byEpoch, people } };
     cache.set(key, entry);
   }
-  const { rosters, points, people, ...meta } = entry.data;
-  return { ...meta, teams: rankTeams(rosters, points, people, options.me ?? null) };
+  const { rosters, points, byEpoch, people, ...meta } = entry.data;
+  const scope = options.scope ?? { kind: 'global' };
+  const shownRosters =
+    scope.kind === 'global' ? rosters.filter((r) => r.in_global !== false) : rosters.filter((r) => options.members?.has(r.stake_address));
+  return { ...meta, scope, teams: rankTeams(shownRosters, points, people, options.me ?? null, byEpoch) };
+}
+
+/** The leaderboard as sent to browsers: never includes stake addresses. */
+export function publicBoard(board: Leaderboard): Leaderboard {
+  return {
+    ...board,
+    teams: board.teams.map((t) => {
+      const copy = { ...t };
+      delete copy.owner;
+      return copy;
+    }),
+  };
+}
+
+/** Drop cached standings so a saved team or swap shows up right away. */
+export function clearLeaderboardCache(): void {
+  cache.clear();
 }

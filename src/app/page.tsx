@@ -155,6 +155,7 @@ const PATHS: Path[] = [
       { href: SECTIONS.draft.href, label: 'Draft your team', tip: SECTIONS.draft.blurb },
       { href: SECTIONS.season.href, label: 'Season standings', tip: SECTIONS.season.blurb },
       { href: '/leaderboard', label: 'Game leaderboard', tip: 'Every team’s score, pick by pick.' },
+      { href: '/leagues', label: 'Leagues', tip: 'Play your team against friends in public or private leagues. Bragging rights only.' },
     ],
   },
   {

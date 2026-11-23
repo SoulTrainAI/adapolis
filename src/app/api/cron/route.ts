@@ -5,6 +5,7 @@
  * Requires Authorization header with CRON_SECRET
  */
 
+import { finalizeEndedSeasons } from '@/lib/season/finalize';
 import { NextResponse } from 'next/server';
 import { syncDReps } from '@/lib/sync/sync-dreps';
 import { syncProposals } from '@/lib/sync/sync-proposals';
@@ -267,6 +268,16 @@ async function runPipeline(): Promise<void> {
       console.error(
         JSON.stringify({ event: 'cron_step_season_failed', error: error instanceof Error ? error.message : String(error) })
       );
+    }
+
+    try {
+      await step('finalize_seasons', async () => {
+        const done = await finalizeEndedSeasons();
+        return { finalized: done };
+      });
+    } catch (error) {
+      demoteError();
+      console.error(JSON.stringify({ event: 'cron_step_finalize_failed', error: error instanceof Error ? error.message : String(error) }));
     }
 
     // Discord feeds are opt-in: set DISCORD_FEEDS=on once the server is set up.

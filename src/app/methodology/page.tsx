@@ -560,8 +560,9 @@ pick contribution = points × multiplier   if points > 0
               </>,
               <>
                 <strong>Snapshots:</strong> the drafting teams and delegators
-                eligible to claim are recorded at the season&apos;s last epoch and
-                published, so anyone can check them.
+                eligible to claim are recorded when the season ends. Each wallet
+                sees its own claims and the number of copies per card is public;
+                which wallet owns which team stays private.
               </>,
               <>
                 <strong>On the card:</strong> the card front and back image;

@@ -15,6 +15,7 @@ const Body = z.object({
     .nullable()
     .default(null),
   drep_ids: z.array(z.string().regex(/^drep1[02-9ac-hj-np-z]{20,80}$/)).length(ROSTER_SIZE),
+  in_global: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {

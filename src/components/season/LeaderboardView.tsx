@@ -1,7 +1,7 @@
 'use client';
 
 import { TIPS } from '@/lib/site/glossary';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Loader2, Trophy } from 'lucide-react';
@@ -55,7 +55,17 @@ function TeamRow({ team, live }: { team: LeaderboardTeam; live: boolean }) {
         <tbody className="text-slate-200">
           {team.picks.map((p) => (
             <tr key={p.drep_id} className="border-t border-slate-800/60">
-              <td className="max-w-[12rem] truncate px-4 py-1.5">{p.name ?? `${p.drep_id.slice(0, 14)}…`}</td>
+              <td className="max-w-[12rem] truncate px-4 py-1.5">
+                {p.name ?? `${p.drep_id.slice(0, 14)}…`}
+                {p.swapped_from && (
+                  <span
+                    className="block truncate text-xs text-slate-400"
+                    title={`Replaced ${p.swapped_from.name ?? p.swapped_from.drep_id} (retired) at epoch ${p.swapped_from.swap_epoch}. Their ${p.swapped_from.points} points from before stay on the team at ${p.swapped_from.multiplier.toFixed(2)}×.`}
+                  >
+                    replaced {p.swapped_from.name ?? 'a retired DRep'} (+{p.swapped_from.points})
+                  </span>
+                )}
+              </td>
               <td className="px-2 text-right">{p.points}</td>
               <td className="px-2 text-right">{p.multiplier.toFixed(2)}×</td>
               <td className="px-4 text-right font-semibold text-white">{p.contribution}</td>
@@ -67,19 +77,34 @@ function TeamRow({ team, live }: { team: LeaderboardTeam; live: boolean }) {
   );
 }
 
-export function LeaderboardView() {
+async function globalBoard(): Promise<Leaderboard> {
+  const r = await fetch('/api/fantasy/leaderboard');
+  const body = (await r.json()) as Leaderboard & { error?: string };
+  if (!r.ok) throw new Error(body.error ?? `HTTP ${r.status}`);
+  return body;
+}
+
+/**
+ * A season leaderboard: the global game by default, or a league's when
+ * `fetchBoard` and `title` are given (`children` adds league controls).
+ */
+export function LeaderboardView({
+  fetchBoard = globalBoard,
+  title = 'Global game leaderboard',
+  children,
+}: {
+  fetchBoard?: () => Promise<Leaderboard>;
+  title?: string;
+  children?: ReactNode;
+} = {}) {
   const [data, setData] = useState<Leaderboard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    fetch('/api/fantasy/leaderboard')
-      .then(async (r) => {
-        const body = (await r.json()) as Leaderboard & { error?: string };
-        if (!r.ok) throw new Error(body.error ?? `HTTP ${r.status}`);
-        setData(body);
-      })
+    fetchBoard()
+      .then(setData)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
-  }, []);
+  }, [fetchBoard]);
 
   useEffect(() => {
     load();
@@ -111,11 +136,13 @@ export function LeaderboardView() {
       <header className="space-y-2">
         <p className="text-sm uppercase tracking-wider text-violet-300">Season {season.season_number}</p>
         <h1 className="flex items-center gap-3 text-4xl font-bold text-white">
-          <Trophy className="h-8 w-8 text-brand-gold" /> Game leaderboard
+          <Trophy className="h-8 w-8 text-brand-gold" /> {title}
         </h1>
+        {children}
         <p className="text-slate-300">
           Team points are each drafted DRep&apos;s season points, with gains multiplied by the underdog multiplier locked in when they were picked (losses count at 1×). Season points come only from
           voting, explaining votes and voting on time, never from how a DRep votes.
+          {data.scope.kind === 'global' && ' Only teams in the global game appear here; the top 3 win Season Trophy NFTs.'}
         </p>
         <p className="text-sm text-slate-400">
           {statusText} · {teams.length} team{teams.length === 1 ? '' : 's'}
