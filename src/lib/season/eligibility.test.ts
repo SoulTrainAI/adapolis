@@ -20,4 +20,11 @@ describe('prize eligibility', () => {
     expect(describeEligibility(d('drep1abc', 650, 40), 672, 670).eligible_now).toBe(false);
     expect(describeEligibility(d('drep1abc', 650, 4000), 672, 670).eligible_now).toBe(true);
   });
+
+  it('treats a delegation made this epoch as on track while the snapshot catches up', () => {
+    const fresh = { drep: 'drep1abc', since_epoch: 669, snapshot_ada: 0, wallet_ada: 500 };
+    expect(describeEligibility(fresh, 672, 669).eligible_now).toBe(true);
+    expect(describeEligibility(fresh, 672, 669).message).toMatch(new RegExp('next epoch'));
+    expect(describeEligibility({ ...fresh, wallet_ada: 50 }, 672, 669).eligible_now).toBe(false);
+  });
 });
