@@ -36,6 +36,10 @@ bonus for delegating to any DRep: where someone delegates is personal.
 - **Season 1 = epochs 678–683, starting 4 Jan 2027.** Every later season follows
   directly. Seasons before 678 were public previews.
 - Season 1 results form the **Genesis set** of Champion Cards.
+- **Preseason (Jason, 2026-11-23): epochs 672–677 (5 Dec – 4 Jan) are season 0,**
+  fully playable (draft, leagues, swaps, leaderboard, end-of-season snapshots) so
+  everything can be tested for real. Its Champion Cards and Trophies are shown as
+  tests and never minted. Season 1 starts 4 Jan with the alpha launch.
 
 ### 1.4 Joining — Decided
 

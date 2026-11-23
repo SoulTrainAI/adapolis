@@ -9,6 +9,7 @@ import {
   windowForEpoch,
   underdogMultipliers,
   type PointBreakdown,
+  type PointEvent,
 } from './points';
 
 export interface SeasonStanding {
@@ -21,6 +22,7 @@ export interface SeasonStanding {
   actions_missed: number;
   /** Points per epoch, for scoring a slot whose DRep was swapped mid-season. */
   by_epoch: Record<number, number>;
+  events: PointEvent[];
   underdog: number;
   amount_lovelace: number;
   delegator_count: number;
@@ -79,6 +81,7 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
     drep_id: v.drep_id,
     proposal_id: v.proposal_id,
     epoch: blockTimeToEpoch(Math.floor(new Date(v.block_time).getTime() / 1000)),
+    time: Math.floor(new Date(v.block_time).getTime() / 1000),
     rationale_url: v.rationale_url,
     rationale_hash: v.rationale_hash,
   }));
@@ -117,6 +120,7 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
         votes_cast: p.votes_cast,
         actions_missed: p.actions_missed,
         by_epoch: p.by_epoch,
+        events: p.events,
         underdog: underdog.get(p.drep_id) ?? 1,
         amount_lovelace: s?.amount_lovelace ?? 0,
         delegator_count: s?.delegator_count ?? 0,

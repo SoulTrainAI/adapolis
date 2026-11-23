@@ -44,7 +44,7 @@ describe('fantasy leaderboard scoring', () => {
         picks: [{ drep_id: 'new', underdog_multiplier: 1.5, swapped_from: 'old', swapped_from_multiplier: 1, swap_epoch: 680 }],
       },
     ];
-    const byEpoch = new Map([
+    const byEpoch = new Map<string, Record<number, number>>([
       ['old', { 678: 20, 679: 10, 680: 99 }], // 99 after retiring must not count
       ['new', { 679: 50, 680: 10, 681: 10 }], // 50 before the swap must not count
     ]);

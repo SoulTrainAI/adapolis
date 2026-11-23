@@ -26,7 +26,7 @@ export const SECTIONS = {
   season: {
     href: '/season',
     label: 'Season',
-    blurb: 'This season’s DRep standings and the game leaderboard. Seasons are 6 epochs, about a month.',
+    blurb: 'Watch the top 20 DReps race through the season, with live commentary. Seasons are 6 epochs, about a month.',
   },
   draft: {
     href: '/draft',

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { Award } from 'lucide-react';
 import type { Claim } from '@/lib/season/champions';
+import { seasonLabel } from '@/lib/season/points';
 
 const WHY: Record<Claim['claimant_type'], string> = {
   drep: 'your own Champion Card (DRep copies)',
@@ -38,14 +39,16 @@ export function ClaimsSection() {
           {claims.map((c) => (
             <li key={`${c.season_number}-${c.drep_id}-${c.claimant_type}`} className="flex flex-wrap items-center gap-3 border border-brand-gold/30 bg-amber-500/5 px-4 py-3">
               <span className="font-semibold text-white">
-                Season {c.season_number} · {c.name ?? `${c.drep_id.slice(0, 14)}…`}
+                {seasonLabel(c.season_number)} · {c.name ?? `${c.drep_id.slice(0, 14)}…`}
               </span>
               {c.edition && <span className="text-sm text-amber-200">{EDITION[c.edition]}</span>}
               <span className="text-sm text-slate-400">
                 {c.copies} cop{c.copies === 1 ? 'y' : 'ies'}, because {WHY[c.claimant_type]}
               </span>
               <span className="ml-auto text-xs text-slate-400">
-                {c.claimed_at
+                {c.season_number === 0
+                  ? 'Preseason test card: shows how claiming will work, never minted'
+                  : c.claimed_at
                   ? 'Claimed'
                   : c.claim_closes_at
                     ? `Claim by ${format(new Date(c.claim_closes_at), 'PP')} once claiming opens`

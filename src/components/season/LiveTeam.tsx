@@ -10,6 +10,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import type { SwapState } from '@/lib/season/fantasy';
 import { cardName } from '@/components/cards/TradingCard';
 import { useCards } from '@/components/cards/useCards';
+import { seasonLabel } from '@/lib/season/points';
 
 export function LiveTeam() {
   const [state, setState] = useState<SwapState | null>(null);
@@ -68,7 +69,7 @@ export function LiveTeam() {
   return (
     <div className="mt-3 rounded-xl border border-emerald-700/50 bg-emerald-950/20 p-4 text-sm text-slate-200">
       <p className="font-semibold text-white">
-        Season {state.season.season_number} is live. Your team is locked:
+        {seasonLabel(state.season.season_number)} is live. Your team is locked:
       </p>
       <ul className="mt-2 flex flex-wrap gap-2">
         {state.roster.picks.map((p) => {

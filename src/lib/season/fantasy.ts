@@ -15,19 +15,12 @@ import { toDisplayProfile } from '@/lib/metadata/profile-display';
 import { getSeasonData } from './data';
 import { clearLeaderboardCache } from './leaderboard';
 import { isMissingSchema } from './schema';
-import { seasonOneStartEpoch, underdogScale, windowEpochs, windowForEpoch } from './points';
+import { epochStart, seasonOneStartEpoch, underdogScale, windowEpochs, windowForEpoch } from './points';
+
+export { epochStart };
 
 export const ROSTER_SIZE = 5;
 const DRAFT_LOCK_MS = 24 * 60 * 60 * 1000;
-
-// Shelley-era epochs are exactly 5 days from epoch 208 (checked against Koios epoch_info).
-const SHELLEY_EPOCH = 208;
-const SHELLEY_START_S = 1596059091;
-const EPOCH_S = 432_000;
-
-export function epochStart(epoch: number): Date {
-  return new Date((SHELLEY_START_S + (epoch - SHELLEY_EPOCH) * EPOCH_S) * 1000);
-}
 
 export interface DraftSeason {
   season_number: number;
@@ -63,7 +56,8 @@ export async function draftSeason(now = new Date()): Promise<(DraftSeason & { re
   if (launch === null) return null;
   const launchWindow = windowForEpoch(launch);
   const currentWindow = windowForEpoch(await fetchCurrentEpoch());
-  let n = Math.max(1, currentWindow - launchWindow + 1);
+  // Season 0 is the Preseason: playable before Season 1, never minted.
+  let n = Math.max(0, currentWindow - launchWindow + 1);
   while (new Date(seasonFor(n, launchWindow).draft_locks_at) <= now) n++;
   const season = seasonFor(n, launchWindow);
   // Multipliers are scaled on the latest finished window, so they hold still while people

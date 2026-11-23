@@ -54,18 +54,38 @@ export function seasonOneStartEpoch(): number | null {
   return windowEpochs(windowForEpoch(epoch)).start;
 }
 
-/** Season number for a window, or null while it is a preview. */
+/**
+ * Season number for a window: 1, 2, … from launch; 0 for the Preseason (the
+ * window just before Season 1: fully playable, test Champion Cards only, never
+ * minted; Jason, 2026-11-23); null for earlier preview windows.
+ */
 export function seasonNumber(window: number): number | null {
   const launch = seasonOneStartEpoch();
   if (launch === null) return null;
   const n = window - windowForEpoch(launch) + 1;
-  return n >= 1 ? n : null;
+  return n >= 0 ? n : null;
+}
+
+/** "Preseason", "Season 3", or "Warm-up" for a preview window. */
+export function seasonLabel(n: number | null): string {
+  return n === null ? 'Warm-up' : n === 0 ? 'Preseason' : `Season ${n}`;
+}
+
+// Shelley-era epochs are exactly 5 days from epoch 208 (checked against Koios epoch_info).
+const SHELLEY_EPOCH = 208;
+const SHELLEY_START_S = 1596059091;
+const EPOCH_S = 432_000;
+
+export function epochStart(epoch: number): Date {
+  return new Date((SHELLEY_START_S + (epoch - SHELLEY_EPOCH) * EPOCH_S) * 1000);
 }
 
 export interface SeasonVote {
   drep_id: string;
   proposal_id: string;
   epoch: number;
+  /** Block time in unix seconds, for the race timeline (optional). */
+  time?: number;
   rationale_url: string | null;
   rationale_hash: string | null;
 }
@@ -84,6 +104,15 @@ export interface PointBreakdown {
   streak: number;
 }
 
+/** One scoring moment, for the season race. t is unix seconds. */
+export interface PointEvent {
+  t: number;
+  kind: keyof PointBreakdown;
+  pts: number;
+  /** Streak length for streak events. */
+  run?: number;
+}
+
 export interface DRepSeasonPoints {
   drep_id: string;
   points: number;
@@ -91,6 +120,7 @@ export interface DRepSeasonPoints {
   votes_cast: number;
   actions_missed: number;
   by_epoch: Record<number, number>;
+  events: PointEvent[];
 }
 
 function wasRegisteredAt(periods: RegistrationPeriod[], epoch: number): boolean {
@@ -120,9 +150,13 @@ export function computeSeasonPoints(
   return drepIds.map((drepId) => {
     const breakdown: PointBreakdown = { votes: 0, rationales: 0, fresh: 0, early: 0, missed: 0, streak: 0 };
     const byEpoch: Record<number, number> = {};
-    const add = (epoch: number, key: keyof PointBreakdown, pts: number) => {
+    const events: PointEvent[] = [];
+    // Votes happen at their block time; misses and streaks land as an epoch closes.
+    const epochEnd = (e: number) => Math.floor(epochStart(e + 1).getTime() / 1000) - 1;
+    const add = (epoch: number, key: keyof PointBreakdown, pts: number, t: number = epochEnd(epoch), run?: number) => {
       breakdown[key] += pts;
       byEpoch[epoch] = (byEpoch[epoch] ?? 0) + pts;
+      events.push(run === undefined ? { t, kind: key, pts } : { t, kind: key, pts, run });
     };
     const votedEpochs = new Set<number>();
     const missedEpochs = new Set<number>();
@@ -142,14 +176,15 @@ export function computeSeasonPoints(
 
       votesCast++;
       votedEpochs.add(v.epoch);
-      add(v.epoch, 'votes', POINT_RULES.vote);
+      const t = v.time ?? epochEnd(v.epoch);
+      add(v.epoch, 'votes', POINT_RULES.vote, t);
       if (v.rationale_url) {
-        add(v.epoch, 'rationales', POINT_RULES.rationale);
-        if (isFresh) add(v.epoch, 'fresh', POINT_RULES.freshRationale);
+        add(v.epoch, 'rationales', POINT_RULES.rationale, t);
+        if (isFresh) add(v.epoch, 'fresh', POINT_RULES.freshRationale, t);
       }
       const lastEpoch = p.end ?? p.expiration;
       if (lastEpoch !== null && v.epoch <= p.start + Math.floor((lastEpoch - p.start) / 2)) {
-        add(v.epoch, 'early', POINT_RULES.early);
+        add(v.epoch, 'early', POINT_RULES.early, t);
       }
     }
 
@@ -169,12 +204,13 @@ export function computeSeasonPoints(
       if (missedEpochs.has(e)) run = 0;
       else if (votedEpochs.has(e)) {
         run++;
-        add(e, 'streak', POINT_RULES.streakStep * Math.min(run, POINT_RULES.streakCap));
+        add(e, 'streak', POINT_RULES.streakStep * Math.min(run, POINT_RULES.streakCap), epochEnd(e), run);
       }
     }
 
     const points = Object.values(breakdown).reduce((a, b) => a + b, 0);
-    return { drep_id: drepId, points, breakdown, votes_cast: votesCast, actions_missed: actionsMissed, by_epoch: byEpoch };
+    events.sort((a, b) => a.t - b.t);
+    return { drep_id: drepId, points, breakdown, votes_cast: votesCast, actions_missed: actionsMissed, by_epoch: byEpoch, events };
   });
 }
 

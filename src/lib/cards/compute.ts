@@ -10,7 +10,7 @@
 import { calculateDampener, type ProposalWindow } from '@/lib/scoring/govscore-v1';
 import { wilsonLowerBound } from '@/lib/scoring/confidence';
 import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
-import {
+import { seasonLabel,
   computeSeasonPoints,
   POINT_RULES,
   seasonNumber,
@@ -43,7 +43,7 @@ export interface CardComputation {
 
 export function windowLabel(window: number): string {
   const n = seasonNumber(window);
-  if (n !== null) return `Season ${n}`;
+  if (n !== null) return seasonLabel(n);
   const { start, end } = windowEpochs(window);
   return `Epochs ${start}–${end}`;
 }

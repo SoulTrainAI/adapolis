@@ -1,7 +1,11 @@
--- Leagues, global opt-in, retirement swaps and season-end snapshots (docs/GAME.md)
+-- Preseason, leagues, global opt-in, retirement swaps and season-end snapshots (docs/GAME.md)
 -- Forward-only and safe to run more than once. Public reads; all writes go
 -- through the server with the service role. No existing data is changed.
 -- Created: 2026-11-22
+
+-- 0. Season 0 is the Preseason (playable before Season 1, never minted).
+ALTER TABLE seasons DROP CONSTRAINT IF EXISTS seasons_season_number_check;
+ALTER TABLE seasons ADD CONSTRAINT seasons_season_number_check CHECK (season_number >= 0);
 
 -- 1. Global game opt-in (only global teams compete for Season Trophies).
 ALTER TABLE fantasy_rosters ADD COLUMN IF NOT EXISTS in_global BOOLEAN NOT NULL DEFAULT TRUE;

@@ -6,6 +6,7 @@
  * up, never which side is winning (Cardinal Rule).
  */
 
+import { seasonLabel } from '@/lib/season/points';
 import { getHotTopics, type HotTopic } from '@/lib/hot-topics/data';
 import { getCards } from '@/lib/cards/data';
 import { getSeasonData } from '@/lib/season/data';
@@ -143,7 +144,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
     build: async () => {
       const top = season.standings.slice(0, 5);
       const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
-      const label = season.season === null ? `Preview season (epochs ${season.start_epoch}–${season.end_epoch})` : `Season ${season.season}`;
+      const label = season.season === null ? `Warm-up (epochs ${season.start_epoch}–${season.end_epoch})` : seasonLabel(season.season);
       const lines = top.map((s, i) => `${medals[i]} **${s.profile.name ?? `${s.drep_id.slice(0, 14)}…`}** · ${s.points} pts · ${s.votes_cast} votes`);
       const board = await getLeaderboard().catch(() => null);
       const fantasy =
@@ -180,7 +181,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
         ...ping('Season Alerts'),
         embeds: [
           {
-            title: `🏟️ The Season ${draft.season_number} draft is open`,
+            title: `🏟️ The ${seasonLabel(draft.season_number)} draft is open`,
             url: `${SITE}/draft`,
             color: COLORS.green,
             description: `Pick 5 DReps for epochs ${draft.start_epoch}–${draft.end_epoch}. Smaller DReps carry an underdog multiplier. Rosters lock ${lockText}. Free to play.`,
@@ -194,7 +195,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
         channel: 'season-feed',
         build: async () => ({
           ...ping('Season Alerts'),
-          embeds: [{ title: `⏰ Season ${draft.season_number} rosters lock in under 24 hours`, url: `${SITE}/draft`, color: COLORS.red, description: `Lock: ${lockText}. Last chance to draft or change your team.` }],
+          embeds: [{ title: `⏰ ${seasonLabel(draft.season_number)} rosters lock in under 24 hours`, url: `${SITE}/draft`, color: COLORS.red, description: `Lock: ${lockText}. Last chance to draft or change your team.` }],
         }),
       });
     }

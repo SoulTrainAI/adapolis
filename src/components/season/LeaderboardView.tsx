@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { Loader2, Trophy } from 'lucide-react';
 import type { Leaderboard, LeaderboardTeam } from '@/lib/season/leaderboard';
+import { seasonLabel } from '@/lib/season/points';
 
 function Initials({ name, image }: { name: string | null; image: string | null }) {
   if (image) {
@@ -134,7 +135,7 @@ export function LeaderboardView({
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <p className="text-sm uppercase tracking-wider text-violet-300">Season {season.season_number}</p>
+        <p className="text-sm uppercase tracking-wider text-violet-300">{seasonLabel(season.season_number)}</p>
         <h1 className="flex items-center gap-3 text-4xl font-bold text-white">
           <Trophy className="h-8 w-8 text-brand-gold" /> {title}
         </h1>
@@ -152,7 +153,7 @@ export function LeaderboardView({
       {mine && (
         <div className="flex items-center justify-between border border-brand-gold/60 bg-amber-500/10 px-4 py-3">
           <p className="text-amber-100">
-            Your team <strong>{mine.name}</strong> is {live ? <>#{mine.rank} with {mine.points} pts</> : <>entered for Season {season.season_number}</>}.
+            Your team <strong>{mine.name}</strong> is {live ? <>#{mine.rank} with {mine.points} pts</> : <>entered for the {seasonLabel(season.season_number)}</>}.
           </p>
           <Link href="/draft" className="text-sm text-amber-200 hover:text-white">
             {season.status === 'upcoming' ? 'Edit team →' : 'View draft →'}

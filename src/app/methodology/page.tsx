@@ -426,9 +426,10 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
           <Bullets
             items={[
               <>
-                <strong>Seasons:</strong> {SEASON_LENGTH_EPOCHS} epochs each.
-                Season 1 is epochs 678–683 (from 4 January 2027); each season
-                follows straight on.
+                <strong>Seasons:</strong> {SEASON_LENGTH_EPOCHS} epochs each. The
+                Preseason (epochs 672–677, from 5 December 2026) is fully playable
+                but its Champion Cards are tests, never minted. Season 1 is epochs
+                678–683 (from 4 January 2027); each season follows straight on.
               </>,
               <>
                 <strong>Free to play.</strong> Connect a Cardano wallet and sign

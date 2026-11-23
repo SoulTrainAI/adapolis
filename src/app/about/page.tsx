@@ -202,8 +202,9 @@ export default function AboutPage() {
           <Bullets
             items={[
               <>
-                <B>6 epochs, about a month.</B> Season 1 runs epochs 678–683, starting 4 January 2027, and every season
-                after follows straight on.
+                <B>6 epochs, about a month.</B> The <B>Preseason</B> (epochs 672–677, 5 December – 4 January) is fully
+                playable: draft, leagues, leaderboards and test Champion Cards, but nothing is minted. Season 1 (epochs
+                678–683) starts 4 January 2027 with the alpha launch, and every season after follows straight on.
               </>,
               <>
                 <B>Draft any time before the lock.</B> The next season&apos;s draft is always open. Change your picks as
@@ -287,7 +288,8 @@ export default function AboutPage() {
           <p>
             At the end of every season, the top 10 DReps by season points are preserved as Champion Cards: Cardano NFTs of
             their card exactly as it stood at the season&apos;s final whistle. The live card on this site keeps evolving;
-            a Champion Card never changes. <B>Season 1&apos;s Champion Cards are the Genesis set.</B>
+            a Champion Card never changes. <B>Season 1&apos;s Champion Cards are the Genesis set.</B> The Preseason
+            produces test Champion Cards so you can see how it works; they are never minted.
           </p>
 
           <H3>Who gets one</H3>

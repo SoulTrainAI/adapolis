@@ -10,6 +10,7 @@ import type { CardSummary } from '@/lib/cards/types';
 import { TradingCard } from '@/components/cards/TradingCard';
 import { placeholderCard, useCards } from '@/components/cards/useCards';
 import { LiveTeam } from './LiveTeam';
+import { seasonLabel } from '@/lib/season/points';
 
 type Response = ({ enabled: true } & DraftData) | { enabled: false };
 type Sort = 'points' | 'projection' | 'form' | 'underdog' | 'smallest' | 'drafted';
@@ -174,7 +175,7 @@ export function DraftBoard() {
     <div className="space-y-6">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-wider text-violet-300">
-          Season {season.season_number} · epochs {season.start_epoch}–{season.end_epoch}
+          {seasonLabel(season.season_number)} · epochs {season.start_epoch}–{season.end_epoch}
         </p>
         <h1 className="text-4xl font-bold text-white">Draft your team</h1>
         <LiveTeam />
