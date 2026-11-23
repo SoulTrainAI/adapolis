@@ -11,7 +11,12 @@ const MIN_SENTENCE = 25;
 
 function clean(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  const text = value.replace(/\s+/g, ' ').trim().replace(new RegExp('^[-–—•*·>#\\s]+'), '');
+  const text = value
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(new RegExp('^[-–—•*·>#\\s]+'), '')
+    // Bilingual bios often open with a language tag: "EN …", "[ES] …", "PT: …".
+    .replace(new RegExp('^\\[?(EN|ES|PT|FR|DE|IT|JA|JP|KO|ZH|RU|UA|NL|PL|TR|VI)\\]?[:\\s]+(?=\\S)'), '');
   return text || null;
 }
 

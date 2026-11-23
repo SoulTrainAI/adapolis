@@ -6,6 +6,11 @@ describe('cardQuote', () => {
     expect(cardQuote(['- Professional accountant and auditor for 12 years.'])).toBe('Professional accountant and auditor for 12 years.');
   });
 
+  it('drops a leading language tag', () => {
+    expect(cardQuote(['EN Blockchain tech only helps if it is truly decentralized.'])).toBe('Blockchain tech only helps if it is truly decentralized.');
+    expect(cardQuote(['[ES] Transparencia en cada voto que emito.'])).toBe('Transparencia en cada voto que emito.');
+  });
+
   it('keeps a short text whole', () => {
     expect(cardQuote(['Show up, explain every vote.'])).toBe('Show up, explain every vote.');
   });
