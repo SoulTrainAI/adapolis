@@ -670,7 +670,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
 
         {/* Links and record, pinned to the bottom */}
         <div className="mt-auto space-y-[0.8cqw]">
-          <div className="flex flex-wrap items-center" style={{ gap: `${cq(0.8)} ${cq(2)}`, fontSize: cq(2.7) }}>
+          <div className="flex items-center overflow-hidden whitespace-nowrap" style={{ gap: cq(2), fontSize: cq(2.7) }}>
             <a href={profileHref} className="font-semibold text-amber-200 hover:text-white">
               Full profile →
             </a>
@@ -679,8 +679,8 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
                 Delegate <ExternalLink style={icon(2.6)} />
               </a>
             )}
-            {links.slice(0, 3).map((l) => (
-              <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex max-w-[30cqw] items-center text-slate-200 hover:text-white" style={{ gap: cq(0.6) }}>
+            {links.slice(0, 2).map((l) => (
+              <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-w-0 max-w-[24cqw] items-center text-slate-200 hover:text-white" style={{ gap: cq(0.6) }}>
                 <Globe className="flex-shrink-0 text-slate-400" style={icon(2.6)} />
                 <span className="truncate">{l.label}</span>
               </a>
