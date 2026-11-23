@@ -2,11 +2,12 @@
 
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
-import { X_HANDLE, X_URL } from '@/lib/site/social';
-import { Logo } from '@/components/brand/Logo';
+import { DISCORD_URL, X_HANDLE, X_URL } from '@/lib/site/social';
+import { LogoMark } from '@/components/brand/Logo';
 
 const WALLET_ADDRESS = 'addr1q9gajv8k3qvl59z5knpyypecf3s6mhdrpr9xd8jsd5y5fsqpy0t8a58zxqqup43d84ju95m62dqrwvdz7s6t429yx6hs56g2mm';
 
+/** One row: mark, donation address (copyable), community links. Wraps only on small screens. */
 export function Footer() {
   const [copied, setCopied] = useState(false);
 
@@ -16,40 +17,30 @@ export function Footer() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const link = 'text-slate-400 transition-colors hover:text-white';
   return (
     <footer className="bg-brand-navy">
       <div className="brand-hairline h-px w-full opacity-60" />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-        <div className="mb-5 flex justify-center">
-          <Logo size={44} textClass="text-2xl" />
-        </div>
-        <p className="text-sm text-slate-400 mb-2">Support ADApolis — Donate ADA or CNTs:</p>
-        <div className="flex items-center justify-center gap-2">
-          <code className="text-xs sm:text-sm text-slate-300 font-mono break-all">
-            {WALLET_ADDRESS}
-          </code>
-          <button
-            onClick={handleCopy}
-            className="flex-shrink-0 p-1 text-slate-400 hover:text-slate-200 transition-colors"
-            title="Copy wallet address"
-            aria-label="Copy wallet address"
-          >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-4 text-sm sm:px-6 lg:px-8">
+        <span className="flex items-center gap-2 text-slate-300">
+          <LogoMark size={22} />© ADApolis
+        </span>
+        <span className="flex items-center gap-1.5 text-slate-400">
+          Donate ADA or CNTs:
+          <button type="button" onClick={handleCopy} className="flex items-center gap-1 font-mono text-slate-300 hover:text-white" title="Copy the full donation address">
+            {WALLET_ADDRESS.slice(0, 12)}…{WALLET_ADDRESS.slice(-6)}
+            {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
           </button>
-        </div>
-        <a
-          href={X_URL}
-          target="_blank"
-          rel="noopener noreferrer me"
-          className="mt-4 inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors"
-        >
-          <span aria-hidden className="text-base font-bold">𝕏</span> Follow {X_HANDLE}
+        </span>
+        <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={link}>
+          Discord
         </a>
-        <p className="mt-2 text-sm">
-          <a href="/drep" className="text-slate-400 hover:text-white">
-            Are you a DRep? Claim your card
-          </a>
-        </p>
+        <a href={X_URL} target="_blank" rel="noopener noreferrer me" className={link}>
+          {X_HANDLE}
+        </a>
+        <a href="/drep" className={link}>
+          DReps: claim your card
+        </a>
       </div>
     </footer>
   );

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { WalletSignIn } from '@/components/auth/WalletSignIn';
 import { Logo } from '@/components/brand/Logo';
 import { ThemeToggle } from './ThemeToggle';
+import { SocialIcons } from './SocialIcons';
 
 const LINKS: Array<[string, string]> = [
   ['/scoreboard', 'Scoreboard'],
@@ -42,6 +43,7 @@ export function Navbar() {
             );
           })}
         </div>
+        <SocialIcons className="hidden md:flex" />
         <ThemeToggle />
         <WalletSignIn />
       </div>
