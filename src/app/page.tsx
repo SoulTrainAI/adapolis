@@ -129,8 +129,8 @@ const PATHS: Path[] = [
     pitch: 'Your ADA votes through a DRep. Make sure it’s one that shows up and thinks like you.',
     links: [
       { href: SECTIONS.match.href, label: 'Find My DRep', tip: SECTIONS.match.blurb },
-      { href: SECTIONS.collection.href, label: 'Check your current DRep', tip: 'Connect your wallet to see who you delegate to and whether they’re still voting.' },
-      { href: SECTIONS.hotTopics.href, label: 'See what’s being voted on', tip: SECTIONS.hotTopics.blurb },
+      { href: SECTIONS.collection.href, label: 'Check your DRep', tip: 'Connect your wallet to see who you delegate to and whether they’re still voting.' },
+      { href: SECTIONS.hotTopics.href, label: 'What’s up for a vote', tip: SECTIONS.hotTopics.blurb },
     ],
   },
   {
