@@ -131,11 +131,14 @@ Shareable team images for X, "drafted by N teams" on DRep cards (live as
 "Teams" on the draft page), weekly Discord recap of top teams, breakout DReps
 and biggest underdog wins (partly live).
 
-### 1.15 Later — Open
+### 1.15 Later
 
-Delegator consistency points (staying with active DReps), a capped "Debater"
-bonus for verified Forum / Ask-a-DRep participation (see the session notes of
-2026-11-22). Both are scoring changes: Season 2 at the earliest.
+- **Debater bonus — Decided: no (Jason, 2026-11-25).** Forum and discussion
+  activity never earns points (it would reward spam and favour DReps on the
+  sites we can read). It feeds the DRep Overview and Hot Takes instead (display
+  only; see docs/PLAN-2026-11-25.md Phase 11).
+- Delegator consistency points (staying with active DReps): Open. A scoring
+  change, so Season 2 at the earliest.
 
 ---
 
