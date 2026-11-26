@@ -5,7 +5,7 @@ import { candidateUrls, isSafeHttpsUrl, parseAnchorBytes } from './anchor';
 describe('candidateUrls', () => {
   it('maps ipfs:// anchors onto public gateways', () => {
     const urls = candidateUrls('ipfs://bafkreiabc123');
-    expect(urls[0]).toBe('https://ipfs.io/ipfs/bafkreiabc123');
+    expect(urls[0]).toBe('https://ipfs.filebase.io/ipfs/bafkreiabc123');
     expect(urls.length).toBeGreaterThan(1);
   });
   it('keeps safe https anchors and drops everything else', () => {

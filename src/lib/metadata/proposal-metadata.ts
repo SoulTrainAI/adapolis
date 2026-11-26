@@ -6,14 +6,9 @@
  */
 
 import { cst } from '@meshsdk/core';
+import { IPFS_GATEWAYS } from '@/lib/utils/ipfs';
 
-const GATEWAYS = [
-  'https://ipfs.io/ipfs/',
-  'https://w3s.link/ipfs/',
-  'https://dweb.link/ipfs/',
-  'https://gateway.pinata.cloud/ipfs/',
-  'https://ipfs.blockfrost.dev/ipfs/',
-];
+const GATEWAYS = IPFS_GATEWAYS;
 const TIMEOUT_MS = 15_000;
 const MAX_BYTES = 1_000_000;
 

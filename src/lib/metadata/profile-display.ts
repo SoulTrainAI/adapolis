@@ -1,3 +1,5 @@
+import { PUBLIC_IPFS_GATEWAY } from '@/lib/utils/ipfs';
+
 /**
  * Turns stored CIP-119 metadata into what the scoreboard may display.
  *
@@ -10,7 +12,7 @@
 
 const MAX_LINKS = 8;
 const MAX_BIO_CHARS = 1500;
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
+const IPFS_GATEWAY = PUBLIC_IPFS_GATEWAY;
 
 export interface DisplayProfile {
   name: string | null;

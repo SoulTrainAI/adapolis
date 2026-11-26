@@ -9,8 +9,8 @@
  */
 
 import { blake2bHex } from 'blakejs';
+import { IPFS_GATEWAYS } from '@/lib/utils/ipfs';
 
-const IPFS_GATEWAYS = ['https://ipfs.io/ipfs/', 'https://dweb.link/ipfs/', 'https://w3s.link/ipfs/'];
 const TIMEOUT_MS = 8000;
 const MAX_BYTES = 512 * 1024;
 
