@@ -13,6 +13,12 @@ export interface ProfileOverride {
   bio: string | null;
   links: Array<{ label: string; url: string }> | null;
   updated_at?: string;
+  /** Moderation by ADApolis (migration 021): hides the field from both the claim and the chain. */
+  hide_image?: boolean;
+  hide_bio?: boolean;
+  moderation_note?: string | null;
+  moderated_at?: string | null;
+  edited_by_admin?: boolean;
 }
 
 export const OverrideInput = z.object({
@@ -47,16 +53,28 @@ export function sanitize(input: z.infer<typeof OverrideInput>): { ok: true; valu
 const TTL_MS = 60 * 1000;
 let cache: { at: number; map: Map<string, ProfileOverride> } | null = null;
 
-export async function getOverrides(): Promise<Map<string, ProfileOverride>> {
-  if (cache && Date.now() - cache.at < TTL_MS) return cache.map;
-  const { data, error } = await supabaseAdmin.from('drep_profile_overrides').select('drep_id, image, bio, links, updated_at');
+export async function getOverrides(force = false): Promise<Map<string, ProfileOverride>> {
+  if (!force && cache && Date.now() - cache.at < TTL_MS) return cache.map;
+  // '*' so moderation columns (migration 021) are read when present.
+  const { data, error } = await supabaseAdmin.from('drep_profile_overrides').select('*');
   if (error) {
     // Missing table (migration not run yet) means no overrides, not a broken site.
     if (error.code !== '42P01') console.error(JSON.stringify({ event: 'overrides_read_failed', error: error.message }));
     return new Map();
   }
   const map = new Map<string, ProfileOverride>();
-  for (const r of (data ?? []) as Array<ProfileOverride & { drep_id: string }>) map.set(r.drep_id, { image: r.image, bio: r.bio, links: r.links, updated_at: r.updated_at });
+  for (const r of (data ?? []) as Array<ProfileOverride & { drep_id: string }>)
+    map.set(r.drep_id, {
+      image: r.image,
+      bio: r.bio,
+      links: r.links,
+      updated_at: r.updated_at,
+      hide_image: r.hide_image === true,
+      hide_bio: r.hide_bio === true,
+      moderation_note: r.moderation_note ?? null,
+      moderated_at: r.moderated_at ?? null,
+      edited_by_admin: r.edited_by_admin === true,
+    });
   cache = { at: Date.now(), map };
   return map;
 }
@@ -68,9 +86,10 @@ export async function getOverride(drepId: string): Promise<ProfileOverride | nul
 /** Saves the DRep's edits. Resetting stores all-null fields (rows are never deleted). */
 export async function saveOverride(drepId: string, value: ProfileOverride | null): Promise<void> {
   const v = value ?? { image: null, bio: null, links: null };
-  const { error } = await supabaseAdmin
-    .from('drep_profile_overrides')
-    .upsert({ drep_id: drepId, image: v.image, bio: v.bio, links: v.links, updated_at: new Date().toISOString() });
+  const row = { drep_id: drepId, image: v.image, bio: v.bio, links: v.links, updated_at: new Date().toISOString() };
+  // The DRep's own save takes the row back from any admin test edit.
+  let { error } = await supabaseAdmin.from('drep_profile_overrides').upsert({ ...row, edited_by_admin: false });
+  if (error && /edited_by_admin/.test(error.message)) ({ error } = await supabaseAdmin.from('drep_profile_overrides').upsert(row));
   if (error) throw new Error(error.code === '42P01' ? MISSING_TABLE : `Couldn't save the card: ${error.message}`);
   cache = null;
 }
@@ -80,8 +99,8 @@ export function applyOverride<T extends { image: string | null; bio?: string | n
   if (!o) return profile;
   return {
     ...profile,
-    image: o.image ?? profile.image,
-    ...('bio' in profile ? { bio: o.bio ?? profile.bio } : {}),
+    image: o.hide_image ? null : (o.image ?? profile.image),
+    ...('bio' in profile ? { bio: o.hide_bio ? null : (o.bio ?? profile.bio) } : {}),
     ...('links' in profile ? { links: o.links ?? profile.links } : {}),
   };
 }
