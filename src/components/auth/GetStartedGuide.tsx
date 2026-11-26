@@ -52,7 +52,8 @@ export function GetStartedGuide({ open, initialStep, walletsFound, signedIn, onC
   useEffect(() => {
     if (!open) return;
     setDevice(detectDevice(navigator.userAgent, navigator.maxTouchPoints));
-    setStep(signedIn ? 'delegate' : walletsFound > 0 ? 'sign' : (initialStep ?? remembered() ?? 'welcome'));
+    // A step asked for explicitly wins; otherwise skip what this visitor has already done.
+    setStep(initialStep ?? (signedIn ? 'delegate' : walletsFound > 0 ? 'sign' : (remembered() ?? 'welcome')));
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
