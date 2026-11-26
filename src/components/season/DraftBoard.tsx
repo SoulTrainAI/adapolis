@@ -289,7 +289,7 @@ export function DraftBoard() {
         </div>
       ))}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section
           className={`order-2 lg:order-1 space-y-3 rounded-xl transition-colors ${dropTarget === 'pool' ? 'bg-rose-500/10 outline outline-2 outline-dashed outline-rose-400/60' : ''}`}
           {...dropOnPool}
