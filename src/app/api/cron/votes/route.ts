@@ -8,6 +8,13 @@ import { runNotifications } from '@/lib/notifications/generate';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
+let lastRun: { at: string; ok: boolean; result?: unknown; error?: string } | null = null;
+
+/** GET /api/cron/votes: when the hourly sync last ran on this server and what it did (no secrets). */
+export async function GET(): Promise<NextResponse> {
+  return NextResponse.json({ last_run: lastRun, note: lastRun ? undefined : 'No hourly run since the last deploy. Railway runs it at :20 past each hour.' });
+}
+
 /**
  * POST /api/cron/votes — the hourly light run (railway.json): new votes only,
  * then season points and cards are recomputed. The full pipeline at /api/cron
@@ -24,10 +31,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     const notifications = await runNotifications().catch((e: unknown) => ({ error: e instanceof Error ? e.message : String(e) }));
     const result = { votes, season: season.season, cards: cards.cards.length, notifications, ms: Date.now() - started };
     console.log(JSON.stringify({ event: 'cron_votes_done', ...result }));
+    lastRun = { at: new Date().toISOString(), ok: true, result };
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(JSON.stringify({ event: 'cron_votes_failed', error: message }));
+    lastRun = { at: new Date().toISOString(), ok: false, error: message };
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
