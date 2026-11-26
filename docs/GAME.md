@@ -50,7 +50,7 @@ bonus for delegating to any DRep: where someone delegates is personal.
 ### 1.5 Drafting — Decided
 
 - Pick exactly 5 different DReps. Any registered DRep can be picked, within a
-  **25-star Draft Cost** (Jason, 2026-11-25): each DRep costs 1–7 gold stars
+  **20-star Draft Cost** (Jason, 2026-11-26; first set at 25): each DRep costs 1–7 gold stars
   from their Projected Points (≤25 → 1, 26–50 → 2, 51–100 → 3, 101–150 → 4,
   151–200 → 5, 201–250 → 6, over 250 → 7), locked when picked (migration 020).
   Holding a DRep's All-Star NFT lowers their cost by 1 **only for teams that

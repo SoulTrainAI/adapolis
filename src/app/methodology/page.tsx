@@ -438,7 +438,7 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
               </>,
               <>
                 <strong>Draft {ROSTER_SIZE} different DReps</strong>, any
-                registered DRep, within a 25-star Draft Cost: each DRep costs 1–7
+                registered DRep, within a 20-star Draft Cost: each DRep costs 1–7
                 stars from their Projected Points (≤25 → 1, 26–50 → 2, 51–100 → 3,
                 101–150 → 4, 151–200 → 5, 201–250 → 6, over 250 → 7), locked when
                 picked. The next season&apos;s draft is

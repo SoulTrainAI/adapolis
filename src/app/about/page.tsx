@@ -139,11 +139,7 @@ export default function AboutPage() {
         <section className="mb-12 space-y-4 text-slate-300 leading-relaxed">
           <H2>What is ADApolis</H2>
           <p>
-            Cardano is an amazing thing: the world&apos;s first fully decentralized{" "}
-            <a href="https://en.wikipedia.org/wiki/Network_state" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-              Network State
-            </a>
-            , complete with its own{" "}
+            Cardano is an amazing thing, complete with its own{" "}
             <a href="https://cardano.org/constitution/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
               Constitution
             </a>{" "}
@@ -244,7 +240,7 @@ export default function AboutPage() {
               </>,
               <>
                 <B>Five different DReps</B>, any registered DRep, one team per wallet per season, within a{" "}
-                <B>25-star Draft Cost</B>. Each DRep costs 1–7 gold stars from their Projected Points (up to 25 points: 1 star;
+                <B>20-star Draft Cost</B>. Each DRep costs 1–7 gold stars from their Projected Points (up to 25 points: 1 star;
                 26–50: 2; 51–100: 3; 101–150: 4; 151–200: 5; 201–250: 6; over 250: 7), fixed when you pick them.
               </>,
               <>
