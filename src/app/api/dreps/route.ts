@@ -13,10 +13,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { toDisplayProfile, type DisplayProfile } from '@/lib/metadata/profile-display';
-import { getSocialAvatars } from '@/lib/drep-profile/social-avatars';
+import { cardImage, getSocialAvatars, type SocialAvatar } from '@/lib/drep-profile/social-avatars';
 
-function withDefaultArt(profile: DisplayProfile, fallback: string | undefined): DisplayProfile {
-  return profile.image || !fallback ? profile : { ...profile, image: fallback };
+function withDefaultArt(profile: DisplayProfile, social: SocialAvatar | undefined): DisplayProfile {
+  const image = cardImage(profile.image, social);
+  return image === profile.image ? profile : { ...profile, image };
 }
 import { applyOverride, getOverrides } from '@/lib/drep-profile/overrides';
 import { getCards } from '@/lib/cards/data';
@@ -105,7 +106,7 @@ async function loadRows(): Promise<{ epoch: number; rows: DRepScoreRow[] }> {
         is_registered: d.is_registered,
         amount_lovelace: d.amount_lovelace === null ? null : String(d.amount_lovelace),
         delegator_count: d.delegator_count,
-        profile: withDefaultArt(toDisplayProfile(d.metadata, d.metadata_fetch_status, d.drep_id), socials.get(d.drep_id)?.url),
+        profile: withDefaultArt(toDisplayProfile(d.metadata, d.metadata_fetch_status, d.drep_id), socials.get(d.drep_id)),
         vote_summary: { yes: 0, no: 0, abstain: 0 },
       });
     }

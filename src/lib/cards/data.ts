@@ -9,7 +9,7 @@ import { fetchCurrentEpoch } from '@/lib/koios';
 import { toDisplayProfile, uniqueLinks } from '@/lib/metadata/profile-display';
 import { cardQuote, quoteSources } from './quote';
 import { flavorText } from './flavor';
-import { getSocialAvatars } from '@/lib/drep-profile/social-avatars';
+import { cardImage, getSocialAvatars } from '@/lib/drep-profile/social-avatars';
 import { applyOverride, getOverride, getOverrides } from '@/lib/drep-profile/overrides';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { draftSeason } from '@/lib/season/fantasy';
@@ -114,7 +114,7 @@ async function load(): Promise<Loaded> {
       delegators: d.delegator_count ?? 0,
       name: profile.name,
       // Their own picture, else the one on the X or GitHub account they linked.
-      image: profile.image ?? socials.get(d.drep_id)?.url ?? null,
+      image: cardImage(profile.image, socials.get(d.drep_id)),
       do_not_list: profile.doNotList,
       profile_complete: Boolean(profile.name && profile.bio && profile.image && profile.links.length > 0),
     };
