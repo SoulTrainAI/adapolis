@@ -50,9 +50,14 @@ bonus for delegating to any DRep: where someone delegates is personal.
 ### 1.5 Drafting — Decided
 
 - Pick exactly 5 different DReps. Any registered DRep can be picked, within a
-  **20-star Draft Cost** (Jason, 2026-11-26; first set at 25): each DRep costs 1–7 gold stars
-  from their Projected Points (≤25 → 1, 26–50 → 2, 51–100 → 3, 101–150 → 4,
-  151–200 → 5, 201–250 → 6, over 250 → 7), locked when picked (migration 020).
+  **10-star Draft Cost** (Jason, 2026-11-26): each DRep costs 1–5 gold stars,
+  stars = ceil(Projected Points ÷ (P99 of active DReps' projections ÷ 5)),
+  min 1 (no projection = 1), locked when picked (migration 020). The scale
+  resets each season. Chosen over fixed bands and percentile tiers because
+  rank-based tiers make the long-tail top DReps bargains (on 2026-11-26 data,
+  stacking them beat any other team by ~32%); proportional pricing at P99
+  with 10 stars keeps that gap near 6%, so several team shapes can win.
+  (First set as fixed 1–7 bands with a 25-star, then 20-star budget.)
   Holding a DRep's All-Star NFT lowers their cost by 1 **only for teams that
   play in leagues only** (not the global prize game); built once NFTs exist.
 - The next season's draft is always open. Change picks freely until the

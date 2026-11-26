@@ -1,6 +1,6 @@
 import { TEAM_STAR_BUDGET } from '@/lib/season/draft-cost';
 
-/** Draft Cost as gold stars (1–7). */
+/** Draft Cost as gold stars (1–5). */
 export function CostStars({ n, className = '', style }: { n: number; className?: string; style?: React.CSSProperties }) {
   return (
     <span

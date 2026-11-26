@@ -40,7 +40,6 @@ import { Sparkline } from './Charts';
 import { useCardDetail, useJourney } from './useCards';
 import type { JourneyPoint } from '@/lib/cards/journey';
 import { CostStars } from './CostStars';
-import { draftCost } from '@/lib/season/draft-cost';
 
 export type CardVariant = 'scoreboard' | 'draft' | 'season';
 
@@ -344,7 +343,7 @@ function CardFront(props: TradingCardProps) {
             <Sparkles style={icon(3.6)} /> {tier.label}
             {c.rank !== null && ` · #${c.rank}`}
           </span>
-          <CostStars n={draftCost(c.projection)} className="absolute bg-black/60" style={{ right: cq(2), top: cq(2), fontSize: cq(3.6), padding: `${cq(0.8)} ${cq(1.5)}` }} />
+          <CostStars n={c.draft_cost ?? 1} className="absolute bg-black/60" style={{ right: cq(2), top: cq(2), fontSize: cq(3.6), padding: `${cq(0.8)} ${cq(1.5)}` }} />
           {c.streak > 1 && (
             <span
               className="absolute flex items-center bg-black/60 font-bold text-orange-300"

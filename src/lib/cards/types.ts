@@ -44,6 +44,8 @@ export interface CardSummary {
   form: number | null;
   /** Projected points next season: form, else average */
   projection: number | null;
+  /** Draft Cost in stars (1–5), scaled to this season's projections; set by getCards. */
+  draft_cost?: number;
   lifetime: {
     votes: number;
     points: number;

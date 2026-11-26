@@ -438,9 +438,10 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
               </>,
               <>
                 <strong>Draft {ROSTER_SIZE} different DReps</strong>, any
-                registered DRep, within a 20-star Draft Cost: each DRep costs 1–7
-                stars from their Projected Points (≤25 → 1, 26–50 → 2, 51–100 → 3,
-                101–150 → 4, 151–200 → 5, 201–250 → 6, over 250 → 7), locked when
+                registered DRep, within a 10-star Draft Cost. Stars = Projected
+                Points ÷ (99th-percentile projection among active DReps ÷ 5),
+                rounded up, from 1 to 5; DReps with no projection cost 1. The
+                scale resets every season, and a pick&apos;s cost locks when
                 picked. The next season&apos;s draft is
                 always open; picks can change until the roster lock, 24 hours
                 after the season&apos;s first epoch begins. DReps you keep hold

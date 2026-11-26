@@ -16,7 +16,7 @@ import { getSeasonData } from './data';
 import { clearLeaderboardCache } from './leaderboard';
 import { isMissingSchema } from './schema';
 import { epochStart, seasonOneStartEpoch, underdogScale, windowEpochs, windowForEpoch } from './points';
-import { draftCost, teamCost, TEAM_STAR_BUDGET } from './draft-cost';
+import { MAX_STARS, teamCost, TEAM_STAR_BUDGET } from './draft-cost';
 
 export { epochStart };
 
@@ -98,7 +98,7 @@ export interface PoolDRep {
   last_votes: number;
   drafted_by: number;
   do_not_list: boolean;
-  /** Draft Cost in stars (1–7) from today's Projected Points */
+  /** Draft Cost in stars (1–5), scaled to this season's Projected Points */
   cost: number;
 }
 
@@ -217,11 +217,12 @@ async function draftScale(season: { reference_window: number }) {
   return { reference, scale };
 }
 
-async function projectionsById(): Promise<Map<string, number | null>> {
+/** Today's Draft Cost per DRep (1–5 stars), from the cards so every page shows the same price. */
+async function costsById(): Promise<Map<string, number>> {
   // Imported lazily: cards/data imports this module, and a static import would make a cycle.
   const { getCards } = await import('@/lib/cards/data');
   const { cards } = await getCards();
-  return new Map(cards.map((c) => [c.drep_id, c.projection]));
+  return new Map(cards.map((c) => [c.drep_id, c.draft_cost ?? 1]));
 }
 
 export async function getDraftData(stakeAddress: string | null): Promise<DraftData | null> {
@@ -240,7 +241,7 @@ export async function getDraftData(stakeAddress: string | null): Promise<DraftDa
     draftCounts(season.season_number),
     stakeAddress ? loadRoster(season.season_number, stakeAddress) : Promise.resolve(null),
   ]);
-  const [saved_teams, projections] = await Promise.all([stakeAddress ? otherTeams(stakeAddress, season.season_number) : Promise.resolve([]), projectionsById()]);
+  const [saved_teams, costs] = await Promise.all([stakeAddress ? otherTeams(stakeAddress, season.season_number) : Promise.resolve([]), costsById()]);
   const standings = new Map(reference.standings.map((s) => [s.drep_id, s]));
 
   const pool = dreps
@@ -260,7 +261,7 @@ export async function getDraftData(stakeAddress: string | null): Promise<DraftDa
         last_votes: s ? s.votes_cast : 0,
         drafted_by: counts.get(d.drep_id) ?? 0,
         do_not_list: profile.doNotList,
-        cost: draftCost(projections.get(d.drep_id)),
+        cost: costs.get(d.drep_id) ?? 1,
       };
     })
     .sort((a, b) => (b.last_points ?? -1e9) - (a.last_points ?? -1e9) || b.ada - a.ada);
@@ -329,8 +330,13 @@ export async function saveRoster(stakeAddress: string, input: { team_name: strin
   const existing = (await loadRoster(season.season_number, stakeAddress))?.picks ?? [];
   const kept = existing.filter((p) => ids.includes(p.drep_id));
   const keptIds = new Set(kept.map((p) => p.drep_id));
-  const projections = await projectionsById();
-  const costOf = (id: string) => kept.find((p) => p.drep_id === id)?.draft_cost ?? draftCost(projections.get(id));
+  const costs = await costsById();
+  // A locked cost from the old 1–7 scale (above 5) is repriced on the current scale.
+  const lockedCost = (id: string) => {
+    const c = kept.find((p) => p.drep_id === id)?.draft_cost;
+    return c != null && c <= MAX_STARS ? c : null;
+  };
+  const costOf = (id: string) => lockedCost(id) ?? costs.get(id) ?? 1;
   const stars = teamCost(ids.map(costOf));
   if (stars > TEAM_STAR_BUDGET) {
     throw new DraftError(`That team costs ${stars} stars; the limit is ${TEAM_STAR_BUDGET}. Swap a high-cost DRep for a cheaper one.`, 400);

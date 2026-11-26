@@ -15,6 +15,7 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { draftSeason } from '@/lib/season/fantasy';
 import { computeCards, type CardComputation } from './compute';
 import { tierFor, type CardDetail, type CardsPayload, type CardSummary } from './types';
+import { draftCost, pointsPerStar } from '@/lib/season/draft-cost';
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
@@ -166,13 +167,13 @@ async function getLoaded(force = false): Promise<Loaded> {
 
 export async function getCards(options: { force?: boolean } = {}): Promise<CardsPayload> {
   const [data, overrides] = await Promise.all([getLoaded(options.force), getOverrides()]);
+  const registered = Array.from(data.summaries.values()).filter((c) => c.registered);
+  const perStar = pointsPerStar(registered.map((c) => c.projection));
   return {
     computed_at: data.computedAt,
     current_epoch: data.currentEpoch,
     current_window: data.currentWindow,
-    cards: Array.from(data.summaries.values())
-      .filter((c) => c.registered)
-      .map((c) => applyOverride(c, overrides.get(c.drep_id))),
+    cards: registered.map((c) => ({ ...applyOverride(c, overrides.get(c.drep_id)), draft_cost: draftCost(c.projection, perStar) })),
   };
 }
 

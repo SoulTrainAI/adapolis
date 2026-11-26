@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { draftCost } from './draft-cost';
+import { draftCost, pointsPerStar } from './draft-cost';
 
-describe('draftCost', () => {
-  it('follows the star bands', () => {
-    expect([null, 0, 25, 26, 50, 51, 100, 101, 150, 151, 200, 201, 250, 251, 291.7].map(draftCost)).toEqual([1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7]);
+describe('Draft Cost', () => {
+  it('scales one star to the 99th-percentile projection ÷ 5', () => {
+    const projections = Array.from({ length: 100 }, (_, i) => i + 1); // 1..100, p99 = 100
+    expect(pointsPerStar([...projections, 0, null])).toBe(20);
+  });
+  it('prices in proportion, from 1 to 5 stars', () => {
+    expect([null, 0, 5, 20, 21, 60, 81, 100, 400].map((p) => draftCost(p, 20))).toEqual([1, 1, 1, 1, 2, 3, 5, 5, 5]);
+  });
+  it('never lets a star be worth less than 10 points', () => {
+    expect(pointsPerStar([1, 2, 3])).toBe(10);
   });
 });

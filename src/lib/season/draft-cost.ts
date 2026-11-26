@@ -1,25 +1,30 @@
 /**
- * Draft Cost (Jason, 2026-11-25): each DRep costs 1–7 gold stars, set by
- * their Projected Points, and a 5-DRep team may spend at most 20 stars (Jason, 2026-11-26; was 25).
- * A pick's cost is fixed when it is drafted, like the underdog multiplier.
- * Projected Points are a process metric, so cost never depends on how a
- * DRep votes (Cardinal Rule).
+ * Draft Cost (Jason, 2026-11-26): each DRep costs 1–5 gold stars, in
+ * proportion to their Projected Points, and a 5-DRep team may spend at most
+ * 10 stars. One star is worth (99th-percentile projection among active DReps
+ * ÷ 5), so prices rescale every season as points and the DRep count change,
+ * and every star buys roughly the same expected points (no dominant team).
+ * A pick's cost is fixed when drafted. Projected Points are a process metric,
+ * so cost never depends on how a DRep votes (Cardinal Rule).
  */
 
-export const TEAM_STAR_BUDGET = 20;
-export const MAX_STARS = 7;
+export const TEAM_STAR_BUDGET = 10;
+export const MAX_STARS = 5;
+/** Floor so a quiet season (few points) can't make every star worth almost nothing. */
+const MIN_POINTS_PER_STAR = 10;
 
-/** ≤25 → 1, 26–50 → 2, 51–100 → 3, 101–150 → 4, 151–200 → 5, 201–250 → 6, over 250 → 7. No projection yet → 1. */
-export function draftCost(projection: number | null | undefined): number {
-  if (projection === null || projection === undefined || !Number.isFinite(projection)) return 1;
-  const p = Math.round(projection);
-  if (p <= 25) return 1;
-  if (p <= 50) return 2;
-  if (p <= 100) return 3;
-  if (p <= 150) return 4;
-  if (p <= 200) return 5;
-  if (p <= 250) return 6;
-  return MAX_STARS;
+/** Projected points one star is worth this season. */
+export function pointsPerStar(projections: Array<number | null | undefined>): number {
+  const active = projections.filter((p): p is number => typeof p === 'number' && p > 0).sort((a, b) => a - b);
+  if (active.length === 0) return MIN_POINTS_PER_STAR;
+  const p99 = active[Math.min(active.length - 1, Math.floor(0.99 * active.length))];
+  return Math.max(MIN_POINTS_PER_STAR, p99 / MAX_STARS);
+}
+
+/** Stars for one DRep: projected points ÷ points per star, rounded up, 1–5. No projection → 1 (a long shot). */
+export function draftCost(projection: number | null | undefined, perStar: number): number {
+  if (projection === null || projection === undefined || !Number.isFinite(projection) || projection <= 0) return 1;
+  return Math.max(1, Math.min(MAX_STARS, Math.ceil(projection / perStar)));
 }
 
 export function teamCost(costs: number[]): number {

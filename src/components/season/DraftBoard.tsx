@@ -6,7 +6,7 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { LayoutGrid, List, Loader2, Lock, Plus, Search, X } from 'lucide-react';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import type { DraftData, PoolDRep } from '@/lib/season/fantasy';
-import { TEAM_STAR_BUDGET } from '@/lib/season/draft-cost';
+import { MAX_STARS, TEAM_STAR_BUDGET } from '@/lib/season/draft-cost';
 import { CostStars } from '@/components/cards/CostStars';
 import type { CardSummary } from '@/lib/cards/types';
 import { TradingCard } from '@/components/cards/TradingCard';
@@ -148,7 +148,7 @@ export function DraftBoard() {
   const locked = now >= new Date(season.draft_locks_at).getTime();
   const started = now >= new Date(season.starts_at).getTime();
   const full = picked.length >= ROSTER_SIZE;
-  const lockedCost = new Map((data.roster?.picks ?? []).filter((p) => p.draft_cost != null).map((p) => [p.drep_id, p.draft_cost as number]));
+  const lockedCost = new Map((data.roster?.picks ?? []).filter((p) => p.draft_cost != null && p.draft_cost <= MAX_STARS).map((p) => [p.drep_id, p.draft_cost as number]));
   const costOf = (id: string) => lockedCost.get(id) ?? byId.get(id)?.cost ?? 1;
   const spent = picked.reduce((sum, id) => sum + costOf(id), 0);
   const fits = (id: string) => picked.includes(id) || spent + costOf(id) <= TEAM_STAR_BUDGET;
@@ -438,7 +438,7 @@ export function DraftBoard() {
           >
             <p className="flex items-center gap-2 font-semibold text-white">
               {locked && <Lock className="h-4 w-4 text-amber-300" />} Your team ({picked.length}/{ROSTER_SIZE})
-              <span className={`ml-auto text-sm ${spent > TEAM_STAR_BUDGET ? 'text-rose-300' : 'text-amber-300'}`} title="Draft Cost: each DRep costs 1–7 stars from their Projected Points.">
+              <span className={`ml-auto text-sm ${spent > TEAM_STAR_BUDGET ? 'text-rose-300' : 'text-amber-300'}`} title="Draft Cost: each DRep costs 1–5 stars in proportion to their Projected Points.">
                 ★ {spent}/{TEAM_STAR_BUDGET}
               </span>
             </p>
@@ -523,7 +523,7 @@ export function DraftBoard() {
             )}
             {message && <p className={`text-sm ${message.kind === 'ok' ? 'text-emerald-300' : 'text-red-300'}`}>{message.text}</p>}
             <p className="text-[11px] text-slate-500">
-              Free to play. Each DRep costs 1–7 stars (★) from their Projected Points, and a team can spend up to {TEAM_STAR_BUDGET}.
+              Free to play. Each DRep costs 1–{MAX_STARS} stars (★) in proportion to their Projected Points, and a team can spend up to {TEAM_STAR_BUDGET}.
               Costs and multipliers lock when you pick; DReps already on your saved team keep theirs.
             </p>
           </div>

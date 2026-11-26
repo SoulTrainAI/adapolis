@@ -240,8 +240,10 @@ export default function AboutPage() {
               </>,
               <>
                 <B>Five different DReps</B>, any registered DRep, one team per wallet per season, within a{" "}
-                <B>20-star Draft Cost</B>. Each DRep costs 1–7 gold stars from their Projected Points (up to 25 points: 1 star;
-                26–50: 2; 51–100: 3; 101–150: 4; 151–200: 5; 201–250: 6; over 250: 7), fixed when you pick them.
+                <B>10-star Draft Cost</B>. Each DRep costs 1–5 gold stars in proportion to their Projected Points, fixed when you pick
+                them. One star is worth a fifth of the season&apos;s top projections (the 99th percentile), so prices rescale every
+                season and every star buys about the same expected points. Go for one superstar and fill with long shots, or build a
+                balanced team: both can win.
               </>,
               <>
                 <B>Underdog multiplier.</B> Smaller DReps (by delegated ADA and number of delegators) multiply the points
