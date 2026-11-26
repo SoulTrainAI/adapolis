@@ -337,3 +337,56 @@ export async function syncAllVotes(): Promise<SyncResult & { skipped: number }> 
   console.log(JSON.stringify({ event: 'sync_all_votes_complete', ...result }));
   return result;
 }
+
+/**
+ * Hourly light sync: only votes cast since shortly before the newest stored
+ * vote, so points move within the hour instead of every 6 hours. Votes on
+ * proposals not stored yet are skipped; the 6-hourly full sync picks them up.
+ */
+export async function syncRecentVotes(overlapSeconds = 3600): Promise<{ fetched: number; saved: number; skipped: number }> {
+  const [{ data: newest, error }, drepIds, proposalIds] = await Promise.all([
+    supabaseAdmin.from('votes').select('block_time').order('block_time', { ascending: false }).limit(1),
+    loadIds('dreps', 'drep_id'),
+    loadIds('proposals', 'proposal_id'),
+  ]);
+  if (error) throw new Error(`Couldn't read the newest stored vote: ${error.message}. Check Supabase status.`);
+  const since = newest?.[0]?.block_time ? Math.floor(new Date(newest[0].block_time as string).getTime() / 1000) - overlapSeconds : Math.floor(Date.now() / 1000) - 86_400;
+
+  const latest = new Map<string, z.infer<typeof KoiosBulkVoteSchema>>();
+  let fetched = 0;
+  let skipped = 0;
+  for (let offset = 0; ; offset += KOIOS_PAGE_SIZE) {
+    const raw = await koiosFetch<unknown>(
+      `/vote_list?voter_role=eq.DRep&block_time=gte.${since}&select=voter_id,proposal_id,vote,block_time,vote_tx_hash,meta_url,meta_hash&order=block_time.asc,vote_tx_hash.asc,proposal_id.asc&offset=${offset}&limit=${KOIOS_PAGE_SIZE}`,
+      { method: 'GET' }
+    );
+    const parsed = z.array(KoiosBulkVoteSchema).safeParse(raw);
+    if (!parsed.success) {
+      throw new Error(`Koios /vote_list returned an unexpected shape: ${parsed.error.message}. Check https://api.koios.rest/#/Governance/vote_list for schema changes.`);
+    }
+    fetched += parsed.data.length;
+    for (const v of parsed.data) {
+      if (!drepIds.has(v.voter_id) || !proposalIds.has(v.proposal_id)) {
+        skipped++;
+        continue;
+      }
+      latest.set(`${v.voter_id}:${v.proposal_id}`, v);
+    }
+    if (parsed.data.length < KOIOS_PAGE_SIZE) break;
+  }
+
+  const records = Array.from(latest.values()).map((v) => ({
+    drep_id: v.voter_id,
+    proposal_id: v.proposal_id,
+    vote: v.vote.toLowerCase(),
+    rationale_url: v.meta_url,
+    rationale_hash: v.meta_hash,
+    block_time: new Date(v.block_time * 1000).toISOString(),
+    tx_hash: v.vote_tx_hash,
+  }));
+  for (let i = 0; i < records.length; i += DB_PAGE_SIZE) {
+    const { error: upsertError } = await supabaseAdmin.from('votes').upsert(records.slice(i, i + DB_PAGE_SIZE), { onConflict: 'drep_id,proposal_id' });
+    if (upsertError) throw new Error(`Failed to save recent votes: ${upsertError.message}. Re-running is safe (idempotent upsert).`);
+  }
+  return { fetched, saved: records.length, skipped };
+}
