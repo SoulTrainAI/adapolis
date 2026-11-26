@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Flag, Pause, Play, Rewind, Share2 } from 'lucide-react';
 import { rationaleHref } from '@/lib/rationale/href';
+import { plainQuote } from '@/components/governance/ArgumentsPanel';
 import type { Race } from '@/lib/season/race';
 import { TeamsPanel } from './TeamsPanel';
 import { MountainRace } from './MountainRace';
@@ -322,6 +323,11 @@ export function Cardanathon({ race }: { race: Race }) {
                                     <a href={rationaleHref(d.drep_id, d.proposal_id)} onClick={(e) => e.stopPropagation()} className="text-sky-300 hover:text-sky-200">
                                       · Read rationale
                                     </a>
+                                  )}
+                                  {race.quotes?.[`${d.proposal_id}|${d.drep_id}`] && (
+                                    <q className="mt-0.5 block w-full border-l-2 border-slate-600 pl-2 italic text-slate-300">
+                                      {plainQuote(race.quotes[`${d.proposal_id}|${d.drep_id}`])}
+                                    </q>
                                   )}
                                 </li>
                               );

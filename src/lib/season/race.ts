@@ -38,6 +38,8 @@ export interface Race {
   racers: Racer[];
   /** Titles of the actions the racers voted on or missed, for commentary; `open` ones have a Hot Take. */
   proposals: Record<string, { title: string | null; open: boolean }>;
+  /** Verified quote a DRep gave for their vote, keyed "proposal_id|drep_id" (from Hot Takes arguments). */
+  quotes: Record<string, string>;
   computed_at: string;
 }
 
@@ -54,6 +56,15 @@ export async function getRace(window?: number): Promise<Race> {
   if (ids.length) {
     const { data: rows } = await supabaseAdmin.from('proposals').select('proposal_id, title, status').in('proposal_id', ids);
     for (const r of rows ?? []) proposals[r.proposal_id as string] = { title: (r.title as string | null) ?? null, open: r.status === 'active' };
+  }
+  const quotes: Race['quotes'] = {};
+  if (ids.length) {
+    const { data: args } = await supabaseAdmin.from('proposal_arguments').select('proposal_id, args_for, args_against').in('proposal_id', ids);
+    for (const a of args ?? []) {
+      for (const p of [...((a.args_for ?? []) as Array<{ quote?: string; drep_id?: string | null }>), ...((a.args_against ?? []) as Array<{ quote?: string; drep_id?: string | null }>)]) {
+        if (p.drep_id && p.quote) quotes[`${a.proposal_id}|${p.drep_id}`] ??= p.quote;
+      }
+    }
   }
   return {
     window: data.window,
@@ -75,6 +86,7 @@ export async function getRace(window?: number): Promise<Race> {
       x_handle: handle(s.drep_id, s.profile.links ?? []),
     })),
     proposals,
+    quotes,
     computed_at: data.computed_at,
   };
 }
