@@ -10,6 +10,7 @@ import {
   underdogMultipliers,
   type PointBreakdown,
   type PointEvent,
+  type SeasonVote,
 } from './points';
 
 export interface SeasonStanding {
@@ -68,7 +69,8 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
       block_time: string;
       rationale_url: string | null;
       rationale_hash: string | null;
-    }>('votes', 'drep_id, proposal_id, block_time, rationale_url, rationale_hash'),
+      vote: string | null;
+    }>('votes', 'drep_id, proposal_id, block_time, rationale_url, rationale_hash, vote'),
     fetchDRepRegistrationPeriods(),
   ]);
 
@@ -77,13 +79,14 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
   const to = Math.min(end, currentEpoch);
 
   const proposals = proposalRows.map((p) => ({ ...proposalWindow(p), expiration: p.voting_ends_epoch }));
-  const votes = voteRows.map((v) => ({
+  const votes: SeasonVote[] = voteRows.map((v) => ({
     drep_id: v.drep_id,
     proposal_id: v.proposal_id,
     epoch: blockTimeToEpoch(Math.floor(new Date(v.block_time).getTime() / 1000)),
     time: Math.floor(new Date(v.block_time).getTime() / 1000),
     rationale_url: v.rationale_url,
     rationale_hash: v.rationale_hash,
+    vote: v.vote === 'yes' || v.vote === 'no' || v.vote === 'abstain' ? v.vote : undefined,
   }));
 
   const registered = dreps.filter((d) => d.is_registered !== false);

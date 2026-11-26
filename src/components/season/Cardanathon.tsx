@@ -9,7 +9,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Crown, Flag, Flame, Pause, Play, Radio, Rewind, Share2, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import { Flag, Pause, Play, Rewind, Share2 } from 'lucide-react';
+import { rationaleHref } from '@/lib/rationale/href';
 import type { Race } from '@/lib/season/race';
 import { TeamsPanel } from './TeamsPanel';
 import { MountainRace } from './MountainRace';
@@ -28,14 +29,16 @@ import { buildCommentary, DAY_S, displayName, orderAt, SHOWN, type CommentaryLin
 const EPOCH_S = 432_000;
 const REPLAY_MS = 18_000;
 
-const TONE: Record<CommentaryLine['tone'], { color: string; Icon: typeof Zap }> = {
-  lead: { color: 'text-amber-300', Icon: Crown },
-  move: { color: 'text-sky-300', Icon: TrendingUp },
-  hot: { color: 'text-fuchsia-300', Icon: Zap },
-  streak: { color: 'text-orange-300', Icon: Flame },
-  slip: { color: 'text-rose-300', Icon: TrendingDown },
-  info: { color: 'text-slate-300', Icon: Radio },
+const TONE: Record<CommentaryLine['tone'], { color: string; emoji: string }> = {
+  lead: { color: 'text-amber-300', emoji: '👑' },
+  move: { color: 'text-sky-300', emoji: '🚀' },
+  hot: { color: 'text-fuchsia-300', emoji: '⚡' },
+  streak: { color: 'text-orange-300', emoji: '🔥' },
+  slip: { color: 'text-rose-300', emoji: '😬' },
+  info: { color: 'text-slate-300', emoji: '🗳️' },
 };
+
+const VOTE_STYLE = { yes: 'text-emerald-300', no: 'text-rose-300', abstain: 'text-slate-300' } as const;
 
 const LANE_COLORS = ['#fbbf24', '#e2e8f0', '#fb923c', '#a78bfa', '#38bdf8', '#34d399', '#f472b6', '#60a5fa', '#facc15', '#2dd4bf'];
 
@@ -270,13 +273,13 @@ export function Cardanathon({ race }: { race: Race }) {
           <ol className="h-full space-y-1 overflow-y-auto p-2">
             <AnimatePresence initial={false}>
               {feed.map((c) => {
-                const { color, Icon } = TONE[c.tone];
+                const { color, emoji } = TONE[c.tone];
                 return (
                   <motion.li
                     key={`${c.day}-${c.text}`}
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="cursor-pointer rounded-lg px-2 py-1 hover:bg-white/5"
+                    className="cursor-pointer rounded-lg px-2 py-1.5 hover:bg-white/5"
                     onMouseEnter={() => setHighlight(c.drep_ids)}
                     onMouseLeave={() => setHighlight([])}
                     onClick={() => setHighlight(c.drep_ids)}
@@ -284,9 +287,48 @@ export function Cardanathon({ race }: { race: Race }) {
                     <p className="text-[9px] uppercase tracking-wider text-slate-500">
                       Day {c.day} · Epoch {c.epoch}
                     </p>
-                    <p className={`group flex gap-1.5 text-xs leading-snug ${color}`} title={c.text}>
-                      <Icon className="mt-0.5 h-3 w-3 flex-shrink-0" />
-                      <span className="line-clamp-2 flex-1 text-slate-100">{c.text}</span>
+                    <div className={`group flex gap-2 text-sm leading-snug ${color}`}>
+                      <span className="flex-shrink-0 text-xl leading-none" aria-hidden>
+                        {emoji}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-slate-100">{c.text}</p>
+                        {c.details && c.details.length > 0 && (
+                          <ul className="mt-1 space-y-0.5 text-xs text-slate-400">
+                            {c.details.map((d) => {
+                              const p = race.proposals[d.proposal_id];
+                              const title = p?.title ?? `${d.proposal_id.slice(0, 16)}…`;
+                              const topic = p?.open ? `/hot-topics#${d.proposal_id}` : `https://gov.tools/governance_actions/${d.proposal_id}`;
+                              return (
+                                <li key={`${d.drep_id}-${d.proposal_id}-${d.action}`} className="flex flex-wrap items-baseline gap-x-1">
+                                  {d.action === 'missed' ? (
+                                    <span>Missed</span>
+                                  ) : (
+                                    <span>
+                                      Voted <strong className={d.vote ? VOTE_STYLE[d.vote] : 'text-slate-200'}>{d.vote ? d.vote[0].toUpperCase() + d.vote.slice(1) : 'on'}</strong>
+                                      {d.vote ? ' on' : ''}
+                                    </span>
+                                  )}
+                                  <a
+                                    href={topic}
+                                    onClick={(e) => e.stopPropagation()}
+                                    {...(p?.open ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+                                    className="truncate text-violet-300 hover:text-violet-200"
+                                    title={p?.open ? 'See the Hot Take on this action' : 'Open this action on gov.tools'}
+                                  >
+                                    {title}
+                                  </a>
+                                  {d.explained && (
+                                    <a href={rationaleHref(d.drep_id, d.proposal_id)} onClick={(e) => e.stopPropagation()} className="text-sky-300 hover:text-sky-200">
+                                      · Read rationale
+                                    </a>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
                       <a
                         href={shareOnX(c.text, c.drep_ids.map((id) => byId.get(id)?.x_handle))}
                         target="_blank"
@@ -296,9 +338,9 @@ export function Cardanathon({ race }: { race: Race }) {
                         title="Share this on X"
                         aria-label="Share this on X"
                       >
-                        <Share2 className="h-3 w-3" />
+                        <Share2 className="h-3.5 w-3.5" />
                       </a>
-                    </p>
+                    </div>
                   </motion.li>
                 );
               })}

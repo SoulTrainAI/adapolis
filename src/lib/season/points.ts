@@ -88,6 +88,8 @@ export interface SeasonVote {
   time?: number;
   rationale_url: string | null;
   rationale_hash: string | null;
+  /** Display only; see PointEvent.vote. */
+  vote?: 'yes' | 'no' | 'abstain';
 }
 
 export interface SeasonProposal extends ProposalWindow {
@@ -111,6 +113,10 @@ export interface PointEvent {
   pts: number;
   /** Streak length for streak events. */
   run?: number;
+  /** The action a vote or miss was about. Display only (commentary); never affects points. */
+  proposal_id?: string;
+  /** How the DRep voted, shown in commentary. Display only: points are identical for Yes, No and Abstain (Cardinal Rule). */
+  vote?: 'yes' | 'no' | 'abstain';
 }
 
 export interface DRepSeasonPoints {
@@ -153,10 +159,22 @@ export function computeSeasonPoints(
     const events: PointEvent[] = [];
     // Votes happen at their block time; misses and streaks land as an epoch closes.
     const epochEnd = (e: number) => Math.floor(epochStart(e + 1).getTime() / 1000) - 1;
-    const add = (epoch: number, key: keyof PointBreakdown, pts: number, t: number = epochEnd(epoch), run?: number) => {
+    const add = (
+      epoch: number,
+      key: keyof PointBreakdown,
+      pts: number,
+      t: number = epochEnd(epoch),
+      run?: number,
+      about?: { proposal_id: string; vote?: SeasonVote['vote'] }
+    ) => {
       breakdown[key] += pts;
       byEpoch[epoch] = (byEpoch[epoch] ?? 0) + pts;
-      events.push(run === undefined ? { t, kind: key, pts } : { t, kind: key, pts, run });
+      const ev: PointEvent = run === undefined ? { t, kind: key, pts } : { t, kind: key, pts, run };
+      if (about) {
+        ev.proposal_id = about.proposal_id;
+        if (about.vote) ev.vote = about.vote;
+      }
+      events.push(ev);
     };
     const votedEpochs = new Set<number>();
     const missedEpochs = new Set<number>();
@@ -177,7 +195,7 @@ export function computeSeasonPoints(
       votesCast++;
       votedEpochs.add(v.epoch);
       const t = v.time ?? epochEnd(v.epoch);
-      add(v.epoch, 'votes', POINT_RULES.vote, t);
+      add(v.epoch, 'votes', POINT_RULES.vote, t, undefined, { proposal_id: v.proposal_id, vote: v.vote });
       if (v.rationale_url) {
         add(v.epoch, 'rationales', POINT_RULES.rationale, t);
         if (isFresh) add(v.epoch, 'fresh', POINT_RULES.freshRationale, t);
@@ -195,7 +213,7 @@ export function computeSeasonPoints(
       if (!wasRegisteredAt(drepPeriods, p.end)) continue;
       actionsMissed++;
       missedEpochs.add(p.end);
-      add(p.end, 'missed', POINT_RULES.missed);
+      add(p.end, 'missed', POINT_RULES.missed, undefined, undefined, { proposal_id: p.proposal_id });
     }
 
     // Epochs with nothing to vote on neither extend nor break a streak.

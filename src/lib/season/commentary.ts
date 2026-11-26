@@ -2,9 +2,10 @@
  * Race commentary: replays a season day by day and turns what happened into
  * short, fun lines ("Kurdopia drops a fresh hot take and pulls ahead of THOR").
  *
- * Neutral by construction: every line comes from process events (voted,
- * explained, voted early, kept a streak, missed an action) and rank changes.
- * Nothing here knows which way anyone voted (Cardinal Rule).
+ * Lines come from process events (voted, explained, voted early, kept a
+ * streak, missed an action) and rank changes. Each line can carry the actions
+ * behind it, including how the DRep voted, for display (Jason, 2026-11-25).
+ * Points never depend on the vote (Cardinal Rule); see points.test.ts.
  */
 
 import type { PointEvent } from './points';
@@ -28,6 +29,16 @@ export interface CommentaryLine {
   text: string;
   tone: 'lead' | 'move' | 'hot' | 'streak' | 'slip' | 'info';
   drep_ids: string[];
+  /** The actions behind the line: what was voted on (and how), or what was missed. */
+  details?: CommentaryDetail[];
+}
+
+export interface CommentaryDetail {
+  drep_id: string;
+  proposal_id: string;
+  action: 'voted' | 'missed';
+  vote?: 'yes' | 'no' | 'abstain';
+  explained?: boolean;
 }
 
 export function displayName(e: Pick<RaceEntrant, 'name' | 'drep_id'>): string {
@@ -123,6 +134,15 @@ export function buildCommentary(
       const early = today.filter((ev) => ev.kind === 'early').length;
       const missed = today.filter((ev) => ev.kind === 'missed').length;
       const streak = today.find((ev) => ev.kind === 'streak');
+      const explainedAt = new Set(today.filter((ev) => ev.kind === 'rationales').map((ev) => ev.t));
+      const voteDetails: CommentaryDetail[] = today
+        .filter((ev) => ev.kind === 'votes' && ev.proposal_id)
+        .slice(0, 3)
+        .map((ev) => ({ drep_id: e.drep_id, proposal_id: ev.proposal_id!, action: 'voted', vote: ev.vote, explained: explainedAt.has(ev.t) }));
+      const missDetails: CommentaryDetail[] = today
+        .filter((ev) => ev.kind === 'missed' && ev.proposal_id)
+        .slice(0, 3)
+        .map((ev) => ({ drep_id: e.drep_id, proposal_id: ev.proposal_id!, action: 'missed' }));
       const seed = `${e.drep_id}:${d}`;
       const sign = pts >= 0 ? `+${pts}` : `${pts}`;
       const action =
@@ -143,6 +163,7 @@ export function buildCommentary(
             text: `${name(e.drep_id)} ${phrase}${action ? ` (${sign})` : ''}`,
             tone: move?.tone === 'lead' ? 'lead' : action?.tone ?? move?.tone ?? 'info',
             drep_ids: move?.other ? [e.drep_id, move.other] : [e.drep_id],
+            details: action ? voteDetails : undefined,
           },
         });
       }
@@ -155,7 +176,12 @@ export function buildCommentary(
       if (missed > 0) {
         candidates.push({
           heat: 28,
-          line: { text: `${name(e.drep_id)} ${pick(SLIP, seed)}${missed > 1 ? ` (${missed} actions)` : ''}: ${missed * -5}`, tone: 'slip', drep_ids: [e.drep_id] },
+          line: {
+            text: `${name(e.drep_id)} ${pick(SLIP, seed)}${missed > 1 ? ` (${missed} actions)` : ''}: ${missed * -5}`,
+            tone: 'slip',
+            drep_ids: [e.drep_id],
+            details: missDetails,
+          },
         });
       }
     }
