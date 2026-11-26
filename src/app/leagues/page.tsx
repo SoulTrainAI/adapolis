@@ -4,7 +4,7 @@ import { SeasonTabs } from '@/components/season/SeasonTabs';
 
 export const metadata: Metadata = {
   title: 'Leagues — ADApolis',
-  description: 'Public and private leagues for the ADApolis DRep game: play your team against friends and communities. Free, bragging rights only.',
+  description: 'Public and private leagues for the ADApolis DRep game: play your team against friends and communities. Free to play.',
 };
 
 export default function LeaguesPage() {

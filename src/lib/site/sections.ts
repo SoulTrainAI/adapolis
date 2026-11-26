@@ -10,17 +10,17 @@ export interface SiteSection {
 export const SECTIONS = {
   scoreboard: {
     href: '/scoreboard',
-    label: 'DRep Hall of Fame',
-    blurb: 'Every active DRep ranked by lifetime GovScore: how reliably they vote, over their whole record. Rank by season points, projections, or your own Alignment after the quiz.',
+    label: 'Scoreboard',
+    blurb: 'Every active DRep ranked by lifetime GovScore: how reliably they vote, over their whole record. Rank by season points, projections, or your own Alignment after the DRep Match-maker quiz.',
   },
   match: {
     href: '/match',
-    label: 'Find My DRep',
+    label: 'DRep Match-maker',
     blurb: 'A 3-minute quiz that matches you with DReps who have actually voted the way you think.',
   },
   hotTopics: {
     href: '/hot-topics',
-    label: 'Hot Topics',
+    label: 'Hot Takes',
     blurb: 'Governance actions open for voting now: how DReps are splitting and the best arguments on each side.',
   },
   season: {
@@ -30,17 +30,17 @@ export const SECTIONS = {
   },
   draft: {
     href: '/draft',
-    label: 'Draft',
-    blurb: 'Free game: draft 5 DReps and score their season points. Small DReps carry an underdog bonus.',
+    label: 'Draft Teams',
+    blurb: 'Free to play: draft 5 DReps and score their season points. Small DReps carry an underdog bonus.',
   },
   collection: {
     href: '/collection',
-    label: 'Collection',
-    blurb: 'Your game team’s cards, a check-up on the DRep you delegate to, and collectible cards (coming soon).',
+    label: 'My DRep All-Stars',
+    blurb: 'Your game team, a check-up on the DRep you delegate to, and the DRep All-Star NFTs you hold.',
   },
   claim: {
     href: '/drep',
-    label: 'Claim your card',
+    label: 'DReps: Claim your profile',
     blurb: 'DReps: sign with your DRep key to set your card’s art, bio and links. Stats always come from the chain.',
   },
   about: { href: '/about', label: 'About', blurb: 'What ADApolis is, who it’s for and the principles it holds to.' },

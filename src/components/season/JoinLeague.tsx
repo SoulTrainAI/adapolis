@@ -47,8 +47,8 @@ export function JoinLeague({ code }: { code: string }) {
             <Users className="h-4 w-4" /> {league.members} member{league.members === 1 ? '' : 's'}
           </p>
           <p className="text-slate-300">
-            A league in the ADApolis DRep game. Draft 5 DReps each season and see whose team scores most. Free, no fees, no
-            prize pool: bragging rights only.
+            You&apos;re invited to join a private league in the ADApolis Cardanathon. Draft a team of 5 DReps each season and cheer them on
+            to victory. Free to play. Join today!
           </p>
           <button
             type="button"

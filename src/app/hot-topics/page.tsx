@@ -11,7 +11,7 @@ import { formatAda } from '@/lib/match/score';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Hot Topics — ADApolis',
+  title: 'Hot Takes — ADApolis',
   description:
     'Cardano governance actions open for voting now: how DReps are splitting, who has explained their vote, and the arguments on each side.',
 };
@@ -202,7 +202,7 @@ export default async function HotTopicsPage() {
       <div className="max-w-3xl mx-auto space-y-6">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-wider text-violet-300">Open for voting now</p>
-        <h1 className="text-4xl font-bold text-white">Hot Topics</h1>
+        <h1 className="text-4xl font-bold text-white">Hot Takes</h1>
         <p className="text-slate-300">
           Governance actions DReps are voting on right now, most active first. See how DReps are splitting, who has
           published reasons for their vote, and the main arguments on each side, with links to their own words.
@@ -215,7 +215,7 @@ export default async function HotTopicsPage() {
       </header>
 
       {!data ? (
-        <p className="text-red-300">Couldn&apos;t load hot topics right now. Koios or Supabase may be unreachable; try again in a minute.</p>
+        <p className="text-red-300">Couldn&apos;t load Hot Takes right now. Koios or Supabase may be unreachable; try again in a minute.</p>
       ) : data.topics.length === 0 ? (
         <p className="text-slate-300">No governance actions are open for voting right now.</p>
       ) : (

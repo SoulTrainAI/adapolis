@@ -39,9 +39,20 @@ export function Footer() {
           Follow On X {X_HANDLE}
         </a>
         <a href="/drep" className={link}>
-          DReps: claim your card
+          DReps: Claim your profile
+        </a>
+        <a href="/terms" className={link}>
+          Terms
+        </a>
+        <a href="/privacy" className={link}>
+          Privacy
         </a>
       </div>
+      <p className="mx-auto max-w-4xl px-4 pb-5 text-center text-xs leading-relaxed text-slate-500">
+        <strong className="text-slate-400">Collectibles only. Not financial instruments.</strong> DRep All-Star NFTs and DRep All-Star Season
+        Trophies are digital collectibles. They pay nothing, share no revenue or royalties, carry no votes or say over ADApolis, and come with no
+        promise of value. Nothing here is financial advice.
+      </p>
     </footer>
   );
 }

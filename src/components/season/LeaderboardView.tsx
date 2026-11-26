@@ -148,7 +148,7 @@ export function LeaderboardView({
         <p className="text-slate-300">
           Team points are each drafted DRep&apos;s season points, with gains multiplied by the underdog multiplier locked in when they were picked (losses count at 1×). Season points come only from
           voting, explaining votes and voting on time, never from how a DRep votes.
-          {data.scope.kind === 'global' && ' Only teams in the global game appear here; the top 3 win Season Trophy NFTs.'}
+          {data.scope.kind === 'global' && ' Only teams in the global game appear here; the top 3 win DRep All-Star Season Trophy NFTs.'}
         </p>
         <p className="text-sm text-slate-400">
           {statusText} · {teams.length} team{teams.length === 1 ? '' : 's'}

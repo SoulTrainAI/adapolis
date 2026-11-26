@@ -9,7 +9,6 @@ import { TradingCard } from './TradingCard';
 import { placeholderCard, useCards } from './useCards';
 import { DRepCheckup } from './DRepCheckup';
 import { ClaimsSection } from './ClaimsSection';
-import { CollectiblesNotice } from './CollectiblesNotice';
 import { ConnectPrompt } from '@/components/auth/ConnectPrompt';
 
 type DraftResponse = (({ enabled: true } & DraftData) | { enabled: false }) & { signed_in?: boolean };
@@ -55,14 +54,13 @@ export function CollectionView() {
   return (
     <div className="space-y-12">
       <header className="space-y-3">
-        <p className="text-sm uppercase tracking-wider text-violet-300">My Collection</p>
+        <p className="text-sm uppercase tracking-wider text-violet-300">My DRep All-Stars</p>
         <h1 className="font-display text-4xl font-bold">Your cards</h1>
         <p className="max-w-3xl text-slate-300">
-          Every DRep has a card. At the end of each season the top 10 DReps become Champion Cards, Cardano NFTs that preserve
-          their season; Season 1&apos;s are the Genesis set. Cards are pure collectibles: they never change how anyone scores
-          or votes.
+          Every DRep has a card showing real-time stats that update daily. At the end of each season, the top 10 DReps&apos; cards become
+          mintable as official DRep All-Star NFTs, digital collectibles that commemorate the historic victory. The top 3 winning DReps
+          and Teams can also mint the exclusive DRep All-Star Season Trophy NFT to showcase their success.
         </p>
-        <CollectiblesNotice compact />
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <button
             type="button"

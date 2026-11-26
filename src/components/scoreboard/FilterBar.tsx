@@ -19,13 +19,13 @@ interface FilterBarProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   onSearch: (search: string) => void;
-  /** The visitor has taken the Find My DRep quiz, so Alignment sorts can be used */
+  /** The visitor has taken the DRep Match-maker quiz, so Alignment sorts can be used */
   alignmentAvailable?: boolean;
 }
 
 /** Sorts worked out in the browser from the visitor's quiz answers. */
 export const ALIGNMENT_SORTS = ['alignment', 'personal_govscore'];
-const QUIZ_FIRST = 'Take the Find My DRep quiz first: Alignment ranks DReps by how well their real votes match your values.';
+const QUIZ_FIRST = 'Take the DRep Match-maker quiz first: Alignment ranks DReps by how well their real votes match your values.';
 
 const SORT_OPTIONS = [
   { value: 'adjusted_govscore', label: 'GovScore (career)', tip: TIPS.govscore },

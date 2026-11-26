@@ -103,8 +103,7 @@ export function LeaguesView() {
         <h1 className="text-4xl font-bold text-white">Leagues</h1>
         <p className="text-slate-300">
           Play your team against friends, a community or a DRep&apos;s delegators. Your one team for the season plays in the
-          global game and in every league you join, each with its own leaderboard. Leagues are for bragging rights: no fees
-          and no prize pools.
+          global game and in every league you join, each with its own leaderboard. Free to play.
         </p>
       </header>
 

@@ -31,14 +31,14 @@ function stage(race: Race): string {
   if (race.season === null) {
     return launch === null
       ? 'A warm-up race on real governance data.'
-      : `Warm-up race. The Preseason, the first season you can draft and play, starts ${fmt(launch - SEASON_LENGTH_EPOCHS)}. Season 1 and the Genesis Champion Cards start ${fmt(launch)}.`;
+      : `Warm-up race. The Preseason, the first season you can draft and play, starts ${fmt(launch - SEASON_LENGTH_EPOCHS)}. Season 1 and the Genesis DRep All-Stars start ${fmt(launch)}.`;
   }
   if (race.season === 0) {
-    return `Preseason: draft, play and win for real, with test Champion Cards that are never minted. Season 1 and the Genesis set start ${launch !== null ? fmt(launch) : 'soon'}.`;
+    return `Preseason: draft, play and win for real, with test DRep All-Star cards that are never minted. Season 1 and the Genesis set start ${launch !== null ? fmt(launch) : 'soon'}.`;
   }
   return race.season === 1
-    ? 'Season 1: the top 10 DReps become the Genesis Champion Cards.'
-    : `The top 10 DReps become ${seasonLabel(race.season)} Champion Cards.`;
+    ? 'Season 1: the top 10 DReps become the Genesis DRep All-Stars.'
+    : `The top 10 DReps become ${seasonLabel(race.season)} DRep All-Stars.`;
 }
 
 export default async function SeasonPage() {
@@ -107,7 +107,7 @@ export default async function SeasonPage() {
             </li>
           </ul>
           <p className="mt-2 text-slate-400">
-            Commentary is generated from these events and rank changes only; it never says how anyone voted.{' '}
+            Commentary is generated from these events and rank changes.{' '}
             <Link href="/methodology#season-points" className="text-violet-300 hover:underline">
               Full rules
             </Link>

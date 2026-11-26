@@ -169,7 +169,7 @@ export function ScoreboardClient({ initialEpoch, initialSort = 'adjusted_govscor
         <p className="-mt-3 mb-5 text-sm text-slate-400">
           Rank by <span title={TIPS.alignment}>Alignment</span> with your own values:{' '}
           <Link href="/match" className="text-brand-lilac hover:underline">
-            take the Find My DRep quiz →
+            take the DRep Match-maker quiz →
           </Link>
         </p>
       )}

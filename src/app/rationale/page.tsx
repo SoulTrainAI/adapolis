@@ -118,7 +118,7 @@ export default async function RationalePage({ searchParams }: { searchParams: { 
               )}
               <p>
                 <Link href="/hot-topics" className="text-violet-300 hover:text-violet-200">
-                  ← Hot Topics
+                  ← Hot Takes
                 </Link>
               </p>
             </footer>

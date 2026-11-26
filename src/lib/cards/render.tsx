@@ -20,7 +20,7 @@ const FRAMES: Record<string, [string, string, string, string]> = {
   Legend: ['#fef08a', '#f59e0b', '#fde047', '#fcd34d'],
   Silver: ['#f1f5f9', '#94a3b8', '#e2e8f0', '#e2e8f0'],
   Bronze: ['#fdba74', '#c2410c', '#fbbf24', '#fdba74'],
-  Holo: ['#e879f9', '#8b5cf6', '#22d3ee', '#f0abfc'],
+  Holographic: ['#e879f9', '#8b5cf6', '#22d3ee', '#f0abfc'],
   Rare: ['#7dd3fc', '#2563eb', '#38bdf8', '#7dd3fc'],
   Common: ['#e2e8f0', '#94a3b8', '#cbd5e1', '#e2e8f0'],
 };

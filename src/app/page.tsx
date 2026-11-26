@@ -129,7 +129,7 @@ const PATHS: Path[] = [
     who: 'ADA holders and delegators',
     pitch: 'Your ADA votes through a DRep. Make sure they show up and thinks like you.',
     links: [
-      { href: SECTIONS.match.href, label: 'Find My DRep', tip: SECTIONS.match.blurb },
+      { href: SECTIONS.match.href, label: 'DRep Match-maker', tip: SECTIONS.match.blurb },
       { href: SECTIONS.collection.href, label: 'Check your DRep', tip: 'Connect your wallet to see who you delegate to and whether they’re still voting.' },
       { href: SECTIONS.hotTopics.href, label: 'What’s up for a vote', tip: SECTIONS.hotTopics.blurb },
     ],
@@ -141,7 +141,7 @@ const PATHS: Path[] = [
     who: 'DReps',
     pitch: 'Your record, scored fairly and in public. Show delegators you do the work.',
     links: [
-      { href: SECTIONS.claim.href, label: 'Claim your card', tip: SECTIONS.claim.blurb },
+      { href: SECTIONS.claim.href, label: 'DReps: Claim your profile', tip: SECTIONS.claim.blurb },
       { href: SECTIONS.scoreboard.href, label: 'See your rank', tip: SECTIONS.scoreboard.blurb },
       { href: SECTIONS.methodology.href, label: 'How you’re scored', tip: SECTIONS.methodology.blurb },
     ],
@@ -156,7 +156,7 @@ const PATHS: Path[] = [
       { href: SECTIONS.draft.href, label: 'Draft your team', tip: SECTIONS.draft.blurb },
       { href: SECTIONS.season.href, label: 'Watch the Cardanathon', tip: SECTIONS.season.blurb },
       { href: '/leaderboard', label: 'Team Leaderboard', tip: 'Every team’s score, pick by pick.' },
-      { href: '/leagues', label: 'Leagues', tip: 'Play your team against friends in public or private leagues. Bragging rights only.' },
+      { href: '/leagues', label: 'Leagues', tip: 'Play your team against friends in public or private leagues. Free to play.' },
     ],
   },
   {
@@ -166,7 +166,7 @@ const PATHS: Path[] = [
     who: 'Collectors and NFT holders',
     pitch: 'Every active DRep is a card with stats, tiers and abilities. Collectible editions are planned.',
     links: [
-      { href: SECTIONS.scoreboard.href, label: 'Browse every card', tip: 'The DRep Hall of Fame shows every DRep as a card. Tap one to flip it.' },
+      { href: SECTIONS.scoreboard.href, label: 'Browse every card', tip: 'The Scoreboard shows every DRep as a card. Tap one to flip it.' },
       { href: SECTIONS.collection.href, label: 'Your collection', tip: SECTIONS.collection.blurb },
       { href: `${SECTIONS.methodology.href}#card-abilities`, label: 'Tiers and abilities', tip: 'How card tiers and abilities are earned.' },
     ],
@@ -179,7 +179,7 @@ const PATHS: Path[] = [
     pitch: 'Learn how on-chain governance works and follow the decisions shaping Cardano.',
     links: [
       { href: SECTIONS.about.href, label: 'Start here', tip: SECTIONS.about.blurb },
-      { href: SECTIONS.hotTopics.href, label: 'Hot Topics', tip: SECTIONS.hotTopics.blurb },
+      { href: SECTIONS.hotTopics.href, label: 'Hot Takes', tip: SECTIONS.hotTopics.blurb },
       { href: DISCORD_URL, label: 'Join On Discord', tip: 'Governance feeds, season recaps, Ask a DRep and newcomer guides.', external: true },
     ],
   },
@@ -241,7 +241,7 @@ export default async function Home() {
         </nav>
       </section>
 
-      {/* Find My DRep: the one action every ADA holder should take */}
+      {/* DRep Match-maker: the one action every ADA holder should take */}
       <section className="relative max-w-4xl mx-auto mt-12">
         <Link
           href={SECTIONS.match.href}
@@ -252,7 +252,7 @@ export default async function Home() {
             <Compass className="h-11 w-11" aria-hidden />
           </span>
           <span className="flex-1 space-y-2">
-            <span className="block font-display text-2xl sm:text-3xl font-bold text-white">Find My DRep</span>
+            <span className="block font-display text-2xl sm:text-3xl font-bold text-white">DRep Match-maker</span>
             <span className="block text-slate-300 text-balance">
               Your ADA has a vote. Answer a 3-minute quiz and see which DReps have actually voted the way you think, plus
               what they say in their own words. Small DReps get a boost so power spreads out.
@@ -278,7 +278,7 @@ export default async function Home() {
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="DRep Hall of Fame" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
+          <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="Scoreboard" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
           <GameTile href={SECTIONS.draft.href} icon={Swords} title="Draft" body={SECTIONS.draft.blurb} accent="bg-brand-gold/20 text-brand-gold-light" />
           <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="Cardanathon" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
           <GameTile href="/leaderboard" icon={Trophy} title="Leaderboard" body="Every team’s score, pick by pick, updated as the season unfolds." accent="bg-sky-500/15 text-sky-300" />

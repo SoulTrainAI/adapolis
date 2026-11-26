@@ -5,17 +5,16 @@ import { format } from 'date-fns';
 import { Award } from 'lucide-react';
 import type { Claim } from '@/lib/season/champions';
 import { seasonLabel } from '@/lib/season/points';
-import { CollectiblesNotice } from './CollectiblesNotice';
 
 const WHY: Record<Claim['claimant_type'], string> = {
-  drep: 'your own Champion Card (DRep copies)',
+  drep: 'it is your own DRep All-Star card (DRep copies)',
   team: 'you drafted them',
   delegator: 'you delegated to them',
 };
 
-const EDITION: Record<string, string> = { gold: 'Gold Champion', silver: 'Silver', bronze: 'Bronze', holo: 'Holo' };
+const EDITION: Record<string, string> = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze', holo: 'Holographic' };
 
-/** Champion Card copies this wallet (or signed-in DRep) has earned. Minting isn't open yet. */
+/** DRep All-Star copies this wallet (or signed-in DRep) has earned. Minting isn't open yet. */
 export function ClaimsSection() {
   const [claims, setClaims] = useState<Claim[] | null>(null);
 
@@ -33,9 +32,8 @@ export function ClaimsSection() {
   return (
     <section className="space-y-4">
       <h2 className="flex items-center gap-2 font-display text-xl font-bold text-white">
-        <Award className="h-5 w-5 text-brand-gold-light" /> Champion Cards you&apos;ve earned
+        <Award className="h-5 w-5 text-brand-gold-light" /> DRep All-Stars you&apos;ve earned
       </h2>
-      <CollectiblesNotice compact />
       {claims && claims.length > 0 ? (
         <ul className="space-y-2">
           {claims.map((c) => (
@@ -61,9 +59,8 @@ export function ClaimsSection() {
         </ul>
       ) : (
         <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 p-5 text-sm text-slate-400">
-          When a season ends, its top 10 DReps become Champion Cards. If you drafted one, delegate to one, or are one, your
-          copies show up here. Claiming opens after the first cards are tested and reviewed; you&apos;ll pay only the
-          network fee.
+          When a season ends, its top 10 DReps become DRep All-Stars. If you drafted one or are one, your copies show up
+          here and on the Mint NFTs page. You pay only the network fee.
         </p>
       )}
     </section>

@@ -1,5 +1,5 @@
 /**
- * DRep Hall of Fame (lifetime stats; route kept at /scoreboard)
+ * Scoreboard (lifetime stats)
  * Server-rendered shell with client-side filtering, sorting, and pagination
  */
 
@@ -9,8 +9,8 @@ import { ScoreboardClient } from '@/components/scoreboard/ScoreboardClient';
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'DRep Hall of Fame — ADApolis',
-  description: 'Every Cardano DRep ranked by lifetime GovScore, with your own Alignment after the Find My DRep quiz.',
+  title: 'Scoreboard — ADApolis',
+  description: 'Every Cardano DRep ranked by lifetime GovScore, with your own Alignment after the DRep Match-maker quiz.',
 };
 
 async function getCurrentEpoch(): Promise<number> {
@@ -42,7 +42,7 @@ export default async function ScoreboardPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-5xl font-bold mb-4">DRep Hall of Fame</h1>
+          <h1 className="text-5xl font-bold mb-4">Scoreboard</h1>
           <p className="text-lg text-slate-300 mb-4">
             Every Cardano DRep&apos;s lifetime record, ranked by GovScore: long-term participation, adjusted for ADA-power dampening. Took the Find My DRep quiz? Rank by your own Alignment too.
           </p>

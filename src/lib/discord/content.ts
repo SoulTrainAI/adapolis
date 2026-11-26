@@ -101,7 +101,7 @@ export const GUIDES: Guide[] = [
       '• explains their reasoning in their own words,',
       '• is reachable: a profile, links, and answers to questions (see #ask-a-drep).',
       '',
-      'Anyone can register as a DRep, and many people hold delegations they never use. ADApolis tracks that: the DRep Hall of Fame at https://adapolis.net/scoreboard ranks DReps on participation, never on which way they vote.',
+      'Anyone can register as a DRep, and many people hold delegations they never use. ADApolis tracks that: the Scoreboard at https://www.adapolis.net/scoreboard ranks DReps on participation, never on which way they vote.',
     ].join('\n'),
   },
   {
@@ -109,7 +109,7 @@ export const GUIDES: Guide[] = [
     title: 'How to delegate your voting power',
     tag: 'Delegation',
     body: [
-      '1. Find a DRep: take the quiz at https://adapolis.net/match or browse the DRep Hall of Fame.',
+      '1. Find a DRep: take the quiz at https://adapolis.net/match or browse the Scoreboard.',
       '2. In your wallet (Eternl, Lace, Yoroi and others), open the governance or voting section and search for the DRep\'s ID or name. You can also delegate on gov.tools.',
       '3. Sign the transaction. It costs a small network fee.',
       '',
@@ -123,11 +123,11 @@ export const GUIDES: Guide[] = [
     title: 'How to read a governance action',
     tag: 'Basics',
     body: [
-      'Every action in #governance-actions links to its page on ADApolis Hot Topics. Look at:',
+      'Every action in #governance-actions links to its page on ADApolis Hot Takes. Look at:',
       '• **Type**: a treasury withdrawal spends ADA; an info action is only a poll.',
       '• **The ask**: for treasury actions, how much, to whom, and for what deliverables.',
       '• **The deadline**: the epoch voting closes.',
-      '• **Arguments**: Hot Topics summarises DRep rationales for and against, each linked to the DRep\'s own words.',
+      '• **Arguments**: Hot Takes shows DRep rationales for and against, each linked to the DRep\'s own words.',
       '',
       'Then ask the proposer or DReps directly: open a post in #ask-a-drep.',
     ].join('\n'),

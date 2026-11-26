@@ -3,7 +3,7 @@ import { MatchQuiz } from '@/components/match/MatchQuiz';
 import { DRepCheckup } from '@/components/cards/DRepCheckup';
 
 export const metadata: Metadata = {
-  title: 'Find My DRep — ADApolis',
+  title: 'DRep Match-maker — ADApolis',
   description:
     'Answer a few questions about the Cardano you want and see which DReps have actually voted that way on-chain.',
 };

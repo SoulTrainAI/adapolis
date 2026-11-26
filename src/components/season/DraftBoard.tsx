@@ -463,7 +463,7 @@ export function DraftBoard() {
             </ol>
             <label
               className="flex items-start gap-2 text-sm text-slate-200"
-              title="The global game is the main leaderboard and the only one that wins Season Trophy NFTs. Your team still plays in any leagues you join either way."
+              title="The global game is the main leaderboard and the only one that wins DRep All-Star Season Trophy NFTs. Your team still plays in any leagues you join either way."
             >
               <input
                 type="checkbox"
@@ -474,7 +474,7 @@ export function DraftBoard() {
               />
               <span>
                 Compete in the global game
-                <span className="block text-xs text-slate-400">Top 3 win Season Trophy NFTs. Leagues are separate.</span>
+                <span className="block text-xs text-slate-400">Top 3 win DRep All-Star Season Trophy NFTs. Leagues are separate.</span>
               </span>
             </label>
             {locked ? (

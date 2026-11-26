@@ -9,7 +9,7 @@ export function CollectiblesNotice({ compact = false }: { compact?: boolean }) {
     >
       <ShieldAlert className={`flex-shrink-0 text-amber-300 ${compact ? 'h-4 w-4' : 'mt-0.5 h-5 w-5'}`} aria-hidden />
       <p>
-        <strong>Collectibles only. Not financial instruments.</strong> ADApolis Champion Cards and Season Trophies are
+        <strong>Collectibles only. Not financial instruments.</strong> DRep All-Star NFTs and DRep All-Star Season Trophies are
         digital collectibles. They pay nothing, share no revenue or royalties, carry no votes or say over ADApolis, and
         come with no promise of value. Buy, keep or trade them only because you like them. Nothing here is financial
         advice.

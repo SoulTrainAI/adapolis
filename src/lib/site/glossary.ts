@@ -13,7 +13,7 @@ export const TIPS = {
     'Season points (this 6-epoch season): +10 per vote, +10 for a rationale, +5 if the rationale is fresh, +5 for voting in the first half of the window, up to +20 per clean epoch for streaks, −5 per action missed. Yes, No and Abstain earn the same.',
   seasonRank: 'Rank by season points among DReps who have voted this season.',
   seasonTrend: 'Season points in each recent season, oldest to newest.',
-  tier: 'Card tier, by GovScore rank among active DReps: Legend #1, Silver #2, Bronze #3, Holo top 10, Rare top 50, Common the rest.',
+  tier: 'Card tier, by GovScore rank among active DReps: Legend #1, Silver #2, Bronze #3, Holographic top 10, Rare top 50, Common the rest.',
   rank: 'GovScore rank among active DReps (registered, has voted, has ADA delegated).',
   cardNumber: 'Card number = current GovScore rank.',
   rookie: 'Rookie card: first votes were in the last two seasons.',
@@ -44,7 +44,7 @@ export const TIPS = {
   votes: 'Governance actions voted on, out of all they were eligible for.',
   participation: 'Votes cast ÷ governance actions open while the DRep was registered.',
   alignment:
-    'Alignment: how closely this DRep’s real votes match your Find My DRep answers, 0–100%. Worked out in your browser from your answers; only you see it.',
+    'Alignment: how closely this DRep’s real votes match your DRep Match-maker answers, 0–100%. Worked out in your browser from your answers; only you see it.',
   personalGovscore:
     'Personal GovScore: GovScore adjusted by your Alignment. 50% alignment leaves it unchanged; 100% raises it by a quarter, 0% lowers it by a quarter (max 100). Only you see it; the public GovScore never depends on how DReps vote.',
   seasonEpochs: 'The six epochs of the season. • marks the season in progress.',

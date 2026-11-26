@@ -266,7 +266,7 @@ export function MatchQuiz() {
 
       {step.kind === 'intro' && (
         <div className="text-center space-y-5">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white">Find My DRep</h1>
+          <h1 className="text-4xl sm:text-5xl font-bold text-white">DRep Match-maker</h1>
           <p className="text-lg text-slate-300">
             Answer a few questions about the Cardano you want. We compare your answers with how DReps have actually voted
             on-chain, and show you who matches best and why.

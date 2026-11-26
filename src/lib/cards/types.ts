@@ -125,7 +125,7 @@ export function tierFor(rank: number | null): Tier {
   if (rank === 3)
     return { label: 'Bronze', frame: 'from-orange-300 via-orange-700 to-amber-400', glow: 'shadow-orange-600/30', art: 'rgba(234,88,12,0.4)', accent: 'text-orange-300' };
   if (rank !== null && rank <= 10)
-    return { label: 'Holo', frame: 'from-fuchsia-400 via-violet-500 to-cyan-400', glow: 'shadow-violet-500/30', art: 'rgba(139,92,246,0.45)', accent: 'text-fuchsia-300' };
+    return { label: 'Holographic', frame: 'from-fuchsia-400 via-violet-500 to-cyan-400', glow: 'shadow-violet-500/30', art: 'rgba(139,92,246,0.45)', accent: 'text-fuchsia-300' };
   if (rank !== null && rank <= 50)
     return { label: 'Rare', frame: 'from-sky-300 via-blue-600 to-sky-400', glow: 'shadow-sky-500/20', art: 'rgba(14,165,233,0.35)', accent: 'text-sky-300' };
   return { label: 'Common', frame: 'from-slate-200 via-slate-400 to-slate-300', glow: '', art: 'rgba(148,163,184,0.28)', accent: 'text-slate-200' };
