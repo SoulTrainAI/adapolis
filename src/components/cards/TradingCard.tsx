@@ -326,6 +326,7 @@ function CardFront(props: TradingCardProps) {
               RC
             </span>
           )}
+          <CostStars n={c.draft_cost ?? 1} className="flex-shrink-0 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]" style={{ fontSize: cq(4) }} />
         </div>
 
         {/* Art window */}
@@ -343,11 +344,10 @@ function CardFront(props: TradingCardProps) {
             <Sparkles style={icon(3.6)} /> {tier.label}
             {c.rank !== null && ` · #${c.rank}`}
           </span>
-          <CostStars n={c.draft_cost ?? 1} className="absolute bg-black/60" style={{ right: cq(2), top: cq(2), fontSize: cq(3.6), padding: `${cq(0.8)} ${cq(1.5)}` }} />
           {c.streak > 1 && (
             <span
               className="absolute flex items-center bg-black/60 font-bold text-orange-300"
-              style={{ right: cq(2), top: cq(9), gap: cq(0.5), fontSize: cq(3.8), padding: `${cq(0.5)} ${cq(2)}` }}
+              style={{ right: cq(2), top: cq(2), gap: cq(0.5), fontSize: cq(3.8), padding: `${cq(0.5)} ${cq(2)}` }}
               title={TIPS.streak}
             >
               <Flame style={icon(4)} /> {c.streak}

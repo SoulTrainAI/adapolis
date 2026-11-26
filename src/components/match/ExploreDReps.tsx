@@ -287,15 +287,15 @@ export function ExploreDReps({
         </select>
       </div>
 
-      <ol className="grid grid-cols-[minmax(0,1fr)] gap-5 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+      <ol className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 xl:gap-5 [&>*]:min-w-0">
         {listed.slice(0, shown).map((r) => {
           const open = expanded === r.drep.drep_id;
           const card =
             cards.get(r.drep.drep_id) ??
             placeholderCard({ drep_id: r.drep.drep_id, name: r.drep.name, image: r.drep.image, ada: r.drep.ada, delegators: r.drep.delegators });
           return (
-            <li key={r.drep.drep_id} className={`flex flex-col gap-2 ${open ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
-              <div className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-slate-900/70 px-3 py-1.5 text-xs">
+            <li key={r.drep.drep_id} className={`flex flex-col gap-2 ${open ? 'sm:col-span-2 lg:col-span-3 xl:col-span-3' : ''}`}>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg bg-slate-900/70 px-3 py-1.5 text-xs">
                 <span className="font-mono text-slate-500">#{rankOf.get(r.drep.drep_id)}</span>
                 <MyDRepBadge drepId={r.drep.drep_id} />
                 {hasAnswers && r.result ? (
@@ -304,7 +304,7 @@ export function ExploreDReps({
                       Alignment <strong className="text-brand-lilac">{Math.round(r.result.matchPercent)}%</strong>
                     </span>
                     <span className="text-slate-300" title={TIPS.personalGovscore}>
-                      Personal{' '}
+                      Aligned{' '}
                       <strong className="text-white">{personalGovScore(r.drep.govscore, r.result.matchPercent).toFixed(1)}</strong>
                     </span>
                   </>
@@ -323,7 +323,7 @@ export function ExploreDReps({
                     type="button"
                     onClick={() => setExpanded(open ? null : r.drep.drep_id)}
                     aria-expanded={open}
-                    className="flex w-full items-center justify-center gap-1 rounded-lg bg-slate-800 py-1.5 text-sm text-slate-200 hover:bg-slate-700"
+                    className="flex min-h-[44px] w-full items-center justify-center gap-1 rounded-lg bg-slate-800 py-1.5 text-sm text-slate-200 hover:bg-slate-700"
                   >
                     {r.result ? 'Why this match' : 'Delegate'} {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </button>

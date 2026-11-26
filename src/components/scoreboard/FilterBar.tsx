@@ -13,6 +13,8 @@ export interface FilterState {
   maxAda: number;
   /** active: registered, has voted, holds delegation. registered: all registered. all: retired too. */
   pool: 'active' | 'registered' | 'all';
+  /** Draft Cost stars to show (empty = all) */
+  stars: number[];
 }
 
 interface FilterBarProps {
@@ -33,6 +35,7 @@ const SORT_OPTIONS = [
   { value: 'personal_govscore', label: 'GovScore (aligned)', tip: TIPS.personalGovscore },
   { value: 'season_points', label: 'Season points', tip: TIPS.seasonPoints },
   { value: 'projection', label: 'Projected points', tip: TIPS.projection },
+  { value: 'draft_cost', label: 'Draft Cost (★)', tip: 'Draft Cost: 1–5 gold stars, in proportion to Projected Points.' },
   { value: 'participation_rate', label: 'Participation %', tip: TIPS.participation },
   { value: 'amount_lovelace', label: 'ADA Delegated', tip: TIPS.ada },
   { value: 'delegator_count', label: 'Delegators', tip: TIPS.delegators },
@@ -49,6 +52,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailab
     filters.minAda > 0 ? 1 : 0,
     filters.maxAda < 999999999 ? 1 : 0,
     filters.pool !== 'active' ? 1 : 0,
+    filters.stars.length > 0 ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -87,6 +91,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailab
       minAda: 0,
       maxAda: 999999999,
       pool: 'active',
+      stars: [],
     };
     onFiltersChange(resetFilters);
     onSearch('');
@@ -297,6 +302,29 @@ export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailab
               <span>0%</span>
               <span className="flex-1 text-right">100%</span>
             </div>
+          </div>
+
+          {/* Draft Cost stars */}
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-200">Draft Cost</p>
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5].map((n) => {
+                const on = filters.stars.includes(n);
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => onFiltersChange({ ...filters, stars: on ? filters.stars.filter((x) => x !== n) : [...filters.stars, n].sort() })}
+                    className={`min-h-[40px] rounded-lg border px-3 text-sm font-bold ${on ? 'border-amber-400 bg-amber-400/15 text-amber-300' : 'border-slate-600 text-slate-300 hover:border-slate-400'}`}
+                    title={`${n} star${n === 1 ? '' : 's'}`}
+                  >
+                    {'★'.repeat(n)}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">Tip: you can also search “5 stars” or “★★★”.</p>
           </div>
 
           {/* ADA range */}

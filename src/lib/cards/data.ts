@@ -195,6 +195,8 @@ export function cardMetadata(s: CardSummary, seasonLabel: string): Record<string
     archetype: s.archetype?.label ?? 'None',
     abilities: s.abilities.map((a) => a.label).join(', ') || 'None',
     rookie: s.rookie ? 'Yes' : 'No',
+    // Draft Cost at the moment the card is frozen (season end), 1–5 gold stars.
+    draft_cost_stars: s.draft_cost ?? 1,
   };
   return meta;
 }
@@ -203,7 +205,8 @@ export async function getCardDetail(drepId: string): Promise<CardDetail | null> 
   const [data, override] = await Promise.all([getLoaded(), getOverride(drepId)]);
   const base = data.summaries.get(drepId);
   if (!base) return null;
-  const summary = applyOverride(base, override);
+  const perStar = pointsPerStar(Array.from(data.summaries.values()).filter((c) => c.registered).map((c) => c.projection));
+  const summary = { ...applyOverride(base, override), draft_cost: draftCost(base.projection, perStar) };
   const profile = applyOverride({ image: null, ...(data.profiles.get(drepId) ?? { bio: null, quote: null, links: [] }) }, override);
   // A bio the DRep wrote here replaces the on-chain quote too.
   const own = override?.bio ? cardQuote([override.bio]) : profile.quote;

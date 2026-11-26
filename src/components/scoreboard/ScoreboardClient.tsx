@@ -67,6 +67,7 @@ export function ScoreboardClient({ initialEpoch, initialSort = 'adjusted_govscor
     minAda: 0,
     maxAda: 999999999,
     pool: 'active',
+    stars: [],
   });
 
   const [page, setPage] = useState(1);
@@ -94,6 +95,7 @@ export function ScoreboardClient({ initialEpoch, initialSort = 'adjusted_govscor
     if (filters.search) {
       params.set('search', filters.search);
     }
+    if (filters.stars.length) params.set('stars', filters.stars.join(','));
 
     return params.toString();
   }, [filters, page]);
@@ -147,8 +149,9 @@ export function ScoreboardClient({ initialEpoch, initialSort = 'adjusted_govscor
     return Array.from(align.byDRep.values())
       .filter((a) => !q || a.result.drep.drep_id.toLowerCase().includes(q) || (a.result.drep.name ?? '').toLowerCase().includes(q))
       .filter((a) => a.result.drep.ada >= filters.minAda && a.result.drep.ada <= filters.maxAda)
+      .filter((a) => filters.stars.length === 0 || filters.stars.includes(cards.get(a.result.drep.drep_id)?.draft_cost ?? 1))
       .sort((a, b) => dir * (a[key] - b[key]) || b.result.drep.ada - a.result.drep.ada);
-  }, [clientMode, align.byDRep, filters]);
+  }, [clientMode, align.byDRep, filters, cards]);
 
   // Pagination helpers
   const currentEpoch = data?.epoch || initialEpoch;

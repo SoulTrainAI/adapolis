@@ -44,11 +44,12 @@ interface DRepScoreRow {
 type Pool = 'active' | 'registered' | 'all';
 
 /** Season points and projections come from the card engine (one cached computation for the whole site). */
-let fantasy: Map<string, { season_points: number; projection: number | null }> = new Map();
+let fantasy: Map<string, { season_points: number; projection: number | null; draft_cost: number }> = new Map();
 
 const SORTS = {
   season_points: (r: DRepScoreRow) => fantasy.get(r.drep_id)?.season_points ?? -1,
   projection: (r: DRepScoreRow) => fantasy.get(r.drep_id)?.projection ?? -1,
+  draft_cost: (r: DRepScoreRow) => fantasy.get(r.drep_id)?.draft_cost ?? 1,
   adjusted_govscore: (r: DRepScoreRow) => r.adjusted_govscore ?? -1,
   raw_govscore: (r: DRepScoreRow) => r.raw_govscore ?? -1,
   participation_rate: (r: DRepScoreRow) => r.participation_rate ?? -1,
@@ -133,7 +134,19 @@ export async function GET(request: Request) {
     if (!(sort in SORTS)) return NextResponse.json({ error: `Invalid sort field. Must be one of: ${Object.keys(SORTS).join(', ')}` }, { status: 400 });
     if (order !== 'asc' && order !== 'desc') return NextResponse.json({ error: 'Order must be asc or desc' }, { status: 400 });
 
-    const search = (searchParams.get('search') ?? '').trim().toLowerCase().slice(0, 64);
+    let search = (searchParams.get('search') ?? '').trim().toLowerCase().slice(0, 64);
+    // Draft Cost filter: ?stars=4,5, or a search like "5 stars", "4★" or "★★★".
+    const stars = new Set(
+      (searchParams.get('stars') ?? '')
+        .split(',')
+        .map(Number)
+        .filter((n) => Number.isInteger(n) && n >= 1 && n <= 5)
+    );
+    const starSearch = search.match(/^(?:([1-5])\s*(?:★|stars?)|(★{1,5}))$/);
+    if (starSearch) {
+      stars.add(starSearch[1] ? Number(starSearch[1]) : starSearch[2].length);
+      search = '';
+    }
     const minParticipation = parseFloat(searchParams.get('min_participation') || '0');
     // ADA bounds arrive in millions of ADA (the filter bar's unit).
     const minAda = parseFloat(searchParams.get('min_ada') || '0');
@@ -144,9 +157,9 @@ export async function GET(request: Request) {
     const perPage = Math.min(100, Math.max(1, parseInt(searchParams.get('per_page') || '50', 10)));
 
     const { epoch, rows } = await loadRows();
-    if (sort === 'season_points' || sort === 'projection') {
+    if (sort === 'season_points' || sort === 'projection' || sort === 'draft_cost' || stars.size > 0) {
       const cards = await getCards();
-      fantasy = new Map(cards.cards.map((c) => [c.drep_id, { season_points: c.season.points, projection: c.projection }]));
+      fantasy = new Map(cards.cards.map((c) => [c.drep_id, { season_points: c.season.points, projection: c.projection, draft_cost: c.draft_cost ?? 1 }]));
     }
     const minLovelace = minAda * 1e12;
     const maxLovelace = maxAda * 1e12;
@@ -156,6 +169,7 @@ export async function GET(request: Request) {
       .filter(
         (r) =>
           inPool(r, pool) &&
+          (stars.size === 0 || stars.has(fantasy.get(r.drep_id)?.draft_cost ?? 1)) &&
           (minParticipation <= 0 || (r.participation_rate ?? 0) >= minParticipation / 100) &&
           (minAda <= 0 || Number(r.amount_lovelace ?? 0) >= minLovelace) &&
           (maxAda >= 999999999 || Number(r.amount_lovelace ?? 0) <= maxLovelace) &&
