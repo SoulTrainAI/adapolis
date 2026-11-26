@@ -46,7 +46,7 @@ export const TIPS = {
   alignment:
     'Alignment: how closely this DRep’s real votes match your DRep Match-maker answers, 0–100%. Worked out in your browser from your answers; only you see it.',
   personalGovscore:
-    'Personal GovScore: GovScore adjusted by your Alignment. 50% alignment leaves it unchanged; 100% raises it by a quarter, 0% lowers it by a quarter (max 100). Only you see it; the public GovScore never depends on how DReps vote.',
+    'GovScore (aligned): GovScore adjusted by your Alignment. 50% alignment leaves it unchanged; 100% raises it by a quarter, 0% lowers it by a quarter (max 100). Only you see it; the public GovScore never depends on how DReps vote.',
   seasonEpochs: 'The six epochs of the season. • marks the season in progress.',
   seasonVotes: 'Votes cast that season.',
   seasonExplained: 'Votes with a rationale that season.',
@@ -54,7 +54,7 @@ export const TIPS = {
   seasonMissed: 'Actions that closed unvoted that season.',
   seasonScore: 'GovScore at the end of that season.',
   dampened: 'Adjusted GovScore = raw score × ADA dampening, 1 ÷ (1 + log₁₀(ADA in millions + 1) ÷ 4).',
-  raw: 'Raw GovScore: confidence-adjusted participation before ADA dampening.',
+  raw: 'GovScore (dry): confidence-adjusted participation before ADA dampening.',
   rationaleRate: 'Share of this DRep’s votes that have a published rationale.',
 } as const;
 

@@ -29,15 +29,15 @@ const QUIZ_FIRST = 'Take the DRep Match-maker quiz first: Alignment ranks DReps 
 
 const SORT_OPTIONS = [
   { value: 'adjusted_govscore', label: 'GovScore (career)', tip: TIPS.govscore },
+  { value: 'raw_govscore', label: 'GovScore (dry)', tip: TIPS.raw },
+  { value: 'personal_govscore', label: 'GovScore (aligned)', tip: TIPS.personalGovscore },
   { value: 'season_points', label: 'Season points', tip: TIPS.seasonPoints },
   { value: 'projection', label: 'Projected points', tip: TIPS.projection },
-  { value: 'raw_govscore', label: 'GovScore before ADA dampening', tip: TIPS.raw },
   { value: 'participation_rate', label: 'Participation %', tip: TIPS.participation },
   { value: 'amount_lovelace', label: 'ADA Delegated', tip: TIPS.ada },
   { value: 'delegator_count', label: 'Delegators', tip: TIPS.delegators },
   { value: 'voting_streak_epochs', label: 'Voting Streak', tip: TIPS.streak },
   { value: 'alignment', label: 'Alignment', tip: TIPS.alignment },
-  { value: 'personal_govscore', label: 'Personal GovScore', tip: TIPS.personalGovscore },
 ];
 
 export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailable = false }: FilterBarProps) {
@@ -112,13 +112,13 @@ export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailab
         </div>
 
         {/* Sort dropdown */}
-        <div className="relative w-48">
+        <div className="relative w-72 flex-shrink-0">
           <button
             onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
             title={SORT_OPTIONS.find((o) => o.value === filters.sort)?.tip ?? 'Choose what to rank DReps by'}
             className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 text-sm flex items-center justify-between hover:border-slate-600 transition-colors"
           >
-            <span className="whitespace-nowrap"><span className="text-slate-400">Rank by:</span> {currentSortLabel}</span>
+            <span className="truncate"><span className="text-slate-400">Rank by:</span> {currentSortLabel}</span>
             <ChevronDown size={16} className={sortDropdownOpen ? 'rotate-180' : ''} />
           </button>
 
@@ -130,7 +130,7 @@ export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailab
                   onClick={() => handleSortChange(option.value)}
                   title={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable ? QUIZ_FIRST : option.tip}
                   aria-disabled={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable}
-                  className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                  className={`w-full min-h-[40px] text-left px-3 py-2 text-sm transition-colors ${
                     ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable
                       ? 'cursor-not-allowed text-slate-500'
                       : filters.sort === option.value
@@ -184,14 +184,14 @@ export function FilterBar({ filters, onFiltersChange, onSearch, alignmentAvailab
             </button>
 
             {sortDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-slate-700 border border-slate-600 rounded shadow-lg z-20 max-h-48 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-slate-700 border border-slate-600 rounded shadow-lg z-20 max-h-80 overflow-y-auto">
                 {SORT_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => handleSortChange(option.value)}
                     title={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable ? QUIZ_FIRST : option.tip}
                     aria-disabled={ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable}
-                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                    className={`w-full min-h-[40px] text-left px-3 py-2 text-sm transition-colors ${
                       ALIGNMENT_SORTS.includes(option.value) && !alignmentAvailable
                         ? 'cursor-not-allowed text-slate-500'
                         : filters.sort === option.value

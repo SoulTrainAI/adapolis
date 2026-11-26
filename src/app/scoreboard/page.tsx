@@ -3,6 +3,7 @@
  * Server-rendered shell with client-side filtering, sorting, and pagination
  */
 
+import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { ScoreboardClient } from '@/components/scoreboard/ScoreboardClient';
 
@@ -43,8 +44,14 @@ export default async function ScoreboardPage() {
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-5xl font-bold mb-4">Scoreboard</h1>
-          <p className="text-lg text-slate-300 mb-4">
-            Every Cardano DRep&apos;s lifetime record, ranked by GovScore: long-term participation, adjusted for ADA-power dampening. Took the Find My DRep quiz? Rank by your own Alignment too.
+          <p className="text-lg text-slate-300">
+            Every Cardano DRep&apos;s lifetime record, ranked by GovScore: long-term participation, adjusted for ADA-power dampening.
+          </p>
+          <p className="mt-2 text-lg text-slate-300">
+            <Link href="/match" className="font-semibold text-violet-300 underline decoration-violet-500/50 underline-offset-4 hover:text-violet-200">
+              Took the DRep Match-maker quiz?
+            </Link>{' '}
+            Rank by your own Alignment too.
           </p>
         </div>
 

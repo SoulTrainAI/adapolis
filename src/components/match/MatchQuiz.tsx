@@ -468,7 +468,7 @@ export function MatchQuiz() {
           </p>
           {hasAnswers && !quickPick && drepsWithStatements > 0 && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-slate-400">Values from:</span>
+              <span className="text-slate-400" title="Changes the ranking: match your answers against DReps' on-chain votes, or against what they have said in their own published words.">Match on:</span>
               {(
                 [
                   ['votes', 'How they vote'],
@@ -487,8 +487,8 @@ export function MatchQuiz() {
               ))}
               {rankMode === 'statements' && (
                 <span className="text-xs text-slate-500 w-full">
-                  Values match uses AI summaries of DReps&apos; own published words ({drepsWithStatements} DReps have statements on
-                  file).
+                  Ranking now uses DReps&apos; own published words (summarized by AI, each linked to the source) instead of their votes.
+                  {drepsWithStatements} DReps have statements on file; this also counts your answers on topics nobody has voted on yet.
                 </span>
               )}
             </div>
