@@ -168,6 +168,15 @@ function TopicCard({ t, currentEpoch }: { t: HotTopic; currentEpoch: number }) {
         <SplitBar label="Voting power (current delegation)" values={t.tally.ada} format={(n) => formatAda(n)} />
       </div>
 
+      {t.arguments?.debate_summary && (
+        <div className="rounded-xl border border-violet-800/50 bg-violet-950/30 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-300">
+            State of the debate · AI summary of {t.arguments.for_sources} Yes and {t.arguments.against_sources} No rationales
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-200">{t.arguments.debate_summary}</p>
+        </div>
+      )}
+
       <details className="group border-t border-slate-800 pt-4">
         <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-2 font-semibold text-white [&::-webkit-details-marker]:hidden">
           Arguments and Rationales

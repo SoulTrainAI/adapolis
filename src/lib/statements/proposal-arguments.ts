@@ -37,6 +37,8 @@ export interface ProposalArguments {
   against: ProposalArgument[];
   for_sources: number;
   against_sources: number;
+  /** "State of the debate": short neutral AI summary; null until generated (migration 024). */
+  debate_summary: string | null;
 }
 
 interface Rationale {
@@ -89,7 +91,7 @@ async function loadRationales(proposalId: string): Promise<Rationale[]> {
 }
 
 // Bump when the prompt changes so every proposal is regenerated once.
-const PROMPT_VERSION = 'v2-full-sentence-quotes';
+const PROMPT_VERSION = 'v3-debate-summary';
 
 function fingerprint(rationales: Rationale[]): string {
   return createHash('sha256')
@@ -106,6 +108,7 @@ Rules:
 - text: a neutral label for the argument in at most 12 words (used only to tell points apart; readers see the quote).
 - quote: 1 to 3 COMPLETE, consecutive sentences copied EXACTLY from the cited rationale that state the argument clearly on their own. Start at the beginning of a sentence and end at its final punctuation. At most 80 words. Do not paraphrase, trim mid-sentence or join separate passages.
 - source_index: the index of the rationale quoted.
+- debate_summary: 2 or 3 neutral sentences (at most 60 words) for a newcomer: what the proposal asks for and the main point of disagreement between the Yes and No sides, as the rationales put it. No names, no verdict on who is right, no prediction of the outcome, no political labels. Empty string if there are no rationales.
 - Skip thanks, procedural remarks and anything that isn't a reason to pass or reject. Fewer points is better than weak ones.
 
 Call the record_arguments tool exactly once.`;
@@ -128,13 +131,23 @@ const TOOL: Anthropic.Tool = {
     properties: {
       for: { type: 'array', items: POINT_SCHEMA },
       against: { type: 'array', items: POINT_SCHEMA },
+      debate_summary: { type: 'string' },
     },
-    required: ['for', 'against'],
+    required: ['for', 'against', 'debate_summary'],
   },
 };
 
 const PointSchema = z.object({ text: z.string().min(3).max(240), quote: z.string(), source_index: z.number().int() });
-const ToolInputSchema = z.object({ for: z.array(z.unknown()).default([]), against: z.array(z.unknown()).default([]) });
+const ToolInputSchema = z.object({ for: z.array(z.unknown()).default([]), against: z.array(z.unknown()).default([]), debate_summary: z.string().default('') });
+
+const LOADED = /\b(left|right)[- ]?(wing|leaning)|\b(conservative|liberal|progressive|libertarian|socialist|populist)\b|\b(will|is going to|is likely to) (pass|fail)\b/i;
+
+/** Neutral, short, or nothing: a summary that labels people or predicts the result is dropped. */
+export function cleanDebateSummary(text: string): string | null {
+  const t = text.replace(/\s+/g, ' ').trim();
+  if (t.length < 30 || t.length > 600 || LOADED.test(t)) return null;
+  return t;
+}
 
 /** Verbatim, 6–90 words, and made of whole sentences: starts with a capital (or quote mark) and ends with sentence punctuation. */
 export function isFullSentenceQuote(quote: string, sourceText: string): boolean {
@@ -184,10 +197,11 @@ async function summarize(title: string, rationales: Rationale[], model: string) 
   });
   const toolUse = response.content.find((c): c is Anthropic.ToolUseBlock => c.type === 'tool_use');
   const input = ToolInputSchema.safeParse(toolUse?.input ?? {});
-  const raw = input.success ? input.data : { for: [], against: [] };
+  const raw = input.success ? input.data : { for: [], against: [], debate_summary: '' };
   return {
     for: validPoints(raw.for, 'yes', rationales),
     against: validPoints(raw.against, 'no', rationales),
+    debate_summary: cleanDebateSummary(raw.debate_summary),
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
   };
@@ -231,10 +245,10 @@ export async function refreshProposalArguments(proposals: Array<{ proposal_id: s
         for_sources: rationales.filter((r) => r.side === 'yes').length,
         against_sources: rationales.filter((r) => r.side === 'no').length,
       };
-      let args = { for: [] as ProposalArgument[], against: [] as ProposalArgument[], inputTokens: 0, outputTokens: 0 };
+      let args = { for: [] as ProposalArgument[], against: [] as ProposalArgument[], debate_summary: null as string | null, inputTokens: 0, outputTokens: 0 };
       if (rationales.length > 0) args = await summarize(p.title, rationales, model);
       result.spent_usd += (args.inputTokens * price.input + args.outputTokens * price.output) / 1_000_000;
-      const { error: upsertError } = await supabaseAdmin.from('proposal_arguments').upsert({
+      const row = {
         proposal_id: p.proposal_id,
         args_for: args.for,
         args_against: args.against,
@@ -244,7 +258,10 @@ export async function refreshProposalArguments(proposals: Array<{ proposal_id: s
         input_tokens: args.inputTokens,
         output_tokens: args.outputTokens,
         generated_at: new Date().toISOString(),
-      });
+      };
+      let { error: upsertError } = await supabaseAdmin.from('proposal_arguments').upsert({ ...row, debate_summary: args.debate_summary });
+      // Migration 024 not run yet: save without the summary rather than lose the arguments.
+      if (upsertError && /debate_summary/.test(upsertError.message)) ({ error: upsertError } = await supabaseAdmin.from('proposal_arguments').upsert(row));
       if (upsertError) throw new Error(`Saving arguments failed: ${upsertError.message}`);
       result.generated++;
     } catch (e) {
@@ -269,6 +286,7 @@ const StoredSchema = z.object({
   args_against: z.array(StoredPointSchema),
   for_sources: z.number(),
   against_sources: z.number(),
+  debate_summary: z.string().nullable().optional(),
 });
 
 async function drepNames(ids: string[]): Promise<Map<string, string | null>> {
@@ -288,7 +306,7 @@ export async function loadProposalArguments(ids: string[]): Promise<Map<string, 
   if (ids.length === 0) return out;
   const { data, error } = await supabaseAdmin
     .from('proposal_arguments')
-    .select('proposal_id, args_for, args_against, for_sources, against_sources')
+    .select('*')
     .in('proposal_id', ids);
   if (error) {
     console.warn(JSON.stringify({ event: 'proposal_arguments_unavailable', error: error.message }));
@@ -306,6 +324,7 @@ export async function loadProposalArguments(ids: string[]): Promise<Map<string, 
       against: named(r.args_against),
       for_sources: r.for_sources,
       against_sources: r.against_sources,
+      debate_summary: r.debate_summary ?? null,
     });
   }
   return out;

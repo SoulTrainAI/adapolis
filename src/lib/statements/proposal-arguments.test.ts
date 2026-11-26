@@ -14,3 +14,15 @@ describe('isFullSentenceQuote', () => {
     expect(isFullSentenceQuote('The team delivered all milestones on time and passed the audit.', source)).toBe(false);
   });
 });
+
+import { cleanDebateSummary } from './proposal-arguments';
+
+describe('cleanDebateSummary', () => {
+  it('keeps a short neutral summary', () => {
+    expect(cleanDebateSummary('The proposal asks for 600,000 ada to maintain the SDK. Supporters cite delivery; opponents question the budget size.')).not.toBeNull();
+  });
+  it('drops labels and predictions', () => {
+    expect(cleanDebateSummary('Conservative DReps oppose the budget while others support the maintenance plan for the SDK.')).toBeNull();
+    expect(cleanDebateSummary('The proposal asks for funding and it will pass easily given the support so far from DReps.')).toBeNull();
+  });
+});
