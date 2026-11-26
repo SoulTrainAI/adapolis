@@ -243,8 +243,9 @@ export default function AboutPage() {
                 <B>Free to play.</B> Connect a Cardano wallet and sign a message. No transaction or fee.
               </>,
               <>
-                <B>Five different DReps</B>, any registered DRep, one team per wallet per season. There&apos;s no salary
-                cap: the underdog multiplier is the balance.
+                <B>Five different DReps</B>, any registered DRep, one team per wallet per season, within a{" "}
+                <B>25-star Draft Cost</B>. Each DRep costs 1–7 gold stars from their Projected Points (up to 25 points: 1 star;
+                26–50: 2; 51–100: 3; 101–150: 4; 151–200: 5; 201–250: 6; over 250: 7), fixed when you pick them.
               </>,
               <>
                 <B>Underdog multiplier.</B> Smaller DReps (by delegated ADA and number of delegators) multiply the points

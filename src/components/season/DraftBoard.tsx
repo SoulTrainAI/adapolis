@@ -6,6 +6,8 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { LayoutGrid, List, Loader2, Lock, Plus, Search, X } from 'lucide-react';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import type { DraftData, PoolDRep } from '@/lib/season/fantasy';
+import { TEAM_STAR_BUDGET } from '@/lib/season/draft-cost';
+import { CostStars } from '@/components/cards/CostStars';
 import type { CardSummary } from '@/lib/cards/types';
 import { TradingCard } from '@/components/cards/TradingCard';
 import { placeholderCard, useCards } from '@/components/cards/useCards';
@@ -146,6 +148,11 @@ export function DraftBoard() {
   const locked = now >= new Date(season.draft_locks_at).getTime();
   const started = now >= new Date(season.starts_at).getTime();
   const full = picked.length >= ROSTER_SIZE;
+  const lockedCost = new Map((data.roster?.picks ?? []).filter((p) => p.draft_cost != null).map((p) => [p.drep_id, p.draft_cost as number]));
+  const costOf = (id: string) => lockedCost.get(id) ?? byId.get(id)?.cost ?? 1;
+  const spent = picked.reduce((sum, id) => sum + costOf(id), 0);
+  const fits = (id: string) => picked.includes(id) || spent + costOf(id) <= TEAM_STAR_BUDGET;
+  const overBudget = `Over budget: this DRep costs ${'{n}'} stars and your team has ${TEAM_STAR_BUDGET - spent} left.`;
   const savedIds = (data.roster?.picks ?? []).map((p) => p.drep_id).sort().join();
   const dirty =
     picked.slice().sort().join() !== savedIds ||
@@ -154,11 +161,19 @@ export function DraftBoard() {
 
   const toggle = (id: string) => {
     setMessage(null);
+    if (!fits(id)) {
+      setMessage({ kind: 'error', text: overBudget.replace('{n}', String(costOf(id))) });
+      return;
+    }
     setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < ROSTER_SIZE ? [...prev, id] : prev));
   };
 
   const addPick = (id: string) => {
     setMessage(null);
+    if (!fits(id)) {
+      setMessage({ kind: 'error', text: overBudget.replace('{n}', String(costOf(id))) });
+      return;
+    }
     setPicked((prev) => (prev.includes(id) || prev.length >= ROSTER_SIZE ? prev : [...prev, id]));
   };
   const removePick = (id: string) => {
@@ -354,7 +369,7 @@ export function DraftBoard() {
                     action={
                       <button
                         type="button"
-                        disabled={locked || (!isPicked && full)}
+                        disabled={locked || (!isPicked && (full || !fits(d.drep_id)))}
                         onClick={() => toggle(d.drep_id)}
                         className={`min-h-[44px] w-full py-2 text-sm font-semibold disabled:opacity-40 ${
                           isPicked ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-violet-600 text-white hover:bg-violet-500'
@@ -392,10 +407,11 @@ export function DraftBoard() {
                       {d.drafted_by > 0 && ` · drafted by ${d.drafted_by} team${d.drafted_by === 1 ? '' : 's'}`}
                     </p>
                   </div>
+                  <CostStars n={costOf(d.drep_id)} className="text-xs" />
                   <UnderdogChip value={snapshot.get(d.drep_id) ?? d.underdog} />
                   <button
                     type="button"
-                    disabled={locked || (!isPicked && full)}
+                    disabled={locked || (!isPicked && (full || !fits(d.drep_id)))}
                     onClick={() => toggle(d.drep_id)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-40 ${
                       isPicked ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-violet-600 text-white hover:bg-violet-500'
@@ -422,7 +438,13 @@ export function DraftBoard() {
           >
             <p className="flex items-center gap-2 font-semibold text-white">
               {locked && <Lock className="h-4 w-4 text-amber-300" />} Your team ({picked.length}/{ROSTER_SIZE})
+              <span className={`ml-auto text-sm ${spent > TEAM_STAR_BUDGET ? 'text-rose-300' : 'text-amber-300'}`} title="Draft Cost: each DRep costs 1–7 stars from their Projected Points.">
+                ★ {spent}/{TEAM_STAR_BUDGET}
+              </span>
             </p>
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-800" aria-hidden>
+              <div className={`h-full ${spent > TEAM_STAR_BUDGET ? 'bg-rose-500' : 'bg-amber-400'}`} style={{ width: `${Math.min(100, (spent / TEAM_STAR_BUDGET) * 100)}%` }} />
+            </div>
             <input
               value={teamName}
               onChange={(e) => setTeamName(e.target.value.slice(0, 40))}
@@ -445,6 +467,7 @@ export function DraftBoard() {
                     {id ? (
                       <>
                         <span className="min-w-0 flex-1 truncate text-slate-100">{d ? displayName(d) : id.slice(0, 14)}</span>
+                        <CostStars n={costOf(id)} className="text-[10px]" />
                         <UnderdogChip value={snapshot.get(id) ?? d?.underdog ?? 1} />
                         {!locked && (
                           <button type="button" onClick={() => toggle(id)} aria-label="Remove" className="-m-2 flex h-10 w-10 items-center justify-center text-slate-400 hover:text-white">
@@ -477,6 +500,12 @@ export function DraftBoard() {
                 <span className="block text-xs text-slate-400">Top 3 win DRep All-Star Season Trophy NFTs. Leagues are separate.</span>
               </span>
             </label>
+            {!locked && spent > TEAM_STAR_BUDGET && (
+              <p className="rounded-lg border border-rose-700/60 bg-rose-950/40 p-2 text-xs text-rose-200">
+                This team costs {spent} stars, over the {TEAM_STAR_BUDGET}-star limit that now applies. Swap a high-cost DRep for a cheaper one
+                and save before the roster lock.
+              </p>
+            )}
             {locked ? (
               <p className="text-sm text-amber-300">Rosters are locked for this season.</p>
             ) : !signedIn ? (
@@ -485,7 +514,7 @@ export function DraftBoard() {
               <button
                 type="button"
                 onClick={save}
-                disabled={!full || saving || !dirty}
+                disabled={!full || saving || !dirty || spent > TEAM_STAR_BUDGET}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 py-2 font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -494,8 +523,8 @@ export function DraftBoard() {
             )}
             {message && <p className={`text-sm ${message.kind === 'ok' ? 'text-emerald-300' : 'text-red-300'}`}>{message.text}</p>}
             <p className="text-[11px] text-slate-500">
-              Free to play. Multipliers shown are what you&apos;d lock in now; DReps already on your saved team keep the
-              multiplier they had when you picked them.
+              Free to play. Each DRep costs 1–7 stars (★) from their Projected Points, and a team can spend up to {TEAM_STAR_BUDGET}.
+              Costs and multipliers lock when you pick; DReps already on your saved team keep theirs.
             </p>
           </div>
         </aside>

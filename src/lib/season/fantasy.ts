@@ -16,6 +16,7 @@ import { getSeasonData } from './data';
 import { clearLeaderboardCache } from './leaderboard';
 import { isMissingSchema } from './schema';
 import { epochStart, seasonOneStartEpoch, underdogScale, windowEpochs, windowForEpoch } from './points';
+import { draftCost, teamCost, TEAM_STAR_BUDGET } from './draft-cost';
 
 export { epochStart };
 
@@ -97,6 +98,8 @@ export interface PoolDRep {
   last_votes: number;
   drafted_by: number;
   do_not_list: boolean;
+  /** Draft Cost in stars (1–7) from today's Projected Points */
+  cost: number;
 }
 
 export interface RosterPick {
@@ -106,6 +109,8 @@ export interface RosterPick {
   picked_at: string;
   swapped_from: string | null;
   swap_epoch: number | null;
+  /** Stars this pick cost when drafted; null for picks saved before migration 020. */
+  draft_cost: number | null;
 }
 
 export interface Roster {
@@ -153,7 +158,8 @@ async function otherTeams(stakeAddress: string, exceptSeason: number): Promise<S
 async function loadRoster(seasonNumber: number, stakeAddress: string): Promise<Roster | null> {
   const full = await supabaseAdmin
     .from('fantasy_rosters')
-    .select('roster_id, team_name, in_global, swap_used, fantasy_roster_picks(slot, drep_id, underdog_multiplier, picked_at, swapped_from, swap_epoch)')
+    // picks(*) so the optional draft_cost column (migration 020) is read when present.
+    .select('roster_id, team_name, in_global, swap_used, fantasy_roster_picks(*)')
     .eq('season_number', seasonNumber)
     .eq('stake_address', stakeAddress)
     .maybeSingle();
@@ -179,6 +185,7 @@ async function loadRoster(seasonNumber: number, stakeAddress: string): Promise<R
       picked_at: p.picked_at as string,
       swapped_from: (p.swapped_from as string | null | undefined) ?? null,
       swap_epoch: p.swap_epoch == null ? null : Number(p.swap_epoch),
+      draft_cost: p.draft_cost == null ? null : Number(p.draft_cost),
     }))
     .sort((a, b) => a.slot - b.slot);
   return {
@@ -210,6 +217,13 @@ async function draftScale(season: { reference_window: number }) {
   return { reference, scale };
 }
 
+async function projectionsById(): Promise<Map<string, number | null>> {
+  // Imported lazily: cards/data imports this module, and a static import would make a cycle.
+  const { getCards } = await import('@/lib/cards/data');
+  const { cards } = await getCards();
+  return new Map(cards.map((c) => [c.drep_id, c.projection]));
+}
+
 export async function getDraftData(stakeAddress: string | null): Promise<DraftData | null> {
   const season = await draftSeason();
   if (!season) return null;
@@ -226,7 +240,7 @@ export async function getDraftData(stakeAddress: string | null): Promise<DraftDa
     draftCounts(season.season_number),
     stakeAddress ? loadRoster(season.season_number, stakeAddress) : Promise.resolve(null),
   ]);
-  const saved_teams = stakeAddress ? await otherTeams(stakeAddress, season.season_number) : [];
+  const [saved_teams, projections] = await Promise.all([stakeAddress ? otherTeams(stakeAddress, season.season_number) : Promise.resolve([]), projectionsById()]);
   const standings = new Map(reference.standings.map((s) => [s.drep_id, s]));
 
   const pool = dreps
@@ -246,6 +260,7 @@ export async function getDraftData(stakeAddress: string | null): Promise<DraftDa
         last_votes: s ? s.votes_cast : 0,
         drafted_by: counts.get(d.drep_id) ?? 0,
         do_not_list: profile.doNotList,
+        cost: draftCost(projections.get(d.drep_id)),
       };
     })
     .sort((a, b) => (b.last_points ?? -1e9) - (a.last_points ?? -1e9) || b.ada - a.ada);
@@ -314,6 +329,12 @@ export async function saveRoster(stakeAddress: string, input: { team_name: strin
   const existing = (await loadRoster(season.season_number, stakeAddress))?.picks ?? [];
   const kept = existing.filter((p) => ids.includes(p.drep_id));
   const keptIds = new Set(kept.map((p) => p.drep_id));
+  const projections = await projectionsById();
+  const costOf = (id: string) => kept.find((p) => p.drep_id === id)?.draft_cost ?? draftCost(projections.get(id));
+  const stars = teamCost(ids.map(costOf));
+  if (stars > TEAM_STAR_BUDGET) {
+    throw new DraftError(`That team costs ${stars} stars; the limit is ${TEAM_STAR_BUDGET}. Swap a high-cost DRep for a cheaper one.`, 400);
+  }
   const freeSlots = [1, 2, 3, 4, 5].filter((slot) => !kept.some((p) => p.slot === slot));
   const now = new Date().toISOString();
   const rows = [
@@ -323,6 +344,7 @@ export async function saveRoster(stakeAddress: string, input: { team_name: strin
       drep_id: p.drep_id,
       underdog_multiplier: p.underdog_multiplier,
       picked_at: p.picked_at,
+      draft_cost: costOf(p.drep_id),
     })),
     ...ids
       .filter((id) => !keptIds.has(id))
@@ -334,10 +356,17 @@ export async function saveRoster(stakeAddress: string, input: { team_name: strin
           drep_id: id,
           underdog_multiplier: scale({ amount_lovelace: Number(d.amount_lovelace ?? 0), delegator_count: d.delegator_count ?? 0 }),
           picked_at: now,
+          draft_cost: costOf(id),
         };
       }),
   ];
-  const { error: picksError } = await supabaseAdmin.from('fantasy_roster_picks').upsert(rows, { onConflict: 'roster_id,slot' });
+  let { error: picksError } = await supabaseAdmin.from('fantasy_roster_picks').upsert(rows, { onConflict: 'roster_id,slot' });
+  if (picksError && /draft_cost/.test(picksError.message)) {
+    // Migration 020 not run yet: save without the locked cost (the budget was still enforced above).
+    ({ error: picksError } = await supabaseAdmin
+      .from('fantasy_roster_picks')
+      .upsert(rows.map((row) => Object.fromEntries(Object.entries(row).filter(([k]) => k !== 'draft_cost'))), { onConflict: 'roster_id,slot' }));
+  }
   if (picksError) throw new Error(`Couldn't save your picks: ${picksError.message}. Your previous roster is unchanged; try again.`);
 
   console.log(JSON.stringify({ event: 'roster_saved', season: season.season_number, stake_address: stakeAddress, kept: kept.length }));
