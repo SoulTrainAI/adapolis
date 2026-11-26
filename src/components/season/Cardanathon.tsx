@@ -12,6 +12,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Crown, Flag, Flame, Pause, Play, Radio, Rewind, Share2, TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import type { Race } from '@/lib/season/race';
 import { TeamsPanel } from './TeamsPanel';
+import { MountainRace } from './MountainRace';
 
 /** A prefilled X post (no account or API needed): the visitor edits and posts it themselves. */
 function shareOnX(text: string, handles: Array<string | null | undefined>): string {
@@ -123,8 +124,6 @@ export function Cardanathon({ race }: { race: Race }) {
 
   const day = dayOf(race, t);
   const epoch = Math.min(race.end_epoch, race.start_epoch + Math.floor((t - race.starts_at) / EPOCH_S));
-  const leader = shown[0];
-  const leaderR = leader ? byId.get(leader.drep_id) : undefined;
   const feed = commentary.filter((c) => c.t <= t).slice(-40).reverse();
   const live = race.now < race.ends_at;
   const atLive = t >= until - 60;
@@ -135,54 +134,69 @@ export function Cardanathon({ race }: { race: Race }) {
 
   return (
     <div className="space-y-5">
-      {/* Scoreboard strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3" title="Each season runs 6 epochs, about 30 days.">
-          <p className="text-[11px] uppercase tracking-wider text-slate-400">Day</p>
-          <p className="font-display text-2xl font-bold text-white">
-            {day} <span className="text-base font-normal text-slate-400">/ {totalDays}</span>
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3" title="A Cardano epoch lasts 5 days.">
-          <p className="text-[11px] uppercase tracking-wider text-slate-400">Epoch</p>
-          <p className="font-display text-2xl font-bold text-white">
-            {epoch} <span className="text-base font-normal text-slate-400">({epoch - race.start_epoch + 1} of 6)</span>
-          </p>
-        </div>
-        <div className="col-span-2 flex items-center gap-3 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-transparent p-3">
-          {leaderR && <Avatar name={displayName(leaderR)} image={leaderR.image} size={40} />}
-          <div className="min-w-0">
-            <p className="flex items-center gap-1 text-[11px] uppercase tracking-wider text-amber-300">
-              <Crown className="h-3.5 w-3.5" /> Leading
-            </p>
-            <p className="truncate font-display text-xl font-bold text-white">
-              {leaderR ? displayName(leaderR) : '—'} <span className="text-amber-200">{leader?.points ?? 0}</span>
+      {/* Scoreboard strip: day and epoch kept small to make room for the podium */}
+      <div className="flex flex-wrap items-stretch gap-2 sm:gap-3">
+        <div className="flex gap-2">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2" title="Each season runs 6 epochs, about 30 days.">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Day</p>
+            <p className="font-display text-lg font-bold leading-tight text-white">
+              {day}
+              <span className="text-xs font-normal text-slate-400">/{totalDays}</span>
             </p>
           </div>
-          <p className="ml-auto text-right text-xs text-slate-400">
-            {race.field} DReps
-            <br />
-            in the race
-            <br />
-            <a
-              href={shareOnX(
-                `${race.label} Cardanathon, day ${day}: ${orderAt(race.racers, t)
-                  .slice(0, 3)
-                  .map((o, i) => `${['🥇', '🥈', '🥉'][i]} ${byId.get(o.drep_id) ? displayName(byId.get(o.drep_id)!) : ''} ${o.points}`)
-                  .join(' ')}`,
-                orderAt(race.racers, t)
-                  .slice(0, 3)
-                  .map((o) => byId.get(o.drep_id)?.x_handle)
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-amber-200 hover:text-white"
-              title="Share the current top 3 on X"
-            >
-              <Share2 className="h-3 w-3" /> Share
-            </a>
-          </p>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2" title="A Cardano epoch lasts 5 days.">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Epoch</p>
+            <p className="font-display text-lg font-bold leading-tight text-white">
+              {epoch}
+              <span className="text-xs font-normal text-slate-400"> {epoch - race.start_epoch + 1}/6</span>
+            </p>
+          </div>
         </div>
+        <ol className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-3">
+          {shown.slice(0, 3).map((o, i) => {
+            const r = byId.get(o.drep_id);
+            if (!r) return null;
+            const style = [
+              'border-amber-400/60 from-amber-500/20 text-amber-300',
+              'border-slate-300/40 from-slate-300/15 text-slate-200',
+              'border-orange-400/50 from-orange-500/15 text-orange-300',
+            ][i];
+            return (
+              <li key={o.drep_id} className={`flex min-w-0 items-center gap-2 rounded-xl border bg-gradient-to-r to-transparent px-3 py-2 ${style}`}>
+                <span className="text-lg" aria-hidden>
+                  {['🥇', '🥈', '🥉'][i]}
+                </span>
+                <Avatar name={displayName(r)} image={r.image} size={32} />
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider">{i === 0 ? 'Leading' : i === 1 ? '2nd' : '3rd'}</p>
+                  <p className="truncate font-display text-sm font-bold text-white sm:text-base">
+                    {displayName(r)} <span className="opacity-80">{o.points}</span>
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+        <p className="flex flex-col justify-center text-right text-xs text-slate-400">
+          <span>{race.field} DReps in the race</span>
+          <a
+            href={shareOnX(
+              `${race.label} Cardanathon, day ${day}: ${orderAt(race.racers, t)
+                .slice(0, 3)
+                .map((o, i) => `${['🥇', '🥈', '🥉'][i]} ${byId.get(o.drep_id) ? displayName(byId.get(o.drep_id)!) : ''} ${o.points}`)
+                .join(' ')}`,
+              orderAt(race.racers, t)
+                .slice(0, 3)
+                .map((o) => byId.get(o.drep_id)?.x_handle)
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-end gap-1 text-amber-200 hover:text-white"
+            title="Share the current top 3 on X"
+          >
+            <Share2 className="h-3 w-3" /> Share
+          </a>
+        </p>
       </div>
 
       {/* Controls */}
@@ -244,6 +258,8 @@ export function Cardanathon({ race }: { race: Race }) {
           {live ? 'Live' : 'Final'}
         </button>
       </div>
+
+      <MountainRace race={race} t={t} until={until} highlight={highlight} />
 
       {/* The dashboard: the DRep race, and the commentary above the Team Leaderboard. Resize, swap and move; saved per browser. */}
       <Dashboard
