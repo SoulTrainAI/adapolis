@@ -9,12 +9,11 @@ import { PROVISIONAL_BELOW_ELIGIBLE } from "@/lib/scoring/confidence";
 import { POINT_RULES, SEASON_LENGTH_EPOCHS } from "@/lib/season/points";
 import { ROSTER_SIZE } from "@/lib/season/fantasy";
 import { MATCH_RULES } from "@/lib/match/topics";
-import { CollectiblesNotice } from "@/components/cards/CollectiblesNotice";
 
 export const metadata = {
   title: "Methodology — ADApolis",
   description:
-    "How ADApolis scores DReps: GovScore, ADA-power dampening, season points, the game, Champion Cards, trading cards, Find My DRep and AI summaries.",
+    "How ADApolis scores DReps: GovScore, ADA-power dampening, season points, the game, DRep All-Star NFTs, trading cards, the DRep Match-maker and AI summaries.",
 };
 
 const LAST_UPDATED = "November 2026";
@@ -118,12 +117,12 @@ const CONTENTS = [
   ["not-measured", "What we never score"],
   ["season-points", "Season points"],
   ["game", "The game"],
-  ["champion-cards", "Champion Cards (NFTs)"],
+  ["champion-cards", "DRep All-Star NFTs"],
   ["cards", "Trading cards"],
   ["card-abilities", "Card abilities"],
-  ["find-my-drep", "Find My DRep"],
+  ["find-my-drep", "DRep Match-maker"],
   ["stated-positions", "Stated positions (AI)"],
-  ["hot-topics", "Hot Topics (AI)"],
+  ["hot-topics", "Hot Takes"],
   ["data", "Data, refresh and transparency"],
   ["limitations", "Limitations"],
 ];
@@ -169,7 +168,7 @@ export default function MethodologyPage() {
               <>
                 <strong>GovScore</strong> (career): how reliably a DRep has
                 voted over their whole record. It drives the{" "}
-                <A href="/scoreboard">DRep Hall of Fame</A>, the card tiers and the
+                <A href="/scoreboard">Scoreboard</A>, the card tiers and the
                 DRep&apos;s rank.
               </>,
               <>
@@ -230,9 +229,9 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
                 provisional.
               </>,
               <>
-                <strong>Who is ranked:</strong> by default the Hall of Fame and
+                <strong>Who is ranked:</strong> by default the Scoreboard and
                 card ranks cover <em>active</em> DReps: registered, at least one
-                vote cast, and some ADA delegated. The Hall of Fame&apos;s Show
+                vote cast, and some ADA delegated. The Scoreboard&apos;s Show
                 filter can include all registered or retired DReps.
               </>,
             ]}
@@ -429,13 +428,13 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
               <>
                 <strong>Seasons:</strong> {SEASON_LENGTH_EPOCHS} epochs each. The
                 Preseason (epochs 672–677, from 5 December 2026) is fully playable
-                but its Champion Cards are tests, never minted. Season 1 is epochs
+                but its DRep All-Star cards are tests, never minted. Season 1 is epochs
                 678–683 (from 4 January 2027); each season follows straight on.
               </>,
               <>
                 <strong>Free to play.</strong> Connect a Cardano wallet and sign
-                a message to prove it&apos;s yours. No transaction, no fee,
-                nothing staked. One team per wallet per season.
+                a message to prove it&apos;s yours. No transaction or fee. One
+                team per wallet per season.
               </>,
               <>
                 <strong>Draft {ROSTER_SIZE} different DReps</strong>, any
@@ -456,31 +455,25 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
               </>,
               <>
                 <strong>Leaderboards:</strong> the global game (opt in when you
-                save; on by default) decides Season Trophies. Public leagues and
+                save; on by default) decides DRep All-Star Season Trophies. Public leagues and
                 invite-only private leagues have their own leaderboards; one team
                 can be in the global game and any number of leagues. Ties share a
                 rank; the team that drafted first is listed first.
               </>,
               <>
-                <strong>Prize eligibility:</strong> anyone can play. Only global
-                teams whose wallet delegates its vote (to any DRep, Abstain or No
-                Confidence) since before the season&apos;s first epoch, with at
-                least 100 ADA in the stake snapshot at the season&apos;s end,
-                compete for prizes. Snapshots stop the same ADA from qualifying
-                two wallets; which DRep never matters.
+                <strong>Prize eligibility:</strong> anyone can play. Prizes can
+                only be won by global teams whose wallet delegates its vote (to
+                any DRep, Abstain or No Confidence) since before the
+                season&apos;s first epoch, with at least 100 ADA in the stake
+                snapshot at the season&apos;s end. Snapshots stop the same ADA
+                from qualifying two wallets.
               </>,
               <>
                 <strong>Rewards:</strong> the top 3 qualifying global teams win a
-                one-of-one Team Trophy NFT (the top 3 DReps get a DRep Trophy);
-                the top 10 teams get a Finalist badge;
-                each of the top 25 qualifying teams can claim the Champion Card of
+                one-of-one DRep All-Star Season Trophy NFT (the top 3 DReps win a
+                DRep Trophy); each of the top 25 qualifying teams can mint the
+                DRep All-Star card of
                 every top-10 DRep on their team (next section).
-              </>,
-              <>
-                <strong>No stakes.</strong> No ADA prizes, no paid entry and no
-                betting pools in leagues, in ADA or NFTs. Staking something of
-                value on the outcome would be gambling, which is illegal in
-                Hawaii. That holds unless a lawyer&apos;s review says otherwise.
               </>,
             ]}
           />
@@ -526,18 +519,17 @@ pick contribution = points × multiplier   if points > 0
           </div>
           <P muted>
             Leagues, the global opt-in and retirement replacements arrive with
-            Season 1. Find My DRep tilts toward small DReps for a different
-            reason: to spread voting power (see Find My DRep below).
+            Season 1. The DRep Match-maker tilts toward small DReps for a different
+            reason: to spread voting power (see DRep Match-maker below).
           </P>
         </Section>
 
-        <Section id="champion-cards" n={next()} title="Champion Cards (NFTs)">
-          <CollectiblesNotice />
+        <Section id="champion-cards" n={next()} title="DRep All-Star NFTs">
           <P>
-            At each season&apos;s end, the top 10 DReps by season points are
-            preserved as Champion Cards: Cardano NFTs of their card as it stood
-            at the final whistle. A Champion Card never changes; the live card on
-            the site keeps evolving. Season 1&apos;s cards are the Genesis set.
+            At each season&apos;s end, the top 10 DReps by season points become
+            mintable as DRep All-Star NFTs: their card as it stood at the final
+            whistle. A minted card never changes; the live card on the site keeps
+            evolving. Season 1&apos;s cards are the Genesis set.
           </P>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-300">
@@ -549,10 +541,10 @@ pick contribution = points × multiplier   if points > 0
               </thead>
               <tbody>
                 {[
-                  ["#1", "Gold Champion"],
+                  ["#1", "Gold"],
                   ["#2", "Silver"],
                   ["#3", "Bronze"],
-                  ["#4–10", "Holo"],
+                  ["#4–10", "Holographic"],
                 ].map(([rank, edition]) => (
                   <tr key={rank} className="border-t border-slate-800">
                     <td className="py-2 pr-4 font-semibold text-white">{rank}</td>
@@ -566,10 +558,21 @@ pick contribution = points × multiplier   if points > 0
             items={[
               <>
                 <strong>Copies:</strong> the DRep gets 5 of their own card, and
-                each of the top 25 qualifying teams that drafted them gets 1. All
-                claims close 7 days after the season ends, DReps included;
-                unclaimed copies are never minted. Then the supply is fixed forever
-                and each copy is numbered. Delegators get nothing for delegating.
+                each of the top 25 qualifying teams that drafted them gets 1.
+              </>,
+              <>
+                <strong>Mint window:</strong> opens 48 hours after the season
+                ends (time for the ADApolis team to test-mint and check every
+                card) and closes 3 epochs after it ends, for everyone, DReps
+                included. Unclaimed copies are never minted; then the supply is
+                fixed forever and each copy is numbered.
+              </>,
+              <>
+                <strong>Team Test Mint:</strong> the first pressing of each card
+                is minted by the ADApolis team to ensure quality. Test Pressing
+                cards may be used or distributed for promotion or other business
+                needs at the team&apos;s discretion. They are marked as test
+                pressings: one per card, 10 a season, on top of the supply below.
               </>,
               <>
                 <strong>Snapshots:</strong> prize eligibility and claims are
@@ -585,7 +588,7 @@ pick contribution = points × multiplier   if points > 0
               </>,
               <>
                 <strong>Supply is enforced on-chain:</strong> one minting policy
-                per season, time-locked to close when the claim window ends, so
+                per season, time-locked to close when the mint window ends, so
                 nobody, ADApolis included, can mint more.
               </>,
               <>
@@ -599,30 +602,27 @@ pick contribution = points × multiplier   if points > 0
                 the ADApolis project wallet. Marketplaces honour it voluntarily.
               </>,
               <>
-                <strong>Collectibles only, not financial instruments:</strong> no
-                yield, no revenue or royalty share, no votes or say over ADApolis
-                and no promise of value.
-              </>,
-              <>
                 <strong>Collector&apos;s Cup editions (from Season 2):</strong>{" "}
                 every copy is identical except this edition: same item, own
                 frame and trait, replacing the regular one. Checked at the
-                season&apos;s end snapshot: a team copy needs a Champion Card of
-                that DRep; a Team Trophy needs a Champion Card of a top-10 DRep
-                the team drafted; a DRep needs an earlier card of their own.
-                Supply per season: at most 175 Champion Cards (50 DRep copies,
-                up to 125 team copies) and 6 Season Trophies.
+                season&apos;s end snapshot: a team copy needs a DRep All-Star card
+                of that DRep; a Team Trophy needs a DRep All-Star card of a top-10
+                DRep the team drafted; a DRep needs an earlier card of their own.
               </>,
               <>
-                <strong>Season Trophies</strong> are one-of-one NFTs: Team Trophies
+                <strong>Supply per season:</strong> at most 175 DRep All-Star
+                cards (50 DRep copies, up to 125 team copies), 6 DRep All-Star
+                Season Trophies and 10 Team Test Mint pressings: 191 in all.
+              </>,
+              <>
+                <strong>DRep All-Star Season Trophies</strong> are one-of-one NFTs: Team Trophies
                 (top 3 qualifying global teams, with the team name, final points
                 and five picks) and DRep Trophies (top 3 DReps).
               </>,
             ]}
           />
           <P muted>
-            Planned: testnet first; the first mainnet mint (Season 1, early
-            February 2027) follows a legal review. The full design is in{" "}
+            The full design is in{" "}
             <A href="https://github.com/SoulTrainAI/adapolis/blob/main/docs/GAME.md">
               docs/GAME.md
             </A>
@@ -633,14 +633,14 @@ pick contribution = points × multiplier   if points > 0
         <Section id="cards" n={next()} title="Trading cards">
           <P>
             Every active DRep has a trading card, rebuilt from on-chain data
-            every 6 hours. Front and back are fixed layouts so a card reads the
+            every hour. Front and back are fixed layouts so a card reads the
             same on the site, in Discord and as a downloaded image.
           </P>
           <Bullets
             items={[
               <>
                 <strong>Frame tier</strong> by GovScore rank among active DReps:
-                Legend (#1), Silver (#2), Bronze (#3), Holo (top 10, with foil),
+                Legend (#1), Silver (#2), Bronze (#3), Holographic (top 10, with foil),
                 Rare (top 50), Common.
               </>,
               <>
@@ -722,9 +722,9 @@ pick contribution = points × multiplier   if points > 0
           </div>
         </Section>
 
-        <Section id="find-my-drep" n={next()} title="Find My DRep">
+        <Section id="find-my-drep" n={next()} title="DRep Match-maker">
           <P>
-            The <A href="/match">Find My DRep</A> quiz compares your answers
+            The <A href="/match">DRep Match-maker</A> quiz compares your answers
             with how DReps have actually voted. Matching uses fixed rules, no
             AI. Answers are scored in your browser; they are saved only if you
             sign in with a wallet and choose to save them, and you can delete
@@ -733,13 +733,13 @@ pick contribution = points × multiplier   if points > 0
           <Bullets
             items={[
               <>
-                <strong>Alignment and Personal GovScore:</strong> Alignment is
-                your values match with a DRep, 0–100%. Personal GovScore is
+                <strong>Alignment and GovScore (aligned):</strong> Alignment is
+                your values match with a DRep, 0–100%. GovScore (aligned) is
                 GovScore × (1 + 0.25 × (Alignment − 50%) ÷ 50%), capped at 100:
                 50% alignment leaves it unchanged, 100% raises it by a quarter,
                 0% lowers it by a quarter. Both are worked out in your browser,
-                shown only to you (in Find My DRep and as sorts in the DRep Hall
-                of Fame) and never change the public GovScore, which depends on
+                shown only to you (in the DRep Match-maker and as sorts on the
+                Scoreboard) and never change the public GovScore, which depends on
                 whether DReps vote, never how.
               </>,
               <>
@@ -810,7 +810,7 @@ pick contribution = points × multiplier   if points > 0
           title="Stated positions (AI-summarized)"
         >
           <P>
-            Find My DRep can also show what each DRep has <em>said</em> about
+            The DRep Match-maker can also show what each DRep has <em>said</em> about
             the quiz topics. These are kept apart from voting data and never
             change a vote-based match %, so you can compare what a DRep says
             with what they do.
@@ -856,9 +856,9 @@ pick contribution = points × multiplier   if points > 0
           </P>
         </Section>
 
-        <Section id="hot-topics" n={next()} title="Hot Topics (AI-summarized)">
+        <Section id="hot-topics" n={next()} title="Hot Takes">
           <P>
-            <A href="/hot-topics">Hot Topics</A> lists governance actions open
+            <A href="/hot-topics">Hot Takes</A> lists governance actions open
             for voting: how DReps are splitting by count and by ADA, who has
             explained their vote, and the main arguments on each side.
           </P>
@@ -900,12 +900,13 @@ pick contribution = points × multiplier   if points > 0
                 <A href="https://gov.tools/">gov.tools</A>.
               </>,
               <>
-                <strong>Refresh:</strong> data syncs every 6 hours. Scores,
-                points and cards are recomputed after each sync.
+                <strong>Refresh:</strong> new votes are picked up every hour
+                and season points recomputed; the full sync and scoring run every
+                6 hours.
               </>,
               <>
                 <strong>Open data:</strong> the JSON behind the site is public,
-                for example <A href="/api/dreps">/api/dreps</A> (Hall of Fame) and{" "}
+                for example <A href="/api/dreps">/api/dreps</A> (Scoreboard) and{" "}
                 <A href="/api/cards">/api/cards</A> (every card&apos;s stats).
                 No key needed; please cache and be gentle.
               </>,

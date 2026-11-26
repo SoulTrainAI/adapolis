@@ -1,17 +1,16 @@
 /**
- * About ADApolis: what the site is, how the game and the Champion Cards work,
+ * About ADApolis: what the site is, how the game and the DRep All-Star NFTs work,
  * and the principles it holds to. Rules here follow docs/GAME.md.
  */
 
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { DISCORD_URL, X_HANDLE, X_URL } from "@/lib/site/social";
-import { CollectiblesNotice } from "@/components/cards/CollectiblesNotice";
 
 export const metadata = {
   title: "About — ADApolis",
   description:
-    "ADApolis turns Cardano governance into something you can follow, play and collect: DRep scores, monthly seasons, a free DRep game, Champion Cards and Find My DRep.",
+    "Why ADApolis exists and how it works: DRep scores, the monthly Cardanathon, a free DRep game, DRep All-Star NFTs and the DRep Match-maker.",
 };
 
 const GITHUB_URL = "https://github.com/SoulTrainAI/adapolis";
@@ -19,43 +18,53 @@ const GITHUB_URL = "https://github.com/SoulTrainAI/adapolis";
 const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
   {
     href: "/scoreboard",
-    title: "DRep Hall of Fame",
-    body: "Every active DRep's lifetime record, ranked by GovScore: how reliably they have voted over their whole record, adjusted for how long that record is and gently dampened for very large ADA holdings. Sort by season points or projections too, or, after the Find My DRep quiz, by your own Alignment.",
-  },
-  {
-    href: "/season",
-    title: "Seasons",
-    body: "Governance runs in 6-epoch seasons (about a month). DReps earn points for voting, explaining their votes, voting early and keeping a streak, and lose points for missed actions.",
-  },
-  {
-    href: "/draft",
-    title: "The game",
-    body: "Free to play. Draft 5 DReps each season and score their season points. Smaller DReps carry an underdog multiplier, so scouting reliable newcomers pays off.",
-  },
-  {
-    href: "/leaderboard",
-    title: "Leaderboard",
-    body: "Every team's score, pick by pick, updated as the season unfolds.",
-  },
-  {
-    href: "/collection",
-    title: "Trading cards",
-    body: "Every active DRep has a card with their stats, tier, journey and earned abilities. Flip it for the full record, download it, or share it.",
+    title: "Scoreboard",
+    body: "Every active DRep ranked by GovScore: how reliably they vote, over their whole record. Rank by season points or projections too, or, after the DRep Match-maker quiz, by your own Alignment.",
   },
   {
     href: "/match",
-    title: "Find My DRep",
-    body: "Answer a short quiz and see which DReps have actually voted the way you think, plus what they say in their own words. Small DReps get a boost so voting power spreads out.",
+    title: "DRep Match-maker",
+    body: "A short quiz that shows which DReps have actually voted the way you think, plus what they say in their own words. Small DReps get a boost so voting power spreads out.",
   },
   {
     href: "/hot-topics",
-    title: "Hot Topics",
-    body: "Governance actions open for voting now: how DReps are splitting, who has explained their vote, and the strongest arguments on each side, each quoted and linked.",
+    title: "Hot Takes",
+    body: "The governance actions being decided now: how DReps are splitting, who explained their vote, and the strongest arguments on each side in DReps' own words.",
+  },
+  {
+    href: "/season",
+    title: "Cardanathon",
+    body: "The monthly race between DReps, with live commentary and the Team Leaderboard. DReps earn points for voting, explaining their votes and voting early.",
+  },
+  {
+    href: "/draft",
+    title: "Draft Teams",
+    body: "Free to play. Draft 5 DReps each season and score their season points. Smaller DReps carry an underdog multiplier, so scouting reliable newcomers pays off.",
+  },
+  {
+    href: "/leagues",
+    title: "Join Leagues",
+    body: "Play your team against friends or the whole community in public and private leagues.",
+  },
+  {
+    href: "/hall-of-fame",
+    title: "Hall of Fame",
+    body: "Last season's top 10 DReps and the six trophy winners, frozen at the final whistle.",
+  },
+  {
+    href: "/mint",
+    title: "DRep All-Star NFTs",
+    body: "Each season's top 10 DReps become DRep All-Star NFTs. Mint the ones you won, and see the official collection.",
+  },
+  {
+    href: "/collection",
+    title: "My DRep All-Stars",
+    body: "Your team, a check-up on the DRep you delegate to, and the DRep All-Stars in your wallet.",
   },
   {
     href: "/drep",
-    title: "For DReps",
-    body: "Claim your card by signing with your DRep key, then set your card's art, bio and links. Your stats always come from the chain.",
+    title: "DReps: Claim your profile",
+    body: "Sign with your DRep key to set your card's art, bio and links. Your stats always come from the chain.",
   },
 ];
 
@@ -70,7 +79,7 @@ const PRINCIPLES: Array<[string, ReactNode]> = [
   ],
   [
     "Decentralization by design",
-    "Find My DRep gives small DReps a visible boost, GovScore gently dampens very large ones, and the game rewards drafting underdogs, all to help voting power spread out.",
+    "The DRep Match-maker gives small DReps a visible boost, GovScore gently dampens very large ones, and the game rewards drafting underdogs, all to help voting power spread out.",
   ],
   [
     "Transparent",
@@ -89,7 +98,7 @@ const PRINCIPLES: Array<[string, ReactNode]> = [
   ],
   [
     "Free and private",
-    "No fees, subscriptions or tokens to hold. Signing in only signs a message, never a transaction. Quiz answers stay in your browser unless you choose to save them.",
+    "No fees or subscriptions required. Signing in only signs a message, never a transaction. Quiz answers stay in your browser unless you choose to save them.",
   ],
 ];
 
@@ -130,14 +139,24 @@ export default function AboutPage() {
         <section className="mb-12 space-y-4 text-slate-300 leading-relaxed">
           <H2>What is ADApolis</H2>
           <p>
-            Cardano is governed on-chain, but following it is hard: hundreds of DReps, dozens of proposals, and votes
-            buried in block explorers. ADApolis makes it something you can follow, play and collect.
+            Cardano is an amazing thing: the world&apos;s first fully decentralized{" "}
+            <a href="https://en.wikipedia.org/wiki/Network_state" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+              Network State
+            </a>
+            , complete with its own{" "}
+            <a href="https://cardano.org/constitution/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+              Constitution
+            </a>{" "}
+            and on-chain representative democracy. But democracy only works if people care enough to have opinions on the issues and
+            hold their leaders accountable. DReps work hard as volunteers and need better incentives for consistent, high-quality
+            engagement.
           </p>
           <p>
-            We score every DRep on how reliably they do the job, run monthly seasons with a free game, turn each DRep into
-            a trading card, preserve each season&apos;s champions as Champion Cards, and help delegators find a DRep who
-            actually votes the way they think. The goal is more people paying attention to governance, more DReps doing it
-            well, and voting power spread across more hands.
+            <B>ADApolis aligns incentives across the Cardano community to promote good governance and civic engagement.</B> We score
+            every DRep on how reliably they do the job and run monthly Cardanathon events, where teams of DReps compete for All-Star
+            status and exclusive digital collectibles. Our short quiz unlocks an Alignment score that helps ADA holders find a DRep who
+            shares their values. The goal: more ADA holders excited about governance, more DReps doing it well, and voting power spread
+            across more hands.
           </p>
         </section>
 
@@ -183,7 +202,7 @@ export default function AboutPage() {
             without voting.
           </p>
           <p>
-            Data comes from the Cardano blockchain via Koios and refreshes every 6 hours. The{" "}
+            Data comes from the Cardano blockchain via Koios: new votes are picked up every hour. The{" "}
             <Link href="/methodology" className="text-blue-400 hover:text-blue-300">
               methodology
             </Link>{" "}
@@ -195,8 +214,7 @@ export default function AboutPage() {
           <H2>The game</H2>
           <p>
             Pick five DReps before each season starts. Your team scores the season points those DReps earn for doing the
-            job. Read the stats, spot the reliable DReps before everyone else does, and climb the leaderboard. You never
-            vote in governance through the game, and DReps gain nothing by voting any particular way.
+            job. Read the stats, spot the reliable DReps before everyone else does, and climb the Team Leaderboard.
           </p>
 
           <H3>A season</H3>
@@ -204,7 +222,7 @@ export default function AboutPage() {
             items={[
               <>
                 <B>6 epochs, about a month.</B> The <B>Preseason</B> (epochs 672–677, 5 December – 4 January) is fully
-                playable: draft, leagues, leaderboards and test Champion Cards, but nothing is minted. Season 1 (epochs
+                playable: draft, leagues, leaderboards and test DRep All-Star cards, but nothing is minted. Season 1 (epochs
                 678–683) starts 4 January 2027 with the alpha launch, and every season after follows straight on.
               </>,
               <>
@@ -212,7 +230,7 @@ export default function AboutPage() {
                 often as you like until rosters lock, 24 hours after the season&apos;s first epoch begins.
               </>,
               <>
-                <B>Watch it play out.</B> Points update every 6 hours on the leaderboard, and the Discord posts a recap
+                <B>Watch it play out.</B> Points update every hour on the Team Leaderboard, and a recap is posted after
                 each epoch.
               </>,
             ]}
@@ -222,7 +240,7 @@ export default function AboutPage() {
           <Bullets
             items={[
               <>
-                <B>Free.</B> Connect a Cardano wallet and sign a message. No transaction, no fee, nothing staked.
+                <B>Free to play.</B> Connect a Cardano wallet and sign a message. No transaction or fee.
               </>,
               <>
                 <B>Five different DReps</B>, any registered DRep, one team per wallet per season. There&apos;s no salary
@@ -244,31 +262,24 @@ export default function AboutPage() {
           <Bullets
             items={[
               <>
-                <B>The global game</B>: everyone&apos;s main leaderboard, and the one that wins Season Trophies. Teams
+                <B>The global game</B>: everyone&apos;s main leaderboard, and the one that wins DRep All-Star Season Trophies. Teams
                 opt in when they save (on by default).
               </>,
               <>
                 <B>Public leagues</B> anyone can join, and <B>private leagues</B> by invite link, each with its own
                 leaderboard and league champion. Your one team can be in the global game and any number of leagues.
-                (Leagues arrive with Season 1.)
-              </>,
-              <>
-                <B>Bragging rights only in leagues.</B> No betting pools, in ADA or NFTs. Staking something of value on
-                the result would make it gambling, which is illegal in Hawaii, where ADApolis is based.
               </>,
             ]}
           />
 
           <H3>Playing for prizes</H3>
           <p>
-            Anyone can play for fun. To compete for Season Trophies and Champion Cards, your wallet must{" "}
-            <B>delegate its vote with at least 100 ADA</B>: to any DRep you like, or to Abstain or No Confidence. The
-            delegation must start before the season&apos;s first epoch, and the 100 ADA must still be there in the
-            snapshot when the season ends. It&apos;s checked from Cardano&apos;s own per-epoch stake snapshot, so the
-            same ADA can&apos;t qualify two wallets, and it never matters which DRep you chose. The draft page tells you
-            where you stand, and{" "}
+            Anyone can play for fun. Prizes can only be won by global teams whose wallet delegates its vote (to any DRep, Abstain or No
+            Confidence) since before the season&apos;s first epoch, with at least 100 ADA in the stake snapshot at the season&apos;s end.
+            Cardano&apos;s own per-epoch stake snapshot is used, so the same ADA can&apos;t qualify two wallets. The draft page tells you
+            where you stand, and the{" "}
             <Link href="/match" className="text-blue-400 hover:text-blue-300">
-              Find My DRep
+              DRep Match-maker
             </Link>{" "}
             helps you choose if you haven&apos;t delegated yet.
           </p>
@@ -277,17 +288,16 @@ export default function AboutPage() {
           <Bullets
             items={[
               <>
-                <B>Season Trophies:</B> the top 3 qualifying teams in the global game each season win a one-of-one
-                Team Trophy NFT (gold, silver, bronze) with the team name, final points and their five picks. The top 3
-                DReps get a DRep Trophy. The top 10 teams get a Finalist badge.
+                <B>DRep All-Star Season Trophies:</B> six one-of-ones each season. The top 3 qualifying teams in the global game win a
+                Team Trophy (gold, silver, bronze) with the team name, final points and their five picks; the top 3 DReps win a DRep
+                Trophy.
               </>,
               <>
-                <B>Champion Cards:</B> if your team finishes in the top 25 qualifying teams, you can claim the Champion
-                Card of every DRep on it who finished in the season&apos;s top 10 (below).
+                <B>DRep All-Star NFTs:</B> if your team finishes in the top 25 qualifying teams, you can mint the DRep All-Star card of
+                every DRep on it who finished in the season&apos;s top 10 (below).
               </>,
               <>
-                <B>No ADA prizes and no paid entry.</B> The game is free to play, and it stays that way unless a lawyer
-                confirms anything else is allowed.
+                <B>Free to play.</B> No ADA prizes and no paid entry. Prizes need a wallet delegated with 100+ ADA.
               </>,
             ]}
           />
@@ -299,13 +309,13 @@ export default function AboutPage() {
         </section>
 
         <section id="champion-cards" className="mb-12 space-y-4 text-slate-300 leading-relaxed scroll-mt-24">
-          <H2>Champion Cards (NFTs)</H2>
-          <CollectiblesNotice />
+          <H2>DRep All-Star NFTs</H2>
           <p>
-            At the end of every season, the top 10 DReps by season points are preserved as Champion Cards: Cardano NFTs of
-            their card exactly as it stood at the season&apos;s final whistle. The live card on this site keeps evolving;
-            a Champion Card never changes. <B>Season 1&apos;s Champion Cards are the Genesis set.</B> The Preseason
-            produces test Champion Cards so you can see how it works; they are never minted.
+            Every DRep has a card showing real-time stats that update daily. At the end of each season, the top 10 DReps&apos; cards become
+            mintable as official DRep All-Star NFTs, digital collectibles that commemorate the historic victory. The top 3 winning DReps and
+            Teams can also mint the exclusive DRep All-Star Season Trophy NFT to showcase their success. A minted card is frozen as it stood
+            at the season&apos;s final whistle; the live card keeps evolving. <B>Season 1&apos;s DRep All-Stars are the Genesis set.</B> The
+            Preseason produces test cards so you can see how it works; they are never minted.
           </p>
 
           <H3>Who gets one</H3>
@@ -318,13 +328,13 @@ export default function AboutPage() {
                 <B>Every top-25 qualifying team that drafted them:</B> 1 copy.
               </>,
               <>
-                <B>Claim within 7 days, or never.</B> One hard deadline for everyone, DReps included. Unclaimed copies
-                are never minted, and then the supply is fixed forever. Each copy is numbered (&ldquo;3 of 12&rdquo;),
-                and nobody, ADApolis included, can mint more.
+                <B>Team Test Mint.</B> The first pressing of each card is minted by the ADApolis team to ensure quality. Test Pressing
+                cards may be used or distributed for promotion or other business needs at the team&apos;s discretion.
               </>,
               <>
-                <B>Delegating earns nothing.</B> Where you delegate is your own choice; no DRep&apos;s delegators get
-                cards for backing them.
+                <B>Mint during the window, or never.</B> The mint window opens 48 hours after the season ends and closes 3 epochs (about
+                15 days) after it ends, for everyone, DReps included. Unclaimed copies are never minted, and then the supply is fixed
+                forever. Each copy is numbered (&ldquo;3 of 12&rdquo;).
               </>,
             ]}
           />
@@ -333,8 +343,8 @@ export default function AboutPage() {
           <Bullets
             items={[
               <>
-                <B>Gold Champion</B> for the season&apos;s #1 DRep, <B>Silver</B> for #2, <B>Bronze</B> for #3, and{" "}
-                <B>Holo</B> for #4–10.
+                <B>Gold</B> for the season&apos;s #1 DRep, <B>Silver</B> for #2, <B>Bronze</B> for #3, and{" "}
+                <B>Holographic</B> for #4–10.
               </>,
               <>
                 Each card carries the season, edition, rank, season points, GovScore, Power, Stamina, XP, Charisma and
@@ -364,20 +374,20 @@ export default function AboutPage() {
           <p>
             Every copy of a prize is the same, except the <B>Collector&apos;s Cup edition</B>: the same card or trophy
             with its own frame and trait. It replaces your regular copy, so supply never grows. You qualify if your
-            wallet holds the right Champion Card in the snapshot at the season&apos;s end (cards bought after that
+            wallet holds the right DRep All-Star card in the snapshot at the season&apos;s end (cards bought after that
             don&apos;t count):
           </p>
           <Bullets
             items={[
               <>
-                <B>Team copy of a Champion Card:</B> any Champion Card of that DRep.
+                <B>Team copy of a DRep All-Star card:</B> any DRep All-Star card of that DRep.
               </>,
               <>
-                <B>Team Trophy:</B> a Champion Card of a DRep you drafted that season who finished in the top 10. Holding
+                <B>Team Trophy:</B> a DRep All-Star card of a DRep you drafted that season who finished in the top 10. Holding
                 without drafting doesn&apos;t count; drafting without holding gets the regular trophy.
               </>,
               <>
-                <B>DReps</B> (their own cards and DRep Trophy): an earlier Champion Card of their own.
+                <B>DReps</B> (their own cards and DRep Trophy): an earlier DRep All-Star card of their own.
               </>,
             ]}
           />
@@ -386,32 +396,20 @@ export default function AboutPage() {
           <Bullets
             items={[
               <>
-                <B>Champion Cards:</B> the top 10 DReps (Gold, Silver, Bronze, then 7 Holo). Each has up to 30 copies: 5
-                for the DRep and 1 for each of up to 25 qualifying teams that drafted them. A team gets a copy of every
-                top-10 DRep on its team, so up to 5.
+                <B>DRep All-Star cards:</B> the top 10 DReps (Gold, Silver, Bronze, then 7 Holographic). Each has up to 30 copies: 5 for
+                the DRep and 1 for each of up to 25 qualifying teams that drafted them. A team gets a copy of every top-10 DRep on its
+                team, so up to 5.
               </>,
               <>
-                <B>Season Trophies:</B> 6 one-of-ones: Gold, Silver and Bronze Team Trophies for the top 3 qualifying
-                teams, and DRep Trophies for the top 3 DReps.
+                <B>DRep All-Star Season Trophies:</B> 6 one-of-ones: Gold, Silver and Bronze Team Trophies for the top 3 qualifying teams,
+                and DRep Trophies for the top 3 DReps.
               </>,
               <>
-                <B>At most 181 a season</B> (50 DRep copies, up to 125 team copies, 6 trophies), usually far fewer: unclaimed copies are never minted. The Preseason mints
-                none.
+                <B>At most 181 a season</B> (50 DRep copies, up to 125 team copies, 6 trophies), plus one Team Test Mint pressing of each
+                of the 10 cards (191 in all). Usually far fewer: unclaimed copies are never minted. The Preseason mints none.
               </>,
             ]}
           />
-
-          <H3>What they are, and aren&apos;t</H3>
-          <p>
-            Champion Cards are <B>pure collectibles</B>: a record of a season and a nod to DReps who did the work. They
-            carry no votes, no say over ADApolis, no share of royalties and no promise of value. Collect them because you
-            like them.
-          </p>
-          <p className="text-sm text-slate-400">
-            Planned: the first cards are minted on Cardano&apos;s testnet before any real mint, and the first real mint
-            (Season 1, after it ends in early February 2027) follows a legal review. Details may still change; the
-            methodology page always has the current rules.
-          </p>
         </section>
 
         <section className="mb-12">
@@ -456,7 +454,7 @@ export default function AboutPage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-6 text-sm">
             <Link href="/scoreboard" className="text-slate-400 hover:text-slate-300 transition-colors">
-              DRep Hall of Fame
+              Scoreboard
             </Link>
             <Link href="/methodology" className="text-slate-400 hover:text-slate-300 transition-colors">
               Methodology

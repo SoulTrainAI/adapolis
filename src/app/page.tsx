@@ -21,6 +21,8 @@ import { LogoMark } from '@/components/brand/Logo';
 import { draftSeason } from '@/lib/season/fantasy';
 import { seasonLabel } from '@/lib/season/points';
 import { SECTIONS } from '@/lib/site/sections';
+import { getHallOfFame, type HallOfFame } from '@/lib/season/hall-of-fame';
+import { HallOfFameView } from '@/components/hall/HallOfFameView';
 import { DISCORD_URL } from '@/lib/site/social';
 
 export const revalidate = 300;
@@ -193,7 +195,7 @@ const LOOP: Array<{ icon: LucideIcon; title: string; body: string }> = [
 ];
 
 export default async function Home() {
-  const [stats, seasonLine] = await Promise.all([getStats(), getSeasonLine()]);
+  const [stats, seasonLine, hall] = await Promise.all([getStats(), getSeasonLine(), getHallOfFame().catch((): HallOfFame | null => null)]);
 
   return (
     <div className="relative overflow-hidden bg-brand-navy px-4 sm:px-6 lg:px-8 pb-16">
@@ -215,8 +217,9 @@ export default async function Home() {
         </p>
         <div className="brand-hairline mx-auto h-px w-64" />
         <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto text-balance">
-          Every Cardano DRep, scored on whether they actually show up to vote. Scores come straight from the blockchain,
-          and the formula is public so you can check our work.
+          Democracy only works if people care. ADApolis aligns incentives across the Cardano community to promote good
+          governance and civic engagement: every DRep scored on how reliably they do the job, a monthly race to cheer on,
+          and a quiz to find a DRep who shares your values.
         </p>
         <Link
           href={SECTIONS.methodology.href}
@@ -279,10 +282,16 @@ export default async function Home() {
         )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="Scoreboard" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
-          <GameTile href={SECTIONS.draft.href} icon={Swords} title="Draft" body={SECTIONS.draft.blurb} accent="bg-brand-gold/20 text-brand-gold-light" />
+          <GameTile href={SECTIONS.draft.href} icon={Swords} title="Draft Teams" body={SECTIONS.draft.blurb} accent="bg-brand-gold/20 text-brand-gold-light" />
           <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="Cardanathon" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
-          <GameTile href="/leaderboard" icon={Trophy} title="Leaderboard" body="Every team’s score, pick by pick, updated as the season unfolds." accent="bg-sky-500/15 text-sky-300" />
+          <GameTile href="/hall-of-fame" icon={Trophy} title="Hall of Fame" body="Last season’s top 10 DReps and the six trophy winners." accent="bg-sky-500/15 text-sky-300" />
         </div>
+        {hall && (
+          <div className="mt-10">
+            <h3 className="mb-4 text-center font-display text-2xl font-bold text-white">Hall of Fame: {seasonLabel(hall.season_number)}</h3>
+            <HallOfFameView hall={hall} seasonName={seasonLabel(hall.season_number)} compact />
+          </div>
+        )}
       </section>
 
       {/* Paths */}
@@ -342,7 +351,7 @@ export default async function Home() {
         </section>
       )}
 
-      <p className="relative text-center text-sm text-slate-500 pt-8">Data from the Cardano blockchain via Koios, refreshed every 6 hours.</p>
+      <p className="relative text-center text-sm text-slate-500 pt-8">Data from the Cardano blockchain via Koios. New votes are picked up every hour.</p>
     </div>
   );
 }
