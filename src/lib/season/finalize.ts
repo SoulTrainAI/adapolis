@@ -5,8 +5,10 @@
  *  - which global teams qualify for prizes (delegated since before the lock
  *    and still delegating 100+ ADA at the end; docs/GAME.md),
  *  - who may claim a copy: the DRep (5) and each of the top 25 qualifying
- *    teams that drafted them (1), all within a hard 7-day window,
- *  - the final top 10 qualifying teams (places 1–3 win Season Trophies).
+ *    teams that drafted them (1), all within one mint window (opens 48 h
+ *    after the season ends, closes 3 epochs after it ends),
+ *  - the final top 10 qualifying teams (places 1–3 win Team Trophies; the
+ *    top 3 DReps win DRep Trophies).
  * Idempotent: upserts, then marks the season finalized. Minting is separate
  * and not built yet.
  */
@@ -18,10 +20,10 @@ import { getSeasonData } from './data';
 import { getLeaderboard, loadRosters } from './leaderboard';
 import { isMissingSchema, MIGRATION_HINT } from './schema';
 import type { DraftSeason } from './fantasy';
+import { mintWindow } from './mint-window';
 
 const CHAMPIONS = 10;
 const DREP_COPIES = 5;
-const CLAIM_DAYS = 7;
 const PRIZE_TEAMS = 25;
 const CHUNK = 500;
 
@@ -42,8 +44,8 @@ async function finalizeSeason(season: DraftSeason): Promise<{ season: number; ch
   const [data, cards, rosters] = await Promise.all([getSeasonData({ window: season.grid_window, force: true }), getCards({ force: true }), loadRosters(season.season_number)]);
   const cardById = new Map(cards.cards.map((c) => [c.drep_id, c]));
   const top = data.standings.filter((s) => s.points > 0).slice(0, CHAMPIONS);
-  // One hard deadline for every claim, DReps included.
-  const closes = new Date(new Date(season.ends_at).getTime() + CLAIM_DAYS * 86_400_000).toISOString();
+  // One hard deadline for every claim, DReps included: 3 epochs after the season ends.
+  const closes = mintWindow(new Date(season.ends_at)).closes.toISOString();
 
   const champions = top.map((s, i) => ({
     season_number: season.season_number,
