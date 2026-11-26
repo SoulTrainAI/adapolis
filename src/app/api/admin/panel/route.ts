@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { currentAdmin } from '@/lib/admin/auth';
+import { adminConfig, currentAdmin } from '@/lib/admin/auth';
 import { isSameOriginJson } from '@/lib/auth/same-origin';
 import {
   editUnclaimedProfile,
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const admin = currentAdmin();
   const params = new URL(request.url).searchParams;
   const view = params.get('view') ?? 'me';
-  if (view === 'me') return NextResponse.json({ admin: admin !== null });
+  if (view === 'me') return NextResponse.json({ admin: admin !== null, config: adminConfig() });
   if (!admin) return forbidden();
   const q = (params.get('q') ?? '').trim().slice(0, 100);
   try {
