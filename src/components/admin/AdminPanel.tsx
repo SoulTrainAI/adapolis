@@ -164,6 +164,7 @@ export function AdminPanel() {
         <div className="flex flex-wrap gap-2">
           <button className={`${btn} bg-slate-700`} disabled={busy} onClick={() => void run(() => api('', { action: 'run_job', job: 'votes' }), 'Hourly vote sync finished.')}>Sync new votes now</button>
           <button className={`${btn} bg-slate-700`} disabled={busy} onClick={() => void run(() => api('', { action: 'run_job', job: 'full' }), 'Full sync started (runs in the background; see /api/cron).')}>Run full sync</button>
+          <button className={`${btn} bg-slate-700`} disabled={busy} onClick={() => void run(() => api('', { action: 'test_notification' }), 'Test notification sent: check the bell.')}>Send me a test notification</button>
           <a href="/api/cron" target="_blank" className={`${btn} border border-slate-700`}>Last run status ↗</a>
         </div>
       </Card>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { adminConfig, currentAdmin } from '@/lib/admin/auth';
+import { notify } from '@/lib/notifications/store';
 import { isSameOriginJson } from '@/lib/auth/same-origin';
 import {
   editUnclaimedProfile,
@@ -49,6 +50,7 @@ const Body = z.discriminatedUnion('action', [
   }),
   z.object({ action: z.literal('edit_unclaimed_profile'), drep_id: z.string(), profile: z.unknown() }),
   z.object({ action: z.literal('run_job'), job: z.enum(['full', 'votes']) }),
+  z.object({ action: z.literal('test_notification') }),
 ]);
 
 export async function POST(request: Request) {
@@ -63,7 +65,19 @@ export async function POST(request: Request) {
     else if (b.action === 'rename_league') await renameLeague(admin, b.league_id, b.name.trim(), b.reason);
     else if (b.action === 'moderate_profile') await moderateProfile(admin, b.drep_id, { hide_image: b.hide_image, hide_bio: b.hide_bio, note: b.note });
     else if (b.action === 'edit_unclaimed_profile') await editUnclaimedProfile(admin, b.drep_id, b.profile);
-    else if (b.action === 'run_job') {
+    else if (b.action === 'test_notification') {
+      const sent = await notify([
+        {
+          stake_address: admin,
+          type: 'season_update',
+          title: '📣 Test: the Cardanathon commentary booth is live!',
+          body: '🎙️ If you can read this, notifications work end to end.',
+          url: '/notifications',
+          dedupe_key: `test:${Date.now()}`,
+        },
+      ]);
+      if (sent === 0) throw new Error('Nothing was sent: the "Season update" type is switched off in your notification settings.');
+    } else if (b.action === 'run_job') {
       const secret = process.env.CRON_SECRET?.trim();
       if (!secret) throw new Error('CRON_SECRET is not set in Railway.');
       const path = b.job === 'full' ? '/api/cron' : '/api/cron/votes';

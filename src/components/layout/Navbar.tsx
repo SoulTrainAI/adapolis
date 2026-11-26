@@ -7,6 +7,7 @@ import { ChevronDown, ExternalLink, Menu, X } from 'lucide-react';
 import { WalletSignIn } from '@/components/auth/WalletSignIn';
 import { Logo } from '@/components/brand/Logo';
 import { ThemeToggle } from './ThemeToggle';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NAV, isActive, type NavItem } from '@/lib/site/nav';
 
 function ItemLink({ item, onPick, compact = false }: { item: NavItem; onPick: () => void; compact?: boolean }) {
@@ -120,6 +121,7 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2 lg:ml-0">
           <ThemeToggle />
+          <NotificationBell />
           <WalletSignIn />
           <button
             type="button"

@@ -28,9 +28,15 @@ const config: Config = {
           "0%": { backgroundPosition: "150% 0" },
           "100%": { backgroundPosition: "-50% 0" },
         },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-14deg)" },
+          "75%": { transform: "rotate(14deg)" },
+        },
       },
       animation: {
         shimmer: "shimmer 2.2s ease-in-out infinite",
+        wiggle: "wiggle 0.5s ease-in-out 3",
       },
     },
   },
