@@ -13,7 +13,8 @@ import { createHash } from 'node:crypto';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
-import { DEFAULT_STATEMENTS_MODEL, priceFor, quoteIsVerbatim } from '@/lib/statements/summarize';
+import { DEFAULT_STATEMENTS_MODEL, priceFor } from '@/lib/statements/summarize';
+import { isFullSentenceQuote } from '@/lib/statements/proposal-arguments';
 
 export const FORUM_BASE = 'https://forum.cardano.org';
 const GOVERNANCE_TAG = '#governance';
@@ -228,7 +229,7 @@ const SYSTEM_PROMPT = `You analyze Cardano Forum posts about one Cardano governa
    Judge only what the post itself says. Do not guess.
 2. for / against: up to ${MAX_POINTS_PER_SIDE} distinct arguments each way, most substantive first.
    - text: neutral plain-language summary, at most 20 words, no names, no judgment.
-   - quote: 5-30 consecutive words copied EXACTLY from the cited post.
+   - quote: 1 to 3 COMPLETE consecutive sentences copied EXACTLY from the cited post (start at a sentence start, end at its final punctuation, at most 80 words). Never trim mid-sentence or join passages.
    - post_index: the post quoted. "for" must cite a supporting post, "against" an opposing one.
    Skip thanks, logistics and personal attacks. Fewer points is better than weak ones.
 
@@ -308,7 +309,7 @@ async function analyze(title: string, posts: ForumPost[], model: string) {
       const r = PointSchema.safeParse(item);
       if (!r.success) continue;
       const post = posts.find((p) => p.index === r.data.post_index);
-      if (!post || stanceByIndex.get(post.index) !== want || !quoteIsVerbatim(r.data.quote, post.text)) continue;
+      if (!post || stanceByIndex.get(post.index) !== want || !isFullSentenceQuote(r.data.quote, post.text)) continue;
       if (result.some((x) => x.text === r.data.text.trim())) continue;
       result.push({ text: r.data.text.trim(), quote: r.data.quote.trim(), url: post.url, author: post.author });
       if (result.length >= MAX_POINTS_PER_SIDE) break;
@@ -398,6 +399,8 @@ export async function refreshForumDiscussions(proposals: Array<{ proposal_id: st
       if (threads.length > 0) result.with_threads++;
 
       const fp = createHash('sha256')
+        // Version prefix: bump when the prompt changes so every thread is re-read once.
+        .update('v2-full-sentence-quotes\n')
         .update(posts.map((x) => `${x.url}:${createHash('sha1').update(x.text).digest('hex')}`).join('\n'))
         .digest('hex');
       if (known.get(p.proposal_id) === fp) {

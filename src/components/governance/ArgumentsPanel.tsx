@@ -13,6 +13,11 @@ export interface Argument {
   linkLabel?: string;
 }
 
+/** Rationales are often Markdown; show the words without **bold** markers or `code` ticks. */
+export function plainQuote(q: string): string {
+  return q.replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim();
+}
+
 export function ArgumentsPanel({
   argsFor,
   argsAgainst,
@@ -38,7 +43,7 @@ export function ArgumentsPanel({
               {!a.quote && a.text}
               {a.quote && (
                 <blockquote className="border-l-2 border-slate-600 pl-3 text-sm text-slate-200">
-                  “{a.quote}”
+                  “{plainQuote(a.quote)}”
                   <span className="mt-1 block text-xs text-slate-500">
                     {a.drepName ?? a.author ?? (a.drepId ? `${a.drepId.slice(0, 14)}…` : 'A DRep')}
                     {a.drepId && <MyDRepBadge drepId={a.drepId} className="ml-1 align-middle" />}
