@@ -40,7 +40,7 @@ export default async function ScoreboardPage() {
 
   return (
     <div className="min-h-screen bg-brand-navy text-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-[1600px]">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-5xl font-bold mb-4">Scoreboard</h1>

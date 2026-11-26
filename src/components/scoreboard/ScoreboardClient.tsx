@@ -193,7 +193,7 @@ export function ScoreboardClient({ initialEpoch, initialSort = 'adjusted_govscor
 
       {/* Loading state: skeleton cards */}
       {showLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 xl:gap-5 mb-8">
           {Array.from({ length: 50 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -209,7 +209,7 @@ export function ScoreboardClient({ initialEpoch, initialSort = 'adjusted_govscor
 
       {/* Grid of DRep cards */}
       {!showLoading && dreps.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 mb-8 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 xl:gap-5 mb-8 w-full">
           {dreps.map((drep) => (
             <div key={drep.drep_id} className="flex flex-col gap-1.5">
               {align.byDRep && <AlignmentStrip a={align.byDRep.get(drep.drep_id)} />}

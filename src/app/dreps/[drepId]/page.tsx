@@ -20,7 +20,7 @@ export default function DrepProfilePage({ params }: { params: { drepId: string }
   if (!DREP_ID.test(params.drepId)) notFound();
   return (
     <div className="min-h-screen bg-brand-navy px-4 py-12 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-7xl">
         <DrepProfile drepId={params.drepId} />
       </div>
     </div>

@@ -249,7 +249,7 @@ export function MatchQuiz() {
   }
 
   return (
-    <div className={`${step.kind === 'results' ? 'max-w-6xl' : 'max-w-2xl'} mx-auto`}>
+    <div className={`${step.kind === 'results' ? 'max-w-[1440px]' : 'max-w-2xl'} mx-auto`}>
       {step.kind !== 'intro' && step.kind !== 'results' && step.kind !== 'deeper-offer' && (
         <div className="mb-6">
           <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">

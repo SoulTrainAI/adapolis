@@ -116,7 +116,7 @@ export function CollectionView() {
                 See where you rank →
               </Link>
             </p>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5 xl:gap-5">
               {roster.picks.map((p) => {
                 const d = pool.get(p.drep_id);
                 const card =
@@ -132,7 +132,7 @@ export function CollectionView() {
       {signedIn && (
         <Section title="Your DRep" icon={<span className="text-sky-300">●</span>}>
           <DRepCheckup />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5 xl:gap-5">
             {mine && <TradingCard variant="scoreboard" card={mine} />}
           </div>
         </Section>

@@ -29,9 +29,10 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
   const narrow = width < 640;
   const height = narrow ? 340 : Math.min(520, Math.round(width * 0.42));
   const byId = useMemo(() => new Map(race.racers.map((r) => [r.drep_id, r])), [race]);
-  // Who climbs: the final (or current) top 10, so the cast doesn't change mid-replay.
-  const cast = useMemo(() => orderAt(race.racers, until).slice(0, CLIMBERS), [race, until]);
-  const color = useMemo(() => new Map(cast.map((c, i) => [c.drep_id, COLORS[i % COLORS.length]])), [cast]);
+  // Who climbs: the top 10 at this moment, matching the podium above. Colours stay with a DRep for the whole replay.
+  const cast = useMemo(() => orderAt(race.racers, t).slice(0, CLIMBERS), [race, t]);
+  const color = useMemo(() => new Map(orderAt(race.racers, until).map((c, i) => [c.drep_id, COLORS[i % COLORS.length]])), [race, until]);
+  const finalTop = useMemo(() => orderAt(race.racers, until)[0]?.points ?? 0, [race, until]);
   const geo = useMemo(
     () =>
       mountain(
@@ -42,12 +43,12 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
           starts_at: race.starts_at,
           ends_at: race.ends_at,
           t,
-          scaleTo: cast[0]?.points ?? 0,
+          scaleTo: finalTop,
           padding: narrow ? { left: 8, right: 96, top: 24, bottom: 26 } : { left: 40, right: 170, top: 30, bottom: 30 },
           labelGap: narrow ? 16 : 20,
         }
       ),
-    [cast, byId, width, height, race.starts_at, race.ends_at, t, narrow]
+    [cast, byId, width, height, race.starts_at, race.ends_at, t, narrow, finalTop]
   );
   const ranked = useMemo(() => [...geo.lines].sort((a, b) => b.points - a.points), [geo]);
   const leader = ranked[0];

@@ -335,7 +335,7 @@ export function DraftBoard() {
           </p>
 
           {view === 'cards' && (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4">
               {filtered.slice(0, shown).map((d) => {
                 const isPicked = picked.includes(d.drep_id);
                 return (
@@ -356,7 +356,7 @@ export function DraftBoard() {
                         type="button"
                         disabled={locked || (!isPicked && full)}
                         onClick={() => toggle(d.drep_id)}
-                        className={`w-full py-1.5 text-sm font-semibold disabled:opacity-40 ${
+                        className={`min-h-[44px] w-full py-2 text-sm font-semibold disabled:opacity-40 ${
                           isPicked ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-violet-600 text-white hover:bg-violet-500'
                         }`}
                       >
@@ -447,7 +447,7 @@ export function DraftBoard() {
                         <span className="min-w-0 flex-1 truncate text-slate-100">{d ? displayName(d) : id.slice(0, 14)}</span>
                         <UnderdogChip value={snapshot.get(id) ?? d?.underdog ?? 1} />
                         {!locked && (
-                          <button type="button" onClick={() => toggle(id)} aria-label="Remove" className="text-slate-400 hover:text-white">
+                          <button type="button" onClick={() => toggle(id)} aria-label="Remove" className="-m-2 flex h-10 w-10 items-center justify-center text-slate-400 hover:text-white">
                             <X className="h-4 w-4" />
                           </button>
                         )}

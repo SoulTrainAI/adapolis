@@ -51,7 +51,7 @@ export default async function SeasonPage() {
 
   return (
     <div className="min-h-screen bg-brand-navy px-4 py-12 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-8">
+      <div className="mx-auto max-w-[1440px] space-y-8">
         <SeasonTabs active="standings" />
 
         <header className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-[radial-gradient(120%_120%_at_0%_0%,rgba(251,191,36,0.18),transparent_55%),radial-gradient(120%_120%_at_100%_100%,rgba(139,92,246,0.25),transparent_55%)] p-6 sm:p-8">
