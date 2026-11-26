@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { adminConfig, currentAdmin } from '@/lib/admin/auth';
 import { notify } from '@/lib/notifications/store';
+import { runOverviews } from '@/lib/overview/generate';
+import { openReports, resolveReport } from '@/lib/overview/data';
 import { isSameOriginJson } from '@/lib/auth/same-origin';
 import {
   editUnclaimedProfile,
@@ -32,6 +34,7 @@ export async function GET(request: Request) {
     if (view === 'leagues') return NextResponse.json({ leagues: q.length >= 2 ? await searchLeagues(q) : [] });
     if (view === 'profile') return NextResponse.json({ profile: await getProfileRow(q) });
     if (view === 'log') return NextResponse.json({ log: await recentActions() });
+    if (view === 'reports') return NextResponse.json({ reports: await openReports() });
     return NextResponse.json({ error: 'Unknown view.' }, { status: 400 });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
@@ -51,6 +54,8 @@ const Body = z.discriminatedUnion('action', [
   z.object({ action: z.literal('edit_unclaimed_profile'), drep_id: z.string(), profile: z.unknown() }),
   z.object({ action: z.literal('run_job'), job: z.enum(['full', 'votes']) }),
   z.object({ action: z.literal('test_notification') }),
+  z.object({ action: z.literal('generate_overview'), drep_id: z.string().regex(/^drep1[02-9ac-hj-np-z]{20,100}$/) }),
+  z.object({ action: z.literal('resolve_report'), id: z.number().int().positive(), accept: z.boolean() }),
 ]);
 
 export async function POST(request: Request) {
@@ -65,7 +70,15 @@ export async function POST(request: Request) {
     else if (b.action === 'rename_league') await renameLeague(admin, b.league_id, b.name.trim(), b.reason);
     else if (b.action === 'moderate_profile') await moderateProfile(admin, b.drep_id, { hide_image: b.hide_image, hide_bio: b.hide_bio, note: b.note });
     else if (b.action === 'edit_unclaimed_profile') await editUnclaimedProfile(admin, b.drep_id, b.profile);
-    else if (b.action === 'test_notification') {
+    else if (b.action === 'generate_overview') {
+      await logAction(admin, 'generate_overview', b.drep_id, {});
+      const r = await runOverviews({ only: b.drep_id });
+      if (r.errors) throw new Error(r.last_error ?? 'Overview failed.');
+      return NextResponse.json({ ok: true, result: r });
+    } else if (b.action === 'resolve_report') {
+      const drep = await resolveReport(b.id, b.accept);
+      await logAction(admin, b.accept ? 'accept_overview_report' : 'dismiss_overview_report', drep, { report: b.id });
+    } else if (b.action === 'test_notification') {
       const sent = await notify([
         {
           stake_address: admin,

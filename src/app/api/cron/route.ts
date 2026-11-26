@@ -25,6 +25,7 @@ import { getCards } from '@/lib/cards/data';
 import { refreshForumDiscussions } from '@/lib/forum/discussions';
 import { discordConfigured } from '@/lib/discord/rest';
 import { runFeeds } from '@/lib/discord/feeds';
+import { runOverviews } from '@/lib/overview/generate';
 
 const STATEMENT_INTERVAL_HOURS: Record<string, number> = { on: 0, daily: 24, weekly: 168 };
 
@@ -185,6 +186,16 @@ async function runPipeline(): Promise<void> {
         console.error(
           JSON.stringify({ event: 'cron_step_statements_failed', error: error instanceof Error ? error.message : String(error) })
         );
+      }
+    }
+
+    // DRep Overviews: up to 25 per run, capped at $1, only once DREP_OVERVIEWS=on is set in Railway (AI spend is opt-in).
+    if (process.env.DREP_OVERVIEWS === 'on' && process.env.ANTHROPIC_API_KEY) {
+      try {
+        await step('drep_overviews', () => runOverviews());
+      } catch (error) {
+        demoteError();
+        console.error(JSON.stringify({ event: 'cron_step_overviews_failed', error: error instanceof Error ? error.message : String(error) }));
       }
     }
 

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DrepProfile } from '@/components/cards/DrepProfile';
 import { getOverride } from '@/lib/drep-profile/overrides';
+import { DrepOverview } from '@/components/overview/DrepOverview';
 
 const DREP_ID = /^drep1[02-9ac-hj-np-z]{20,100}$/;
 
@@ -33,6 +34,7 @@ export default async function DrepProfilePage({ params }: { params: { drepId: st
           </p>
         )}
         <DrepProfile drepId={params.drepId} />
+        <DrepOverview drepId={params.drepId} />
       </div>
     </div>
   );

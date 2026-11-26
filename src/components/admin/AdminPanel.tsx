@@ -38,6 +38,7 @@ export function AdminPanel() {
   const [note, setNote] = useState('');
   const [edit, setEdit] = useState({ image: '', bio: '' });
   const [log, setLog] = useState<Json[]>([]);
+  const [reports, setReports] = useState<Json[]>([]);
 
   const loadMe = useCallback(() => {
     api('?view=me')
@@ -49,7 +50,10 @@ export function AdminPanel() {
     window.addEventListener('adapolis:auth', loadMe);
     return () => window.removeEventListener('adapolis:auth', loadMe);
   }, [loadMe]);
-  const loadLog = useCallback(() => api('?view=log').then((r) => setLog((r.log as Json[]) ?? [])), []);
+  const loadLog = useCallback(
+    () => Promise.all([api('?view=log').then((r) => setLog((r.log as Json[]) ?? [])), api('?view=reports').then((r) => setReports((r.reports as Json[]) ?? [])).catch(() => undefined)]),
+    []
+  );
   useEffect(() => {
     if (admin) void loadLog();
   }, [admin, loadLog]);
@@ -158,6 +162,30 @@ export function AdminPanel() {
             )}
           </div>
         )}
+      </Card>
+
+      <Card title="DRep Overview">
+        <p className="text-sm text-slate-400">
+          Generate one overview to check quality and cost (uses the DRep ID above). Scheduled generation runs only when DREP_OVERVIEWS=on is set in Railway.
+        </p>
+        <button className={`${btn} bg-violet-600`} disabled={busy || !drepId.trim()} onClick={() => void run(async () => { const r = await api('', { action: 'generate_overview', drep_id: drepId.trim() }); const res = r.result as Json; setStatus({ kind: 'ok', text: `Overview generated. Cost $${String(res?.spent_usd ?? '?')}.` }); }, 'Overview generated.')}>
+          Generate overview for this DRep
+        </button>
+        <h3 className="pt-2 font-semibold">Open error reports ({reports.length})</h3>
+        <ul className="space-y-2 text-sm">
+          {reports.map((r) => (
+            <li key={String(r.id)} className="rounded-lg bg-slate-950 p-2">
+              <a href={`/dreps/${String(r.drep_id)}`} target="_blank" className="text-xs text-violet-300">{String(r.drep_id).slice(0, 24)}… ↗</a>
+              {r.reporter_drep ? <span className="ml-2 text-xs text-sky-300">from the DRep</span> : null}
+              <p className="mt-1 whitespace-pre-line text-slate-200">{String(r.message)}</p>
+              <span className="mt-2 flex gap-2">
+                <button className={`${btn} bg-emerald-800`} disabled={busy} onClick={() => void run(() => api('', { action: 'resolve_report', id: Number(r.id), accept: true }), 'Accepted: the overview is rewritten on the next run.')}>Accept (rewrite)</button>
+                <button className={`${btn} bg-slate-700`} disabled={busy} onClick={() => void run(() => api('', { action: 'resolve_report', id: Number(r.id), accept: false }), 'Report dismissed.')}>Dismiss</button>
+              </span>
+            </li>
+          ))}
+          {reports.length === 0 && <li className="text-slate-500">None open.</li>}
+        </ul>
       </Card>
 
       <Card title="Run jobs">
