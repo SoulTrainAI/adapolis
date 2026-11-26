@@ -12,6 +12,7 @@ import { placeholderCard, useCards } from '@/components/cards/useCards';
 import { LiveTeam } from './LiveTeam';
 import { EligibilityNote } from './EligibilityNote';
 import { seasonLabel } from '@/lib/season/points';
+import { ConnectPrompt } from '@/components/auth/ConnectPrompt';
 
 type Response = ({ enabled: true } & DraftData) | { enabled: false };
 type Sort = 'points' | 'projection' | 'form' | 'underdog' | 'smallest' | 'drafted';
@@ -479,7 +480,7 @@ export function DraftBoard() {
             {locked ? (
               <p className="text-sm text-amber-300">Rosters are locked for this season.</p>
             ) : !signedIn ? (
-              <p className="text-sm text-slate-300">Connect your wallet (top right) to save your team. It only asks you to sign a message.</p>
+              <ConnectPrompt reason="Connect a wallet to save your team." />
             ) : (
               <button
                 type="button"

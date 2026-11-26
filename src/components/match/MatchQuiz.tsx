@@ -516,7 +516,7 @@ export function MatchQuiz() {
             <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-sm">
               {!signedIn ? (
                 <p className="flex items-center gap-2 text-slate-300">
-                  <CloudOff size={16} className="text-slate-500" /> Saved on this device only. Connect your wallet (top right) to save
+                  <CloudOff size={16} className="text-slate-500" /> Saved on this device only. Connect your wallet to save
                   your answers to it and use them on other devices.
                 </p>
               ) : walletSavedAt ? (

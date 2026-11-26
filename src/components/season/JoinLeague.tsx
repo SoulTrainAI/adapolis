@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Users } from 'lucide-react';
+import { ConnectPrompt } from '@/components/auth/ConnectPrompt';
 
 type League = { league_id: string; name: string; members: number };
 
@@ -57,7 +58,7 @@ export function JoinLeague({ code }: { code: string }) {
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Join league
           </button>
-          <p className="text-xs text-slate-500">Connect your wallet (top right) first. It only asks you to sign a message.</p>
+          <ConnectPrompt reason="Connect a wallet to join." />
         </>
       ) : !error ? (
         <p className="flex items-center justify-center gap-2 text-slate-400">

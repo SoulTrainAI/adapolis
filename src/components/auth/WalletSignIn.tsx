@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Wallet, LogOut, Loader2 } from 'lucide-react';
+import { GET_STARTED_EVENT, GetStartedGuide, type Step } from './GetStartedGuide';
 
 interface InstalledWallet {
   id: string;
@@ -10,6 +11,13 @@ interface InstalledWallet {
 }
 
 type Status = 'loading' | 'disabled' | 'signed-out' | 'choosing' | 'signing' | 'signed-in';
+
+/** CIP-30 wallets injected into this page: browser extensions, or the wallet app whose browser this is. */
+function injectedWalletCount(): number {
+  const cardano = (window as unknown as { cardano?: Record<string, unknown> }).cardano;
+  if (!cardano) return 0;
+  return Object.values(cardano).filter((w) => typeof w === 'object' && w !== null && typeof (w as { enable?: unknown }).enable === 'function').length;
+}
 
 function short(stakeAddress: string): string {
   return `${stakeAddress.slice(0, 10)}…${stakeAddress.slice(-4)}`;
@@ -38,6 +46,19 @@ export function WalletSignIn() {
   const [wallets, setWallets] = useState<InstalledWallet[]>([]);
   const [error, setError] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const [guide, setGuide] = useState<{ open: boolean; step: Step | null; found: number }>({ open: false, step: null, found: 0 });
+  const fromGuide = useRef(false);
+
+  useEffect(() => {
+    const open = (e: Event) => {
+      const step = (e as CustomEvent<Step | null>).detail ?? null;
+      setGuide({ open: true, step, found: injectedWalletCount() });
+    };
+    window.addEventListener(GET_STARTED_EVENT, open);
+    return () => window.removeEventListener(GET_STARTED_EVENT, open);
+  }, []);
+
+  const closeGuide = useCallback(() => setGuide((g) => ({ ...g, open: false })), []);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -61,6 +82,11 @@ export function WalletSignIn() {
 
   async function choose() {
     setError(null);
+    if (injectedWalletCount() === 0) {
+      // No wallet in this browser (every phone browser, or a desktop without an extension): guide them instead of a dead end.
+      setGuide({ open: true, step: null, found: 0 });
+      return;
+    }
     // Mesh is loaded on demand so its WASM isn't shipped with every page.
     const { BrowserWallet } = await import('@meshsdk/core');
     setWallets(BrowserWallet.getInstalledWallets().map((w) => ({ id: w.id, name: w.name, icon: w.icon })));
@@ -98,7 +124,10 @@ export function WalletSignIn() {
       setStakeAddress(stake);
       setStatus('signed-in');
       window.dispatchEvent(new CustomEvent('adapolis:auth', { detail: stake }));
+      if (fromGuide.current) setGuide({ open: true, step: 'delegate', found: injectedWalletCount() });
+      fromGuide.current = false;
     } catch (e) {
+      fromGuide.current = false;
       setError(walletErrorText(e));
       setStatus('signed-out');
     }
@@ -111,12 +140,28 @@ export function WalletSignIn() {
     window.dispatchEvent(new CustomEvent('adapolis:auth', { detail: null }));
   }
 
+  const guideEl = (
+    <GetStartedGuide
+      open={guide.open}
+      initialStep={guide.step}
+      walletsFound={guide.found}
+      signedIn={status === 'signed-in'}
+      onClose={closeGuide}
+      onConnect={() => {
+        fromGuide.current = true;
+        closeGuide();
+        void choose();
+      }}
+    />
+  );
+
   if (status === 'disabled') return null;
   if (status === 'loading') return <div className="w-32" aria-hidden />;
 
   if (status === 'signed-in' && stakeAddress) {
     return (
       <div className="flex items-center gap-2">
+        {guideEl}
         <span className="font-mono text-sm text-emerald-300" title={stakeAddress}>
           {short(stakeAddress)}
         </span>
@@ -134,6 +179,7 @@ export function WalletSignIn() {
 
   return (
     <div className="relative" ref={panel}>
+      {guideEl}
       <button
         onClick={choose}
         disabled={status === 'signing'}
@@ -143,17 +189,15 @@ export function WalletSignIn() {
         {status === 'signing' ? 'Check your wallet…' : 'Connect wallet'}
       </button>
       {status === 'choosing' && (
-        <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-xl">
+        <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-xl">
           {wallets.length === 0 ? (
-            <p className="p-2 text-sm text-slate-300">
-              No Cardano wallet found. Install a CIP-30 wallet such as Eternl, Lace or Typhon, then reload.
-            </p>
+            <p className="p-2 text-sm text-slate-300">No Cardano wallet found in this browser.</p>
           ) : (
             wallets.map((w) => (
               <button
                 key={w.id}
                 onClick={() => signIn(w.id)}
-                className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm text-slate-200 hover:bg-slate-800"
+                className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm text-slate-200 hover:bg-slate-800"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={w.icon} alt="" className="w-6 h-6" />
@@ -164,6 +208,12 @@ export function WalletSignIn() {
           <p className="px-2 pt-2 text-[11px] text-slate-500">
             You&apos;ll sign a message to prove you own the wallet. No transaction, no fee.
           </p>
+          <button
+            onClick={() => setGuide({ open: true, step: 'welcome', found: injectedWalletCount() })}
+            className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs font-medium text-violet-300 hover:bg-slate-800"
+          >
+            New to Cardano? Get set up step by step
+          </button>
         </div>
       )}
       {error && status === 'signed-out' && (

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Check, Copy, Globe2, Loader2, Lock, Plus, Users } from 'lucide-react';
 import type { LeagueSummary } from '@/lib/season/leagues';
 import { SITE_URL } from '@/lib/site/social';
+import { ConnectPrompt } from '@/components/auth/ConnectPrompt';
 
 type Lists = { mine: LeagueSummary[]; public: LeagueSummary[] };
 
@@ -138,7 +139,7 @@ export function LeaguesView() {
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create
           </button>
         </div>
-        <p className="text-xs text-slate-500">Connect your wallet (top right) first. It only asks you to sign a message.</p>
+        <ConnectPrompt reason="Connect a wallet to create or join a league." />
         {message && <p className={`text-sm ${message.kind === 'ok' ? 'text-emerald-300' : 'text-red-300'}`}>{message.text}</p>}
       </section>
 

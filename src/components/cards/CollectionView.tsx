@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Gem, Loader2, ShoppingBag, Wallet } from 'lucide-react';
+import { Gem, Loader2, ShoppingBag } from 'lucide-react';
 import type { DraftData } from '@/lib/season/fantasy';
 import { useMyDRep } from '@/components/auth/MyDRepBadge';
 import { TradingCard } from './TradingCard';
@@ -10,6 +10,7 @@ import { placeholderCard, useCards } from './useCards';
 import { DRepCheckup } from './DRepCheckup';
 import { ClaimsSection } from './ClaimsSection';
 import { CollectiblesNotice } from './CollectiblesNotice';
+import { ConnectPrompt } from '@/components/auth/ConnectPrompt';
 
 type DraftResponse = (({ enabled: true } & DraftData) | { enabled: false }) & { signed_in?: boolean };
 
@@ -81,10 +82,9 @@ export function CollectionView() {
             <Loader2 className="h-4 w-4 animate-spin" /> Checking your wallet…
           </p>
         ) : !signedIn ? (
-          <p className="rounded-xl border border-slate-700 bg-slate-900/60 p-5 text-slate-300">
-            <Wallet className="mr-2 inline h-4 w-4 text-violet-300" />
-            Connect your wallet (top right) to see the ADApolis cards you hold. It only asks you to sign a message.
-          </p>
+          <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-5">
+            <ConnectPrompt reason="Connect a wallet to see your team, your DRep and the ADApolis cards you hold." />
+          </div>
         ) : (
           <div className="rounded-xl border border-dashed border-brand-gold/30 bg-slate-900/40 p-6 text-center">
             <p className="font-semibold text-white">No ADApolis cards yet</p>
