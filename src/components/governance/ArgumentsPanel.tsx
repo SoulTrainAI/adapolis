@@ -32,14 +32,14 @@ export function ArgumentsPanel({
       {items.length === 0 ? (
         <p className="text-sm text-slate-500">{empty}</p>
       ) : (
-        <ul className="list-disc pl-4 space-y-1.5 text-sm text-slate-300">
+        <ul className="list-disc pl-4 space-y-3 text-sm text-slate-300">
           {items.map((a) => (
-            <li key={a.text}>
-              {a.text}
+            <li key={a.text} className={a.quote ? 'list-none -ml-4' : undefined}>
+              {!a.quote && a.text}
               {a.quote && (
-                <blockquote className="mt-1 border-l-2 border-slate-700 pl-2 text-xs italic text-slate-400">
+                <blockquote className="border-l-2 border-slate-600 pl-3 text-sm text-slate-200">
                   “{a.quote}”
-                  <span className="not-italic block mt-0.5 text-slate-500">
+                  <span className="mt-1 block text-xs text-slate-500">
                     {a.drepName ?? a.author ?? (a.drepId ? `${a.drepId.slice(0, 14)}…` : 'A DRep')}
                     {a.drepId && <MyDRepBadge drepId={a.drepId} className="ml-1 align-middle" />}
                     {href(a) && (

@@ -15,7 +15,7 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { rationaleText } from './sources';
 import { publicUrl } from '@/lib/utils/links';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
-import { DEFAULT_STATEMENTS_MODEL, priceFor, quoteIsVerbatim } from './summarize';
+import { DEFAULT_STATEMENTS_MODEL, priceFor } from './summarize';
 
 const MAX_RATIONALES_PER_SIDE = 30;
 const MAX_CHARS_PER_RATIONALE = 1500;
@@ -88,8 +88,12 @@ async function loadRationales(proposalId: string): Promise<Rationale[]> {
   return out;
 }
 
+// Bump when the prompt changes so every proposal is regenerated once.
+const PROMPT_VERSION = 'v2-full-sentence-quotes';
+
 function fingerprint(rationales: Rationale[]): string {
   return createHash('sha256')
+    .update(PROMPT_VERSION + '\n')
     .update(rationales.map((r) => `${r.side}:${createHash('sha1').update(r.text).digest('hex')}`).sort().join('\n'))
     .digest('hex');
 }
@@ -99,8 +103,8 @@ const SYSTEM_PROMPT = `You summarize the main arguments Cardano DReps gave for a
 Rules:
 - "for" points must come from rationales marked side="yes"; "against" points only from side="no".
 - Give up to ${MAX_POINTS_PER_SIDE} distinct points per side, most common or most substantive first. Merge rationales that make the same point.
-- text: a neutral, plain-language summary of the argument in at most 20 words. No names, no judgment of whether the argument is right.
-- quote: 5-30 consecutive words copied EXACTLY from the cited rationale, showing that argument. Do not paraphrase or join passages.
+- text: a neutral label for the argument in at most 12 words (used only to tell points apart; readers see the quote).
+- quote: 1 to 3 COMPLETE, consecutive sentences copied EXACTLY from the cited rationale that state the argument clearly on their own. Start at the beginning of a sentence and end at its final punctuation. At most 80 words. Do not paraphrase, trim mid-sentence or join separate passages.
 - source_index: the index of the rationale quoted.
 - Skip thanks, procedural remarks and anything that isn't a reason to pass or reject. Fewer points is better than weak ones.
 
@@ -132,13 +136,23 @@ const TOOL: Anthropic.Tool = {
 const PointSchema = z.object({ text: z.string().min(3).max(240), quote: z.string(), source_index: z.number().int() });
 const ToolInputSchema = z.object({ for: z.array(z.unknown()).default([]), against: z.array(z.unknown()).default([]) });
 
+/** Verbatim, 6–90 words, and made of whole sentences: starts with a capital (or quote mark) and ends with sentence punctuation. */
+export function isFullSentenceQuote(quote: string, sourceText: string): boolean {
+  const q = quote.trim();
+  const words = q.split(/\s+/).filter(Boolean).length;
+  if (words < 6 || words > 90) return false;
+  if (!/^["'“‘(]?[A-Z0-9]/.test(q) || !/[.!?]["'”’)]?$/.test(q)) return false;
+  const norm = (t: string) => t.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim().toLowerCase();
+  return norm(sourceText).includes(norm(q));
+}
+
 function validPoints(raw: unknown[], side: 'yes' | 'no', rationales: Rationale[]): ProposalArgument[] {
   const points: ProposalArgument[] = [];
   for (const item of raw) {
     const p = PointSchema.safeParse(item);
     if (!p.success) continue;
     const source = rationales.find((r) => r.index === p.data.source_index);
-    if (!source || source.side !== side || !quoteIsVerbatim(p.data.quote, source.text)) continue;
+    if (!source || source.side !== side || !isFullSentenceQuote(p.data.quote, source.text)) continue;
     if (points.some((x) => x.text === p.data.text.trim())) continue;
     points.push({ text: p.data.text.trim(), quote: p.data.quote.trim(), url: publicUrl(source.url), drep_id: source.drep_id });
     if (points.length >= MAX_POINTS_PER_SIDE) break;

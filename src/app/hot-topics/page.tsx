@@ -168,23 +168,32 @@ function TopicCard({ t, currentEpoch }: { t: HotTopic; currentEpoch: number }) {
         <SplitBar label="Voting power (current delegation)" values={t.tally.ada} format={(n) => formatAda(n)} />
       </div>
 
-      {t.arguments && (
-        <div className="border-t border-slate-800 pt-4">
-          <ArgumentsPanel
-            argsFor={t.arguments.for.map(toArgument)}
-            argsAgainst={t.arguments.against.map(toArgument)}
-            proposalId={t.proposal_id}
-            footnote={`AI-summarized from ${t.arguments.for_sources} Yes and ${t.arguments.against_sources} No rationales. Quotes are the DReps' exact words.`}
-          />
+      <details className="group border-t border-slate-800 pt-4">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-2 font-semibold text-white [&::-webkit-details-marker]:hidden">
+          Arguments and Rationales
+          <span className="text-sm font-normal text-violet-300 group-open:hidden">Show</span>
+          <span className="hidden text-sm font-normal text-violet-300 group-open:inline">Hide</span>
+        </summary>
+        <div className="mt-3 space-y-5">
+        {t.arguments && (
+          <div className="border-t border-slate-800 pt-4">
+            <ArgumentsPanel
+              argsFor={t.arguments.for.map(toArgument)}
+              argsAgainst={t.arguments.against.map(toArgument)}
+              proposalId={t.proposal_id}
+              footnote={`Chosen from ${t.arguments.for_sources} Yes and ${t.arguments.against_sources} No rationales. Every quote is the DRep's exact words, checked against the original.`}
+            />
+          </div>
+        )}
+
+        <div className="border-t border-slate-800 pt-4 grid sm:grid-cols-2 gap-4">
+          <VocalList title="Explained a Yes vote" dreps={t.vocal.yes} tone="text-emerald-300" proposalId={t.proposal_id} />
+          <VocalList title="Explained a No vote" dreps={t.vocal.no} tone="text-red-300" proposalId={t.proposal_id} />
         </div>
-      )}
 
-      <div className="border-t border-slate-800 pt-4 grid sm:grid-cols-2 gap-4">
-        <VocalList title="Explained a Yes vote" dreps={t.vocal.yes} tone="text-emerald-300" proposalId={t.proposal_id} />
-        <VocalList title="Explained a No vote" dreps={t.vocal.no} tone="text-red-300" proposalId={t.proposal_id} />
-      </div>
-
-      {t.forum && <ForumSection forum={t.forum} />}
+        {t.forum && <ForumSection forum={t.forum} />}
+        </div>
+      </details>
     </article>
   );
 }
