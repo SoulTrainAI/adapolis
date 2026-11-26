@@ -98,7 +98,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
   const tier = tierFor(card.rank);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[22rem_1fr]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[22rem_minmax(0,1fr)]">
       <div className="mx-auto w-full max-w-[22rem] lg:sticky lg:top-24 lg:self-start">
         <TradingCard card={card} variant="scoreboard" />
         <p className="mt-2 text-center text-xs text-slate-500">Tap the card to flip it.</p>
@@ -180,7 +180,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
             )}
 
             <Section title="Trends">
-              <div className="grid gap-6 xl:grid-cols-2">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-2 [&>*]:min-w-0">
                 <div>
                   <p className="mb-1 text-sm text-slate-300">GovScore at the end of each 6-epoch window</p>
                   <LineChart points={activeSeasons(detail.seasons).map((s) => ({ label: s.label, value: s.govscore_end }))} />
@@ -217,7 +217,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
 
             <Section title="Card traits">
               <p className="text-sm text-slate-400">What this card carries as collectible metadata. Season editions freeze these at the end of each season.</p>
-              <dl className="grid gap-x-8 sm:grid-cols-2">
+              <dl className="grid grid-cols-[minmax(0,1fr)] gap-x-8 sm:grid-cols-2 [&>*]:min-w-0">
                 {Object.entries(detail.metadata).map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-3 border-b border-slate-800 py-1 text-sm">
                     <dt className="text-slate-500">{k.replace(/_/g, ' ')}</dt>
@@ -256,7 +256,7 @@ function JourneyTrends({ drepId }: { drepId: string }) {
   return (
     <div className="mt-6 space-y-2">
       <p className="text-sm font-semibold text-white">Journey over the last {journey.length} seasons</p>
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 sm:grid-cols-2 [&>*]:min-w-0">
         {JOURNEY.map((j) => (
           <div key={j.key} title={j.tip}>
             <p className="mb-1 flex items-center gap-2 text-sm text-slate-300">
