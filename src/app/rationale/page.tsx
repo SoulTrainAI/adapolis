@@ -68,7 +68,19 @@ export default async function RationalePage({ searchParams }: { searchParams: { 
               </p>
             </header>
 
-            {r.sections.length === 0 ? (
+            {r.hash_matches === false && (
+              <p role="note" className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                This document doesn&apos;t match the fingerprint recorded with the vote on-chain, so it may have been
+                changed after the vote. Compare with the original below.
+              </p>
+            )}
+
+            {!r.readable ? (
+              <p className="text-slate-300">
+                This DRep attached a rationale to this vote, but the document couldn&apos;t be loaded right now (it may be
+                on a slow IPFS host). Try again in a few minutes, or open the original document below.
+              </p>
+            ) : r.sections.length === 0 ? (
               <p className="text-slate-400">The rationale document has no readable text.</p>
             ) : (
               r.sections.map((s) => (

@@ -9,6 +9,7 @@ import { koiosFetch } from '@/lib/koios/client';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { toDisplayProfile } from '@/lib/metadata/profile-display';
 import { publicUrl } from '@/lib/utils/links';
+import { fetchAnchor } from './anchor';
 
 const SECTIONS = [
   ['summary', 'Summary'],
@@ -27,6 +28,10 @@ export interface Rationale {
   vote: 'Yes' | 'No' | 'Abstain';
   voted_at: string;
   sections: Array<{ heading: string; text: string }>;
+  /** false when the DRep attached a rationale but neither Koios nor we could read it. */
+  readable: boolean;
+  /** Whether the document matches the hash recorded on-chain; null if it couldn't be checked. */
+  hash_matches: boolean | null;
   references: Array<{ label: string; url: string }>;
   source_url: string | null;
 }
@@ -35,6 +40,7 @@ const RowSchema = z.object({
   vote: z.enum(['Yes', 'No', 'Abstain']),
   block_time: z.number(),
   meta_url: z.string().nullable(),
+  meta_hash: z.string().nullable().optional(),
   meta_json: z.unknown().nullable(),
 });
 
@@ -55,22 +61,37 @@ export async function loadRationale(drepId: string, proposalId: string): Promise
   if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
 
   const raw = await koiosFetch<unknown>(
-    `/vote_list?voter_id=eq.${encodeURIComponent(drepId)}&proposal_id=eq.${encodeURIComponent(proposalId)}&select=vote,block_time,meta_url,meta_json&order=block_time.desc&limit=5`,
+    `/vote_list?voter_id=eq.${encodeURIComponent(drepId)}&proposal_id=eq.${encodeURIComponent(proposalId)}&select=vote,block_time,meta_url,meta_hash,meta_json&order=block_time.desc&limit=5`,
     { method: 'GET' }
   );
   const rows = z.array(RowSchema).parse(raw);
   // Latest vote that carries a rationale; a DRep may have re-voted.
-  const row = rows.find((r) => r.meta_json !== null) ?? null;
+  const row = rows.find((r) => r.meta_url !== null || r.meta_json !== null) ?? null;
   if (!row) {
     cache.set(key, { value: null, at: Date.now() });
     return null;
   }
 
-  const body = ((row.meta_json as { body?: Record<string, unknown> }).body ?? {}) as Record<string, unknown>;
-  const sections = SECTIONS.flatMap(([field, heading]) => {
-    const t = text(body[field]);
-    return t ? [{ heading, text: t }] : [];
-  });
+  let doc: unknown = row.meta_json;
+  let plainText: string | null = null;
+  let hashMatches: boolean | null = row.meta_json !== null ? true : null;
+  if (doc === null && row.meta_url) {
+    const fetched = await fetchAnchor(row.meta_url, row.meta_hash ?? null);
+    if (fetched) {
+      doc = fetched.json;
+      hashMatches = fetched.hashMatches;
+      if (fetched.json === null) plainText = fetched.text.trim() || null;
+    }
+  }
+
+  const body = (doc && typeof doc === 'object' ? ((doc as { body?: unknown }).body ?? {}) : {}) as Record<string, unknown>;
+  const sections = plainText
+    ? [{ heading: 'Rationale', text: plainText }]
+    : SECTIONS.flatMap(([field, heading]) => {
+        const t = text(body[field]);
+        return t ? [{ heading, text: t }] : [];
+      });
+  const readable = doc !== null || plainText !== null;
   const references = (Array.isArray(body.references) ? body.references : []).flatMap((r) => {
     const ref = r as { label?: unknown; uri?: unknown };
     const url = typeof ref.uri === 'string' ? publicUrl(ref.uri) : null;
@@ -90,10 +111,12 @@ export async function loadRationale(drepId: string, proposalId: string): Promise
     vote: row.vote,
     voted_at: new Date(row.block_time * 1000).toISOString(),
     sections,
+    readable,
+    hash_matches: hashMatches,
     references,
     source_url: publicUrl(row.meta_url),
   };
-  cache.set(key, { value, at: Date.now() });
+  if (readable) cache.set(key, { value, at: Date.now() });
   return value;
 }
 
