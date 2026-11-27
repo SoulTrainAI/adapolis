@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { format, formatDistanceToNowStrict } from 'date-fns';
-import { LayoutGrid, List, Loader2, Lock, Plus, Search, X } from 'lucide-react';
+import { LayoutGrid, List, Loader2, Lock, Plus, X } from 'lucide-react';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
 import type { DraftData, PoolDRep } from '@/lib/season/fantasy';
 import { MAX_STARS, TEAM_STAR_BUDGET } from '@/lib/season/draft-cost';
@@ -15,9 +15,12 @@ import { LiveTeam } from './LiveTeam';
 import { EligibilityNote } from './EligibilityNote';
 import { seasonLabel } from '@/lib/season/points';
 import { ConnectPrompt } from '@/components/auth/ConnectPrompt';
+import { CardFilters } from '@/components/cards/CardFilters';
+import { applyFilters, DEFAULT_SPEC, type FilterCard, type FilterSpec } from '@/lib/cards/filter';
 
 type Response = ({ enabled: true } & DraftData) | { enabled: false };
-type Sort = 'points' | 'projection' | 'form' | 'underdog' | 'smallest' | 'drafted';
+// Draft defaults: every registered DRep, best last season first.
+const DRAFT_DEFAULTS: FilterSpec = { ...DEFAULT_SPEC, pool: 'registered', sort: 'last_points' };
 
 const ROSTER_SIZE = 5;
 const PAGE = 24;
@@ -57,8 +60,7 @@ export function DraftBoard() {
   const [picked, setPicked] = useState<string[]>([]);
   const [teamName, setTeamName] = useState('');
   const [inGlobal, setInGlobal] = useState(true);
-  const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<Sort>('points');
+  const [spec, setSpec] = useState<FilterSpec>(DRAFT_DEFAULTS);
   const [activeOnly, setActiveOnly] = useState(true);
   const [shown, setShown] = useState(PAGE);
   const [saving, setSaving] = useState(false);
@@ -105,23 +107,16 @@ export function DraftBoard() {
     [cards]
   );
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = pool.filter(
-      (d) =>
-        (!activeOnly || d.last_votes > 0) &&
-        (q === '' || d.drep_id.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q))
-    );
-    const cmp: Record<Sort, (a: PoolDRep, b: PoolDRep) => number> = {
-      points: (a, b) => (b.last_points ?? -1e9) - (a.last_points ?? -1e9),
-      projection: (a, b) => (cards.get(b.drep_id)?.projection ?? -1e9) - (cards.get(a.drep_id)?.projection ?? -1e9),
-      form: (a, b) => (cards.get(b.drep_id)?.form ?? -1e9) - (cards.get(a.drep_id)?.form ?? -1e9),
-      underdog: (a, b) => b.underdog - a.underdog || (b.last_points ?? -1e9) - (a.last_points ?? -1e9),
-      smallest: (a, b) => a.ada - b.ada,
-      drafted: (a, b) => b.drafted_by - a.drafted_by,
-    };
-    return list.sort(cmp[sort]);
-  }, [pool, query, sort, activeOnly, cards]);
+  // The pool as filterable cards: this draft's underdog multiplier, Draft Cost and team count.
+  const poolCards = useMemo<FilterCard[]>(
+    () =>
+      pool
+        .filter((d) => !activeOnly || d.last_votes > 0)
+        .map((d) => ({ ...cardFor(d), last_points: d.last_points ?? cards.get(d.drep_id)?.last_points ?? null, draft_cost: d.cost, drafted_by: d.drafted_by })),
+    [pool, activeOnly, cardFor, cards]
+  );
+  const poolById = useMemo(() => new Map(pool.map((d) => [d.drep_id, d])), [pool]);
+  const filtered = useMemo(() => applyFilters(poolCards, spec).map((c) => poolById.get(c.drep_id)!), [poolCards, spec, poolById]);
 
   if (loadError) return <p className="text-red-300">{loadError}</p>;
   if (!data) {
@@ -294,32 +289,18 @@ export function DraftBoard() {
           className={`order-2 lg:order-1 space-y-3 rounded-xl transition-colors ${dropTarget === 'pool' ? 'bg-rose-500/10 outline outline-2 outline-dashed outline-rose-400/60' : ''}`}
           {...dropOnPool}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="relative flex-1 min-w-[12rem]">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-              <input
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setShown(PAGE);
-                }}
-                placeholder="Search DRep name or ID"
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 py-2 pl-9 pr-3 text-sm text-white placeholder:text-slate-500"
-              />
-            </label>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as Sort)}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
-              aria-label="Sort DReps"
-            >
-              <option value="points">Most points last season</option>
-              <option value="projection">Highest projection</option>
-              <option value="form">Best form (last 3)</option>
-              <option value="underdog">Biggest underdog multiplier</option>
-              <option value="smallest">Smallest by ADA</option>
-              <option value="drafted">Most drafted</option>
-            </select>
+          <CardFilters
+            spec={spec}
+            onChange={(next) => {
+              setSpec(next);
+              setShown(PAGE);
+            }}
+            cards={poolCards}
+            defaults={DRAFT_DEFAULTS}
+            resultCount={filtered.length}
+            optionalStats={['drafted_by']}
+          />
+          <div className="-mt-3 flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-sm text-slate-300">
               <input type="checkbox" checked={activeOnly} onChange={(e) => setActiveOnly(e.target.checked)} />
               Voted last season
@@ -346,7 +327,7 @@ export function DraftBoard() {
           </div>
           <p className="text-xs text-slate-500">
             &quot;Last season&quot; is epochs {data.reference_window.start_epoch}–{data.reference_window.end_epoch}; multipliers
-            are scaled against the DReps active then. {filtered.length.toLocaleString()} DReps shown.
+            are scaled against the DReps active then.
           </p>
 
           {view === 'cards' && (

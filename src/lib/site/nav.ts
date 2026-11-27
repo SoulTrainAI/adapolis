@@ -39,6 +39,7 @@ export const NAV: NavGroup[] = [
       { label: 'Explore The Official Collection', href: '/nfts', blurb: 'Every DRep All-Star card and trophy minted so far.' },
       { label: 'My Collection', href: '/collection', blurb: 'Your team, your DRep and the cards you hold.' },
       { label: 'Mint NFTs', href: '/mint', blurb: 'Claim the All-Stars and trophies you won.' },
+      { label: 'Stats and Traits', href: '/stats-and-traits', blurb: 'Every stat, badge, class and NFT trait, and what it means.' },
     ],
   },
   {

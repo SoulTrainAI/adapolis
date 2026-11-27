@@ -14,22 +14,13 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
 import {
-  BadgeCheck,
-  BookOpen,
-  Dog,
   ExternalLink,
   Flame,
   Globe,
-  Hammer,
   Loader2,
-  Medal,
   RotateCcw,
-  Shield,
   Sparkles,
-  Sprout,
-  Sunrise,
   X,
-  type LucideIcon,
 } from 'lucide-react';
 import { hashDRepId } from '@/lib/utils/avatar';
 import { MyDRepBadge } from '@/components/auth/MyDRepBadge';
@@ -40,6 +31,7 @@ import { Sparkline } from './Charts';
 import { useCardDetail, useJourney } from './useCards';
 import type { JourneyPoint } from '@/lib/cards/journey';
 import { CostStars } from './CostStars';
+import { ABILITY_ICONS, CLASS_ICONS } from './trait-icons';
 
 export type CardVariant = 'scoreboard' | 'draft' | 'season';
 
@@ -55,17 +47,6 @@ interface TradingCardProps {
   selected?: boolean;
 }
 
-const ABILITY_ICONS: Record<string, LucideIcon> = {
-  scholar: BookOpen,
-  early_bird: Sunrise,
-  ironclad: Shield,
-  workhorse: Hammer,
-  on_fire: Flame,
-  veteran: Medal,
-  underdog: Dog,
-  rookie: Sprout,
-  identified: BadgeCheck,
-};
 
 // Any letter or digit in any script (constructor form: the TS target predates the u flag).
 const LETTER = new RegExp('[\\p{L}\\p{N}]', 'u');
@@ -499,6 +480,21 @@ function AbilityChip({ a, size = 2.55 }: { a: CardAbility; size?: number }) {
   );
 }
 
+/** The DRep's Class (who backs them), in sky blue to set it apart from earned badges. */
+function ClassChip({ cls, size }: { cls: NonNullable<CardSummary['drep_class']>; size: number }) {
+  const Icon = CLASS_ICONS[cls.id] ?? Sparkles;
+  return (
+    <span
+      className="inline-flex items-center border border-sky-400/50 bg-sky-500/15 font-semibold text-sky-200"
+      style={{ gap: cq(0.7), fontSize: cq(size), padding: `${cq(0.35)} ${cq(size < 2.5 ? 1 : 1.2)}` }}
+      title={`Class: ${cls.label}. Average delegation ${Math.round(cls.avg_ada).toLocaleString()} ADA per delegator.`}
+    >
+      <Icon style={icon(2.9)} />
+      {cls.label}
+    </span>
+  );
+}
+
 /** Windows from the DRep's first appearance on, so charts don't open with years of empty space. */
 export function activeSeasons(seasons: SeasonLine[]): SeasonLine[] {
   const first = seasons.findIndex((s) => s.played || s.govscore_end !== null);
@@ -587,7 +583,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
   const profileHref = `/dreps/${c.drep_id}`;
   const iconButton = 'flex items-center justify-center bg-black/40 text-slate-100 hover:bg-black/60 hover:text-white';
   const chips = c.abilities;
-  const chipSize = chips.length > 6 ? 2.3 : 2.55;
+  const chipSize = chips.length + (c.drep_class ? 1 : 0) > 6 ? 2.3 : 2.55;
   const links = detail?.links ?? [];
   const votes = detail?.votes;
 
@@ -687,8 +683,9 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
         </div>
 
         {/* Abilities */}
-        {chips.length > 0 && (
+        {(chips.length > 0 || c.drep_class) && (
           <div className="flex flex-wrap" style={{ gap: cq(0.9) }}>
+            {c.drep_class && <ClassChip cls={c.drep_class} size={chipSize} />}
             {chips.map((a) => (
               <AbilityChip key={a.id} a={a} size={chipSize} />
             ))}

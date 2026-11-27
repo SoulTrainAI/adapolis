@@ -52,3 +52,44 @@ h2 {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Two-handle range slider (CardFilters): two native range inputs stacked on one track; only the thumbs take clicks. */
+.dual-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  pointer-events: none;
+  margin: 0;
+}
+.dual-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #f8fafc;
+  border: 3px solid #8b5cf6;
+  cursor: grab;
+}
+.dual-range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #f8fafc;
+  border: 3px solid #8b5cf6;
+  cursor: grab;
+}
+.dual-range::-webkit-slider-runnable-track {
+  background: transparent;
+}
+.dual-range::-moz-range-track {
+  background: transparent;
+}
+.dual-range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 2px;
+}

@@ -67,6 +67,8 @@ export interface CardSummary {
   ownership: number | null;
   archetype: CardAbility | null;
   abilities: CardAbility[];
+  /** Who backs the DRep (whales to crowds), from ADA ÷ delegators; null with no delegators. See classes.ts. */
+  drep_class: { id: string; label: string; avg_ada: number } | null;
 }
 
 export interface SeasonLine {

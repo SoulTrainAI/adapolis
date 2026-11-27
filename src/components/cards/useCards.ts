@@ -109,6 +109,7 @@ export function placeholderCard(p: { drep_id: string; name: string | null; image
     ownership: null,
     archetype: null,
     abilities: [],
+    drep_class: null,
   };
 }
 

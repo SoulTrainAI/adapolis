@@ -165,15 +165,18 @@ async function getLoaded(force = false): Promise<Loaded> {
   return inflight;
 }
 
-export async function getCards(options: { force?: boolean } = {}): Promise<CardsPayload> {
+export async function getCards(options: { force?: boolean; retired?: boolean } = {}): Promise<CardsPayload> {
   const [data, overrides] = await Promise.all([getLoaded(options.force), getOverrides()]);
-  const registered = Array.from(data.summaries.values()).filter((c) => c.registered);
+  const all = Array.from(data.summaries.values());
+  const registered = all.filter((c) => c.registered);
   const perStar = pointsPerStar(registered.map((c) => c.projection));
+  // Retired DReps only on request (the Scoreboard's "retired too" view), and only ones that ever voted.
+  const shown = options.retired ? all.filter((c) => !c.registered && c.lifetime.votes > 0) : registered;
   return {
     computed_at: data.computedAt,
     current_epoch: data.currentEpoch,
     current_window: data.currentWindow,
-    cards: registered.map((c) => ({ ...applyOverride(c, overrides.get(c.drep_id)), draft_cost: draftCost(c.projection, perStar) })),
+    cards: shown.map((c) => ({ ...applyOverride(c, overrides.get(c.drep_id)), draft_cost: draftCost(c.projection, perStar) })),
   };
 }
 
@@ -193,6 +196,7 @@ export function cardMetadata(s: CardSummary, seasonLabel: string): Record<string
     best_season_points: s.best_points,
     rationale_pct: s.lifetime.rationale_rate === null ? 0 : Math.round(s.lifetime.rationale_rate * 100),
     archetype: s.archetype?.label ?? 'None',
+    class: s.drep_class?.label ?? 'None',
     abilities: s.abilities.map((a) => a.label).join(', ') || 'None',
     rookie: s.rookie ? 'Yes' : 'No',
     // Draft Cost at the moment the card is frozen (season end), 1–5 gold stars.

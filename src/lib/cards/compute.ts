@@ -21,6 +21,7 @@ import { seasonLabel,
 } from '@/lib/season/points';
 import type { CardAbility, CardSummary, SeasonLine } from './types';
 import { ABILITY_RULES, TIER_NAMES, tierFor } from './abilities';
+import { classFor } from './classes';
 
 const TREND_WINDOWS = 12;
 
@@ -279,6 +280,7 @@ export function computeCards(input: CardInputs): CardComputation {
       ownership: input.ownership.rosters > 0 ? (input.ownership.picks.get(d.drep_id) ?? 0) / input.ownership.rosters : null,
       archetype: abilities.find((a) => a.id !== 'underdog' && a.id !== 'rookie') ?? abilities[0] ?? null,
       abilities,
+      drep_class: classFor(d.ada, d.delegators),
     });
   }
   // Archetype is the DRep's rarest ability (ability and tier together), so the headline trait sets it apart.
