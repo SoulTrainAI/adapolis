@@ -28,7 +28,7 @@ const FRAMES: Record<string, [string, string, string, string]> = {
 let fonts: Array<{ name: string; data: ArrayBuffer; weight: 400 | 700; style: 'normal' }> | null = null;
 let mark: string | null = null;
 
-async function assets() {
+export async function assets() {
   if (!fonts) {
     const dir = path.join(process.cwd(), 'public', 'fonts');
     const [regular, bold] = await Promise.all([readFile(path.join(dir, 'SpaceGrotesk-400.woff')), readFile(path.join(dir, 'SpaceGrotesk-700.woff'))]);
@@ -46,7 +46,7 @@ async function assets() {
 }
 
 /** Fetches the DRep's picture as a data URI the renderer can embed; null on anything unusual (then generated art is used). */
-async function artDataUri(image: string | null): Promise<string | null> {
+export async function artDataUri(image: string | null): Promise<string | null> {
   if (!image) return null;
   const url = image.startsWith('/') ? `${SITE_URL}${image}` : image;
   if (!/^https:\/\//.test(url)) return null;

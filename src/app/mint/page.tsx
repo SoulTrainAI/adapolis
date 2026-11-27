@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { Gem } from 'lucide-react';
 import { MintView } from '@/components/mint/MintView';
+import { TrophyGallery } from '@/components/hall/TrophyGallery';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Mint NFTs — ADApolis',
@@ -26,6 +29,7 @@ export default function MintPage() {
           <p className="max-w-3xl text-slate-300">Won a DRep All-Star or a trophy? Claim it here while the mint window is open.</p>
         </header>
         <MintView />
+        <TrophyGallery />
         <section className="space-y-3">
           <h2 className="text-xl font-bold">How minting works</h2>
           <dl className="grid gap-3 md:grid-cols-2">

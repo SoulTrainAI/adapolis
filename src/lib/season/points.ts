@@ -80,6 +80,11 @@ export function epochStart(epoch: number): Date {
   return new Date((SHELLEY_START_S + (epoch - SHELLEY_EPOCH) * EPOCH_S) * 1000);
 }
 
+/** The epoch a moment (unix seconds) falls in. */
+export function epochAt(t: number): number {
+  return SHELLEY_EPOCH + Math.floor((t - SHELLEY_START_S) / EPOCH_S);
+}
+
 export interface SeasonVote {
   drep_id: string;
   proposal_id: string;

@@ -5,6 +5,7 @@ import { getHallOfFame, type HallOfFame } from '@/lib/season/hall-of-fame';
 import { seasonLabel } from '@/lib/season/points';
 import { SeasonTabs } from '@/components/season/SeasonTabs';
 import { HallOfFameView } from '@/components/hall/HallOfFameView';
+import { TrophyGallery } from '@/components/hall/TrophyGallery';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,10 @@ export default async function HallOfFamePage() {
           </p>
         </header>
         {hall ? (
-          <HallOfFameView hall={hall} seasonName={name} />
+          <>
+            <HallOfFameView hall={hall} seasonName={name} />
+            <TrophyGallery season={hall.season_number} />
+          </>
         ) : (
           <Link href="/draft" className="inline-flex min-h-[44px] items-center rounded-lg bg-violet-600 px-5 py-2.5 font-semibold text-white hover:bg-violet-500">
             Draft your team
