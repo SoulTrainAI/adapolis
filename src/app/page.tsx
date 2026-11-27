@@ -205,7 +205,7 @@ export default async function Home() {
       />
 
       {/* Hero */}
-      <section className="relative max-w-3xl mx-auto text-center space-y-5 pt-14">
+      <section className="relative max-w-6xl mx-auto text-center space-y-5 pt-14">
         <LogoMark size={150} className="mx-auto drop-shadow-[0_0_40px_rgba(139,92,246,0.35)]" />
         <h1 className="font-display text-6xl sm:text-7xl tracking-tight">
           <span className="font-bold text-white">ADA</span>
@@ -215,7 +215,7 @@ export default async function Home() {
           The civic engine for Cardano governance
         </p>
         <div className="brand-hairline mx-auto h-px w-64" />
-        <p className="mx-auto max-w-[66rem] text-[15px] leading-relaxed text-slate-300 sm:text-base text-balance">
+        <p className="mx-auto max-w-6xl text-[15px] leading-relaxed text-slate-300 sm:text-base text-balance">
           ADApolis is a civic engagement platform that aligns incentives across the Cardano community to promote good governance. Learn about
           DReps and proposals, find a DRep who shares your values, and see every DRep scored on consistent voting and thoughtful rationales.
           Then draft a team in the monthly Cardanathon and compete for bragging rights and digital collectibles.
