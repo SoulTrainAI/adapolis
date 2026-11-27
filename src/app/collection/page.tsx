@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { CollectionView } from '@/components/cards/CollectionView';
 
 export const metadata: Metadata = {
-  title: 'My DRep All-Stars — ADApolis',
+  title: 'My Collection — ADApolis',
   description: 'Your ADApolis DRep trading cards, your game team and your DRep, in one place.',
 };
 

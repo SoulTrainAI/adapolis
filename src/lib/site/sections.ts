@@ -35,7 +35,7 @@ export const SECTIONS = {
   },
   collection: {
     href: '/collection',
-    label: 'My DRep All-Stars',
+    label: 'My Collection',
     blurb: 'Your game team, a check-up on the DRep you delegate to, and the DRep All-Star NFTs you hold.',
   },
   claim: {

@@ -58,7 +58,7 @@ const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
   },
   {
     href: "/collection",
-    title: "My DRep All-Stars",
+    title: "My Collection",
     body: "Your team, a check-up on the DRep you delegate to, and the DRep All-Stars in your wallet.",
   },
   {

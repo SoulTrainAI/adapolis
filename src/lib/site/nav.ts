@@ -34,10 +34,10 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
-    label: 'DRep All-Star NFTs',
+    label: 'ADApolis NFTs',
     items: [
       { label: 'Explore The Official Collection', href: '/nfts', blurb: 'Every DRep All-Star card and trophy minted so far.' },
-      { label: 'My DRep All-Stars', href: '/collection', blurb: 'Your team, your DRep and the cards you hold.' },
+      { label: 'My Collection', href: '/collection', blurb: 'Your team, your DRep and the cards you hold.' },
       { label: 'Mint NFTs', href: '/mint', blurb: 'Claim the All-Stars and trophies you won.' },
     ],
   },

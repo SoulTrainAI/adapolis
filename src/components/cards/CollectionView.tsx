@@ -54,7 +54,7 @@ export function CollectionView() {
   return (
     <div className="space-y-12">
       <header className="space-y-3">
-        <p className="text-sm uppercase tracking-wider text-violet-300">My DRep All-Stars</p>
+        <p className="text-sm uppercase tracking-wider text-violet-300">My Collection</p>
         <h1 className="font-display text-4xl font-bold">Your cards</h1>
         <p className="max-w-3xl text-slate-300">
           Every DRep has a card showing real-time stats that update daily. At the end of each season, the top 10 DReps&apos; cards become

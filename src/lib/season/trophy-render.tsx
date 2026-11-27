@@ -196,10 +196,22 @@ function Front({ season, winner, mark, photo, art }: { season: SeasonTrophies; w
   );
 }
 
-function Row({ label, value, color = '#e2e8f0', strong = false, dot }: { label: string; value: string; color?: string; strong?: boolean; dot?: string }) {
+/** A small trophy in a medal's colours (the lucide "trophy" shape). */
+function TrophyIcon({ medal }: { medal: Medal }) {
+  const m = MEDALS[medal];
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" style={{ marginRight: 8, flexShrink: 0 }}>
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" fill={m.light} stroke={m.deep} strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18" fill="none" stroke={m.light} strokeWidth="2" strokeLinecap="round" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M4 22h16" fill="none" stroke={m.light} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Row({ label, value, color = '#e2e8f0', strong = false, medal }: { label: string; value: string; color?: string; strong?: boolean; medal?: Medal }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', fontSize: 14, padding: '3px 0', borderBottom: '1px dashed rgba(148,163,184,0.18)' }}>
-      {dot ? <div style={{ display: 'flex', width: 10, height: 10, borderRadius: 999, background: dot, marginRight: 8, flexShrink: 0 }} /> : null}
+      {medal ? <TrophyIcon medal={medal} /> : null}
       <div style={{ display: 'flex', flex: 1, color: strong ? '#f8fafc' : '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', fontWeight: strong ? 700 : 400 }}>{label}</div>
       <div style={{ display: 'flex', color, fontWeight: 700, marginLeft: 10 }}>{value}</div>
     </div>
@@ -246,15 +258,15 @@ function Back({ season, winner, mark }: { season: SeasonTrophies; winner: Trophy
         ))}
       </Box>
 
-      <Box title="DREP PODIUM">
+      <Box title="TOP DREPS">
         {dreps.map((d) => (
-          <Row key={d.climber_id} dot={MEDALS[d.medal].deep} label={d.name} value={`${fmtPts(d.points)} pts`} color={MEDALS[d.medal].light} strong={d.climber_id === winner.climber_id} />
+          <Row key={d.climber_id} medal={d.medal} label={d.name} value={`${fmtPts(d.points)} pts`} color={MEDALS[d.medal].light} strong={d.climber_id === winner.climber_id} />
         ))}
       </Box>
 
-      <Box title="TEAM PODIUM">
+      <Box title="TOP TEAMS">
         {teams.length ? (
-          teams.map((t) => <Row key={t.climber_id} dot={MEDALS[t.medal].deep} label={t.name} value={`${fmtPts(t.points)} pts`} color={MEDALS[t.medal].light} strong={t.climber_id === winner.climber_id} />)
+          teams.map((t) => <Row key={t.climber_id} medal={t.medal} label={t.name} value={`${fmtPts(t.points)} pts`} color={MEDALS[t.medal].light} strong={t.climber_id === winner.climber_id} />)
         ) : (
           <div style={{ display: 'flex', fontSize: 13, color: '#94a3b8' }}>{season.sample ? 'Team trophies start with the Preseason.' : 'No prize-eligible teams.'}</div>
         )}

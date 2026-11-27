@@ -84,7 +84,7 @@ function sky(o: SpaceOptions, p: string, r: () => number): string {
     `<radialGradient id="${p}n1"><stop offset="0" stop-color="#a78bfa" stop-opacity="0.95"/><stop offset="0.5" stop-color="#7c3aed" stop-opacity="0.45"/><stop offset="1" stop-color="#4c1d95" stop-opacity="0"/></radialGradient>` +
     `<radialGradient id="${p}n2"><stop offset="0" stop-color="#67e8f9" stop-opacity="0.85"/><stop offset="0.5" stop-color="#0ea5e9" stop-opacity="0.35"/><stop offset="1" stop-color="#0369a1" stop-opacity="0"/></radialGradient>` +
     `<radialGradient id="${p}n3"><stop offset="0" stop-color="#f9a8d4" stop-opacity="0.7"/><stop offset="0.6" stop-color="#db2777" stop-opacity="0.25"/><stop offset="1" stop-color="#9d174d" stop-opacity="0"/></radialGradient>` +
-    `<radialGradient id="${p}band"><stop offset="0" stop-color="#e0e7ff" stop-opacity="0.22"/><stop offset="0.5" stop-color="#a5b4fc" stop-opacity="0.08"/><stop offset="1" stop-color="#a5b4fc" stop-opacity="0"/></radialGradient>` +
+    `<radialGradient id="${p}band"><stop offset="0" stop-color="#e0e7ff" stop-opacity="0.1"/><stop offset="0.5" stop-color="#a5b4fc" stop-opacity="0.04"/><stop offset="1" stop-color="#a5b4fc" stop-opacity="0"/></radialGradient>` +
     `<radialGradient id="${p}star"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.25" stop-color="#e0f2fe" stop-opacity="0.55"/><stop offset="1" stop-color="#e0f2fe" stop-opacity="0"/></radialGradient>` +
     `<radialGradient id="${p}gal"><stop offset="0" stop-color="#fff7ed" stop-opacity="0.9"/><stop offset="0.2" stop-color="#fbcfe8" stop-opacity="0.35"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></radialGradient>` +
     // Nebula colour shows only where the noise is dense: a cloud, not a blob.
@@ -96,18 +96,18 @@ function sky(o: SpaceOptions, p: string, r: () => number): string {
   const neb = (cx: number, cy: number, rx: number, ry: number, rot: number, fill: string) =>
     `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(rx)}" ry="${f(ry)}" transform="rotate(${rot} ${f(cx)} ${f(cy)})" fill="url(#${fill})"/>`;
   const clouds =
-    `<g mask="url(#${p}m1)" opacity="0.95">` +
+    `<g mask="url(#${p}m1)" opacity="0.45">` +
     neb(W * (0.18 + r() * 0.1), H * (0.68 + r() * 0.1), W * 0.42, H * 0.38, -20, `${p}n1`) +
     neb(W * (0.5 + r() * 0.1), H * (0.42 + r() * 0.1), W * 0.36, H * 0.3, -32, `${p}n2`) +
     neb(o.planet.cx - W * 0.18, o.planet.cy + H * 0.22, W * 0.28, H * 0.22, -35, `${p}n3`) +
     `</g>` +
     // Fine filaments over the clouds, brighter at the band's heart.
-    `<g mask="url(#${p}m2)" opacity="0.7">` +
+    `<g mask="url(#${p}m2)" opacity="0.22">` +
     neb(W * 0.3, H * 0.62, W * 0.34, H * 0.26, -25, `${p}n1`) +
     neb(W * 0.55, H * 0.45, W * 0.26, H * 0.2, -32, `${p}n2`) +
     `</g>` +
     // A soft glow under the clouds so they sit in light, not on black.
-    `<g filter="url(#${p}soft)" opacity="0.55">` +
+    `<g filter="url(#${p}soft)" opacity="0.28">` +
     neb(W * 0.22, H * 0.72, W * 0.3, H * 0.22, -20, `${p}n1`) +
     neb(W * 0.55, H * 0.45, W * 0.22, H * 0.16, -32, `${p}n2`) +
     `</g>` +
@@ -120,7 +120,7 @@ function sky(o: SpaceOptions, p: string, r: () => number): string {
   const gy = H * (0.12 + r() * 0.18);
   const gs = Math.min(W, H) * 0.05;
   const galaxy =
-    `<g transform="rotate(${Math.round(-30 - r() * 40)} ${f(gx)} ${f(gy)})" opacity="0.8">` +
+    `<g transform="rotate(${Math.round(-30 - r() * 40)} ${f(gx)} ${f(gy)})" opacity="0.35">` +
     `<ellipse cx="${f(gx)}" cy="${f(gy)}" rx="${f(gs * 1.6)}" ry="${f(gs * 0.45)}" fill="url(#${p}gal)"/>` +
     `<ellipse cx="${f(gx)}" cy="${f(gy)}" rx="${f(gs * 0.35)}" ry="${f(gs * 0.14)}" fill="#fff7ed" opacity="0.8"/>` +
     `</g>`;
@@ -130,33 +130,33 @@ function sky(o: SpaceOptions, p: string, r: () => number): string {
   const tiny = Math.round(240 * density);
   for (let i = 0; i < tiny; i++) {
     const [x, y] = i % 3 === 0 ? along(r(), Math.min(W, H) * 0.12) : [r() * W, r() * H];
-    stars += `<circle cx="${f(x)}" cy="${f(y)}" r="${(0.35 + r() * 0.55).toFixed(2)}" fill="${TINTS[Math.floor(r() * TINTS.length)]}" opacity="${(0.25 + r() * 0.6).toFixed(2)}"/>`;
+    stars += `<circle cx="${f(x)}" cy="${f(y)}" r="${(0.25 + r() * 0.35).toFixed(2)}" fill="${TINTS[Math.floor(r() * TINTS.length)]}" opacity="${(0.15 + r() * 0.45).toFixed(2)}"/>`;
   }
   // Medium stars with a soft halo.
-  const mid = Math.round(34 * density);
+  const mid = Math.round(16 * density);
   for (let i = 0; i < mid; i++) {
     const x = r() * W;
     const y = r() * H;
-    const s = 0.9 + r() * 1.1;
-    stars += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(s * 3.2)}" fill="url(#${p}star)" opacity="0.5"/><circle cx="${f(x)}" cy="${f(y)}" r="${s.toFixed(2)}" fill="${TINTS[Math.floor(r() * TINTS.length)]}"/>`;
+    const s = 0.55 + r() * 0.5;
+    stars += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(s * 2.6)}" fill="url(#${p}star)" opacity="0.25"/><circle cx="${f(x)}" cy="${f(y)}" r="${s.toFixed(2)}" fill="${TINTS[Math.floor(r() * TINTS.length)]}" opacity="0.75"/>`;
   }
   // A few bright stars with diffraction spikes.
-  const bright = Math.max(3, Math.round(6 * Math.sqrt(density)));
+  const bright = Math.max(1, Math.round(2 * Math.sqrt(density)));
   for (let i = 0; i < bright; i++) {
     const x = W * (0.05 + r() * 0.9);
     const y = H * (0.05 + r() * 0.9);
     // Keep the planet's face clear.
     if (Math.hypot(x - o.planet.cx, y - o.planet.cy) < o.planet.r * 1.3) continue;
-    const L = Math.min(W, H) * (0.025 + r() * 0.035);
+    const L = Math.min(W, H) * (0.01 + r() * 0.012);
     const tint = TINTS[3 + Math.floor(r() * 3)];
     stars +=
-      `<g opacity="${(0.7 + r() * 0.3).toFixed(2)}">` +
+      `<g opacity="${(0.4 + r() * 0.2).toFixed(2)}">` +
       `<circle cx="${f(x)}" cy="${f(y)}" r="${f(L * 0.55)}" fill="url(#${p}star)"/>` +
       `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(L)}" ry="0.55" fill="${tint}" filter="url(#${p}glint)"/>` +
       `<ellipse cx="${f(x)}" cy="${f(y)}" rx="0.55" ry="${f(L)}" fill="${tint}" filter="url(#${p}glint)"/>` +
       `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(L)}" ry="0.35" fill="#fff"/>` +
       `<ellipse cx="${f(x)}" cy="${f(y)}" rx="0.35" ry="${f(L)}" fill="#fff"/>` +
-      `<circle cx="${f(x)}" cy="${f(y)}" r="1.4" fill="#fff"/>` +
+      `<circle cx="${f(x)}" cy="${f(y)}" r="0.9" fill="#fff"/>` +
       `</g>`;
   }
 
@@ -168,30 +168,21 @@ export function vignette(W: number, H: number, p: string): string {
   return `<rect width="${W}" height="${H}" fill="url(#${p}vig)"/>`;
 }
 
-/** The destination planet with halo, atmosphere, surface, terminator and a slim ring. */
+/** The destination planet with halo, atmosphere, surface and night side. */
 export function planetMarkup(pl: PlanetSpec, p: string, seed: number, logo?: string | null): string {
   const { cx, cy, r } = pl;
-  const tilt = -20;
-  const ring = (front: boolean) =>
-    `<g transform="rotate(${tilt} ${f(cx)} ${f(cy)})"${front ? ` clip-path="url(#${p}front)"` : ''}>` +
-    `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(r * 1.72)}" ry="${f(r * 0.36)}" fill="none" stroke="url(#${p}ring)" stroke-width="${f(r * 0.045)}" opacity="0.7"/>` +
-    `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(r * 1.92)}" ry="${f(r * 0.41)}" fill="none" stroke="url(#${p}ring)" stroke-width="${f(r * 0.012)}" opacity="0.45"/>` +
-    `</g>`;
   const L = r * 1.05;
   return (
     `<defs>` +
     `<radialGradient id="${p}halo"><stop offset="0.46" stop-color="#60a5fa" stop-opacity="0.5"/><stop offset="0.6" stop-color="#2563eb" stop-opacity="0.18"/><stop offset="1" stop-color="#1e3a8a" stop-opacity="0"/></radialGradient>` +
     `<radialGradient id="${p}sphere" cx="0.36" cy="0.32" r="0.78"><stop offset="0" stop-color="#9ec5ff"/><stop offset="0.2" stop-color="#3b7bff"/><stop offset="0.5" stop-color="#0d47d9"/><stop offset="0.8" stop-color="#0033ad"/><stop offset="1" stop-color="#001a5c"/></radialGradient>` +
     `<radialGradient id="${p}shade" cx="0.22" cy="0.18" r="1.05"><stop offset="0.34" stop-color="#01030f" stop-opacity="0"/><stop offset="0.6" stop-color="#01030f" stop-opacity="0.72"/><stop offset="0.82" stop-color="#01030f" stop-opacity="0.96"/></radialGradient>` +
-    `<linearGradient id="${p}ring" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fef3c7" stop-opacity="0.1"/><stop offset="0.3" stop-color="#fde68a" stop-opacity="0.85"/><stop offset="0.55" stop-color="#e0f2fe" stop-opacity="0.95"/><stop offset="1" stop-color="#bae6fd" stop-opacity="0.15"/></linearGradient>` +
     `<clipPath id="${p}ball"><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}"/></clipPath>` +
-    `<clipPath id="${p}front"><rect x="${f(cx - r * 3)}" y="${f(cy)}" width="${f(r * 6)}" height="${f(r * 3)}"/></clipPath>` +
     `<filter id="${p}surf" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="${(1.6 / r).toFixed(4)} ${(4.2 / r).toFixed(4)}" numOctaves="5" seed="${seed % 997}"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 3 -1.45"/></filter>` +
     `<filter id="${p}sea" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="${(1.1 / r).toFixed(4)}" numOctaves="4" seed="${(seed % 997) + 11}"/><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0.08  0 0 0 0 0.3  0 0 0 2.4 -1.1"/></filter>` +
     `<filter id="${p}rim" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${f(r * 0.05)}"/></filter>` +
     `</defs>` +
-    `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r * 2.1)}" fill="url(#${p}halo)"/>` +
-    ring(false) +
+    `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r * 1.8)}" fill="url(#${p}halo)" opacity="0.7"/>` +
     `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="url(#${p}sphere)"/>` +
     `<g clip-path="url(#${p}ball)">` +
     `<rect x="${f(cx - r)}" y="${f(cy - r)}" width="${f(r * 2)}" height="${f(r * 2)}" filter="url(#${p}sea)" opacity="0.7"/>` +
@@ -200,8 +191,7 @@ export function planetMarkup(pl: PlanetSpec, p: string, seed: number, logo?: str
     `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="url(#${p}shade)"/>` +
     `</g>` +
     `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r * 0.985)}" fill="none" stroke="#7dd3fc" stroke-width="${f(r * 0.07)}" opacity="0.55" filter="url(#${p}rim)"/>` +
-    `<path d="M${f(cx - r * 0.93)},${f(cy - r * 0.37)} A${f(r)},${f(r)} 0 0 1 ${f(cx + r * 0.37)},${f(cy - r * 0.93)}" fill="none" stroke="#e0f2fe" stroke-width="${f(Math.max(1, r * 0.018))}" opacity="0.8" stroke-linecap="round"/>` +
-    ring(true)
+    `<path d="M${f(cx - r * 0.93)},${f(cy - r * 0.37)} A${f(r)},${f(r)} 0 0 1 ${f(cx + r * 0.37)},${f(cy - r * 0.93)}" fill="none" stroke="#e0f2fe" stroke-width="${f(Math.max(1, r * 0.018))}" opacity="0.8" stroke-linecap="round"/>`
   );
 }
 
