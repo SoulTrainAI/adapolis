@@ -199,3 +199,40 @@ export function trophyMetadata(s: TrophySubject): Record<string, string | number
   if (s.picks?.length) meta.team = s.picks.join(', ');
   return meta;
 }
+
+/**
+ * A trophy cup in the medal's metal (bowl, handles, star emblem, stem and
+ * plinth), as a standalone SVG for the card's corner. 100 × 120 view box.
+ */
+export function trophyCup(medal: Medal): string {
+  const m = MEDALS[medal];
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="120" viewBox="0 0 100 120">` +
+    `<defs>` +
+    `<radialGradient id="glow" cx="0.5" cy="0.42" r="0.55"><stop offset="0" stop-color="${m.light}" stop-opacity="0.45"/><stop offset="1" stop-color="${m.light}" stop-opacity="0"/></radialGradient>` +
+    `<linearGradient id="metal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${m.deep}"/><stop offset="0.28" stop-color="${m.light}"/><stop offset="0.5" stop-color="#ffffff"/><stop offset="0.72" stop-color="${m.light}"/><stop offset="1" stop-color="${m.deep}"/></linearGradient>` +
+    `<linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.28"/></linearGradient>` +
+    `<linearGradient id="plinth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/></linearGradient>` +
+    `</defs>` +
+    `<circle cx="50" cy="48" r="48" fill="url(#glow)"/>` +
+    // Handles behind the bowl.
+    `<path d="M24 22 C8 22 8 46 26 50" fill="none" stroke="url(#metal)" stroke-width="6" stroke-linecap="round"/>` +
+    `<path d="M76 22 C92 22 92 46 74 50" fill="none" stroke="url(#metal)" stroke-width="6" stroke-linecap="round"/>` +
+    // Bowl.
+    `<path d="M22 14 H78 V30 C78 54 64 67 50 69 C36 67 22 54 22 30 Z" fill="url(#metal)" stroke="${m.deep}" stroke-width="1.5"/>` +
+    `<path d="M22 14 H78 V30 C78 54 64 67 50 69 C36 67 22 54 22 30 Z" fill="url(#shade)"/>` +
+    `<ellipse cx="50" cy="14" rx="28" ry="4" fill="${m.light}" stroke="${m.deep}" stroke-width="1.5"/>` +
+    // Star emblem.
+    `<polygon points="50,28 53.5,36.5 62.5,37 55.5,42.8 57.8,51.5 50,46.6 42.2,51.5 44.5,42.8 37.5,37 46.5,36.5" fill="#ffffff" fill-opacity="0.85" stroke="${m.deep}" stroke-width="1.2" stroke-linejoin="round"/>` +
+    // Shine.
+    `<path d="M30 20 C29 34 32 46 38 54" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="2.5" stroke-linecap="round"/>` +
+    // Stem, knot and cup foot.
+    `<path d="M45 68 H55 L53 82 H47 Z" fill="url(#metal)" stroke="${m.deep}" stroke-width="1.2"/>` +
+    `<ellipse cx="50" cy="83" rx="9" ry="3.2" fill="url(#metal)" stroke="${m.deep}" stroke-width="1.2"/>` +
+    `<path d="M38 92 C38 87 62 87 62 92 Z" fill="url(#metal)" stroke="${m.deep}" stroke-width="1.2"/>` +
+    // Plinth with a metal plate.
+    `<rect x="28" y="92" width="44" height="22" rx="3" fill="url(#plinth)" stroke="${m.deep}" stroke-width="1.2"/>` +
+    `<rect x="36" y="98" width="28" height="10" rx="1.5" fill="url(#metal)"/>` +
+    `</svg>`
+  );
+}

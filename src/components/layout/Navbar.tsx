@@ -106,7 +106,7 @@ export function Navbar() {
                   {groupActive && <span className="absolute inset-x-3 bottom-0.5 h-0.5 rounded-full bg-brand-gold" />}
                 </button>
                 {open && (
-                  <div className="absolute left-1/2 top-full w-80 -translate-x-1/2 pt-2">
+                  <div className="absolute left-1/2 top-full z-10 w-80 -translate-x-1/2 pt-2">
                     <div className="rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl">
                       {group.items.map((item) => (
                         <ItemLink key={item.href} item={item} onPick={() => setOpenGroup(null)} />

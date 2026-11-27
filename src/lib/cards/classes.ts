@@ -17,7 +17,7 @@ export interface DRepClass {
 
 /** From the most whale-backed to the most crowd-backed. */
 export const DREP_CLASSES: DRepClass[] = [
-  { id: 'whale_watcher', label: 'Whale Watcher', icon: 'Fish', min_avg_ada: 250_000, blurb: 'Backed by whales: the average delegation is 250,000 ADA or more.' },
+  { id: 'whale_watcher', label: 'Whale Watcher', icon: 'Whale', min_avg_ada: 250_000, blurb: 'Backed by whales: the average delegation is 250,000 ADA or more.' },
   { id: 'heavy_weight', label: 'Heavy Weight', icon: 'Dumbbell', min_avg_ada: 75_000, blurb: 'Big wallets carry the weight: 75,000–250,000 ADA per delegator on average.' },
   { id: 'power_player', label: 'Power Player', icon: 'Zap', min_avg_ada: 30_000, blurb: 'Well-funded backers: 30,000–75,000 ADA per delegator on average.' },
   { id: 'coalition_builder', label: 'Coalition Builder', icon: 'Handshake', min_avg_ada: 12_000, blurb: 'A balanced mix of big and small wallets: 12,000–30,000 ADA per delegator on average.' },

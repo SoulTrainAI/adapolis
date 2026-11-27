@@ -51,6 +51,12 @@ const NFT_TRAITS: Array<[string, string]> = [
 
 const GROUP_TITLE: Record<StatGroup, string> = { Scores: 'Scores', Game: 'The game', Backing: 'Backing', Record: 'Voting record' };
 
+/** Tooltips open with their own label ("Power: …"); under a big title that reads twice. */
+function withoutLabel(tip: string): string {
+  const rest = tip.replace(/^[^:]{1,20}:\s*/, '');
+  return rest.charAt(0).toUpperCase() + rest.slice(1);
+}
+
 function Section({ id, title, intro, children }: { id: string; title: string; intro?: ReactNode; children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24 space-y-3">
@@ -117,7 +123,7 @@ export default async function StatsAndTraitsPage() {
             {headline.map(([label, tip]) => (
               <div key={label} className="rounded-xl border border-brand-gold/30 bg-brand-ink/70 p-4">
                 <dt className="font-display text-lg font-bold text-brand-gold-light">{label}</dt>
-                <dd className="mt-1 text-sm text-slate-300">{tip}</dd>
+                <dd className="mt-1 text-sm text-slate-300">{withoutLabel(tip)}</dd>
               </div>
             ))}
           </dl>

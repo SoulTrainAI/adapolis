@@ -12,7 +12,7 @@ import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { ImageResponse } from 'next/og';
 import { format } from 'date-fns';
 import { artDataUri, assets } from '@/lib/cards/render';
-import { MEDALS, trophyArt, type Medal } from './trophy';
+import { MEDALS, trophyArt, trophyCup, type Medal } from './trophy';
 import type { SeasonTrophies, TrophyWinner } from './trophy-data';
 
 const W = 500;
@@ -153,6 +153,8 @@ function Front({ season, winner, mark, photo, art }: { season: SeasonTrophies; w
         <div style={{ display: 'flex', position: 'absolute', left: 10, top: 10, background: 'rgba(0,0,0,0.55)', color: m.light, fontSize: 13, fontWeight: 700, letterSpacing: 2, padding: '3px 10px' }}>
           {`${m.label.toUpperCase()} · ${ordinal(winner.place).toUpperCase()} ${who.toUpperCase()}`}
         </div>
+        {/* eslint-disable-next-line @next/next/no-img-element -- rendered to PNG by Satori, not a page */}
+        <img src={`data:image/svg+xml;base64,${Buffer.from(trophyCup(winner.medal)).toString('base64')}`} alt="" width={80} height={96} style={{ position: 'absolute', left: 14, top: 42 }} />
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', margin: '12px 12px 0', padding: '10px 12px', ...plate }}>
