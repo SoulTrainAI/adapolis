@@ -121,7 +121,7 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
           const name = displayName(r);
           const c = color.get(l.drep_id)!;
           const rad = narrow ? 9 : 12;
-          const short = name.length > (narrow ? 10 : 18) ? `${name.slice(0, narrow ? 9 : 17)}…` : name;
+          const short = fitLabel(name, narrow ? 10 : 18);
           return (
             <g key={l.drep_id}>
               <line x1={l.x + rad} y1={l.y} x2={geo.plot.right + 8} y2={l.labelY} stroke={c} strokeOpacity={0.35} />
@@ -149,4 +149,24 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
       </svg>
     </div>
   );
+}
+
+/** Truncate to a width budget where wide (CJK, emoji) characters count double. */
+function fitLabel(name: string, budget: number): string {
+  const w = (c: string) => {
+    const cp = c.codePointAt(0) ?? 0;
+    const cjk = (cp >= 0x1100 && cp <= 0x115f) || (cp >= 0x2e80 && cp <= 0xa4cf) || (cp >= 0xac00 && cp <= 0xd7a3) || (cp >= 0xf900 && cp <= 0xfaff);
+    const full = (cp >= 0xfe30 && cp <= 0xfe4f) || (cp >= 0xff00 && cp <= 0xff60) || (cp >= 0xffe0 && cp <= 0xffe6) || cp >= 0x1f300;
+    return cjk || full ? 2 : 1;
+  };
+  const chars = Array.from(name);
+  if (chars.reduce((a, c) => a + w(c), 0) <= budget) return name;
+  let used = 0;
+  let out = '';
+  for (const c of chars) {
+    if (used + w(c) > budget - 1) break;
+    used += w(c);
+    out += c;
+  }
+  return `${out.trimEnd()}…`;
 }
