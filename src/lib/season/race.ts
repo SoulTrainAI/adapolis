@@ -50,6 +50,10 @@ export async function getRace(window?: number): Promise<Race> {
     return h && h.source === 'x' && !optOut.has(drepId) ? h.handle : null;
   };
   const toSec = (d: Date) => Math.floor(d.getTime() / 1000);
+  const now = Math.floor(Date.now() / 1000);
+  // The running epoch's streak is already in the totals but dated at its close;
+  // show it as of now so the replay ends on the scoreboard's numbers.
+  const asOfNow = (events: PointEvent[]) => events.map((e) => (e.t > now ? { ...e, t: now } : e));
   const top = data.standings.slice(0, RACERS);
   const ids = Array.from(new Set(top.flatMap((s) => s.events.map((e) => e.proposal_id).filter((id): id is string => !!id))));
   const proposals: Race['proposals'] = {};
@@ -75,14 +79,14 @@ export async function getRace(window?: number): Promise<Race> {
     current_epoch: data.current_epoch,
     starts_at: toSec(epochStart(data.start_epoch)),
     ends_at: toSec(epochStart(data.end_epoch + 1)),
-    now: Math.floor(Date.now() / 1000),
+    now,
     field: data.standings.length,
     racers: top.map((s) => ({
       drep_id: s.drep_id,
       name: s.profile.name,
       image: s.profile.image,
       points: s.points,
-      events: s.events,
+      events: asOfNow(s.events),
       x_handle: handle(s.drep_id, s.profile.links ?? []),
     })),
     proposals,
