@@ -16,10 +16,11 @@ const cards: FilterCard[] = [
 const spec = (over: Partial<FilterSpec>): FilterSpec => ({ ...DEFAULT_SPEC, pool: 'registered', ...over });
 
 describe('card filters', () => {
-  it('classes run from whales to crowds, with Lone Wolf under 10 delegators', () => {
+  it('classes run from whales to crowds, on ADA per delegator alone', () => {
     expect(classFor(50_000_000, 40)?.id).toBe('whale_watcher');
     expect(classFor(300_000, 400)?.id).toBe('rabble_rouser');
-    expect(classFor(5_000, 3)?.id).toBe('lone_wolf');
+    expect(classFor(5_000, 3)?.id).toBe('freedom_fighter');
+    expect(classFor(2_000_000, 1)?.id).toBe('whale_watcher');
     expect(classFor(0, 0)).toBeNull();
   });
 
@@ -28,7 +29,7 @@ describe('card filters', () => {
     expect(ids(spec({ badges: { scholar: 2 } }))).toEqual(['whale']);
     expect(ids(spec({ badges: { scholar: 0, rookie: 0 } }))).toEqual(['crowd']);
     expect(ids(spec({ ranges: { underdog: [1.3, null] } }))).toEqual(['crowd', 'quiet']);
-    expect(ids(spec({ classes: ['rabble_rouser', 'lone_wolf'] }))).toEqual(['crowd', 'quiet']);
+    expect(ids(spec({ classes: ['rabble_rouser', 'freedom_fighter'] }))).toEqual(['crowd', 'quiet']);
   });
 
   it('the active pool leaves out DReps who never voted', () => {

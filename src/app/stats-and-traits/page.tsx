@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { ABILITY_RULES, TIER_NAMES } from '@/lib/cards/abilities';
-import { DREP_CLASSES, CLASS_MIN_DELEGATORS } from '@/lib/cards/classes';
+import { DREP_CLASSES } from '@/lib/cards/classes';
 import { STATS, type StatGroup } from '@/lib/cards/filter';
 import { getCards } from '@/lib/cards/data';
 import { ABILITY_ICONS, CLASS_ICONS, FALLBACK_ICON } from '@/components/cards/trait-icons';
@@ -41,7 +41,7 @@ const NFT_TRAITS: Array<[string, string]> = [
   ['rationale_pct', 'Share of votes explained with a rationale.'],
   ['archetype', 'The headline badge on the card front.'],
   ['abilities', 'Every badge the DRep holds, with its tier.'],
-  ['class', 'Who backs the DRep, from Whale Watcher to Rabble Rouser (or Lone Wolf).'],
+  ['class', 'Who backs the DRep, from Whale Watcher to Rabble Rouser.'],
   ['rookie', 'Yes if their first votes were in the last two seasons.'],
   ['draft_cost_stars', 'Draft Cost in stars (1–5) at the season’s end.'],
   ['trophy, medal, place', 'Trophies only: DRep or Team Trophy, Gold / Silver / Bronze, and 1st–3rd.'],
@@ -181,18 +181,16 @@ export default async function StatsAndTraitsPage() {
           intro={
             <>
               Who backs a DRep, read from their delegated ADA divided by their delegators (the average delegation). It runs from DReps carried by a few
-              very large wallets to DReps carried by a crowd of small ones. DReps with fewer than {CLASS_MIN_DELEGATORS} delegators are Lone Wolves:
-              too few to tell. A class is a trait only. It never changes anyone’s points.
+              very large wallets to DReps carried by a crowd of small ones. A class is a trait only. It never changes anyone’s points.
             </>
           }
         >
           <ol className="space-y-2">
             {DREP_CLASSES.map((c, i) => {
               const Icon = CLASS_ICONS[c.id] ?? FALLBACK_ICON;
-              const lone = c.min_avg_ada === null;
               return (
-                <li key={c.id} className={`flex items-center gap-3 rounded-xl border p-3 ${lone ? 'border-slate-800 bg-slate-950/60' : 'border-sky-500/30 bg-sky-500/5'}`}>
-                  <span className="w-6 text-center text-xs text-slate-500">{lone ? '' : i + 1}</span>
+                <li key={c.id} className={`flex items-center gap-3 rounded-xl border p-3 border-sky-500/30 bg-sky-500/5`}>
+                  <span className="w-6 text-center text-xs text-slate-500">{i + 1}</span>
                   <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-200">
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>

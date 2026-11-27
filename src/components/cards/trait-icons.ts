@@ -6,7 +6,6 @@ import {
   Fish,
   Flag,
   Flame,
-  Footprints,
   Hammer,
   Handshake,
   HeartHandshake,
@@ -42,7 +41,6 @@ export const CLASS_ICONS: Record<string, LucideIcon> = {
   peoples_hero: HeartHandshake,
   freedom_fighter: Flag,
   rabble_rouser: Megaphone,
-  lone_wolf: Footprints,
 };
 
 export const FALLBACK_ICON = Sparkles;
