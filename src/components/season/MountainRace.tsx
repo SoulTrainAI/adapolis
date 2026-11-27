@@ -4,15 +4,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Race } from '@/lib/season/race';
 import { mountain, summitExponent } from '@/lib/season/mountain';
+import { planetNear, spaceScene } from '@/lib/season/space';
 import { displayName, orderAt } from '@/lib/season/commentary';
 
 const COLORS = ['#fbbf24', '#e2e8f0', '#fb923c', '#a78bfa', '#38bdf8', '#34d399', '#f472b6', '#60a5fa', '#facc15', '#2dd4bf'];
 const CLIMBERS = 10;
 
 /**
- * The Cardanathon as a mountain climb: the top 10 DReps' season points rise
- * from bottom-left to top-right through the season. Heights are proportional
- * to points, so the summit gap shows how big a win really is.
+ * The Cardanathon as a flight through space: the top 10 DReps' season points
+ * carry them from bottom-left toward the destination planet in the top-right
+ * as the season goes on. Height follows points (stretched near the top so a
+ * tight race spreads out), so a bigger lead always flies higher.
  */
 export function MountainRace({ race, t, until, highlight }: { race: Race; t: number; until: number; highlight: string[] }) {
   const box = useRef<HTMLDivElement>(null);
@@ -35,6 +37,15 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
   const finalTop = useMemo(() => orderAt(race.racers, until)[0]?.points ?? 0, [race, until]);
   // One curve for the whole replay, set by where the final top 10 finish.
   const exponent = useMemo(() => summitExponent(orderAt(race.racers, until).slice(0, CLIMBERS).map((o) => o.points)), [race, until]);
+  const planetR = Math.round(height * (narrow ? 0.15 : 0.17));
+  const pad = narrow ? { left: 8, right: 96, top: Math.round(planetR * 1.35), bottom: 26 } : { left: 40, right: 170, top: Math.round(planetR * 1.35), bottom: 30 };
+  const planet = planetNear(width - pad.right, pad.top, planetR, planetR * 0.3, -42);
+  // The sky only changes with the frame's size, not as the replay runs.
+  const sky = useMemo(
+    () => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(spaceScene({ width, height, seed: race.label, planet, id: 'race', stars: 0.8 }))}`,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- planet derives from width/height
+    [width, height, race.label]
+  );
   const geo = useMemo(
     () =>
       mountain(
@@ -47,11 +58,14 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
           t,
           scaleTo: finalTop,
           exponent,
-          padding: narrow ? { left: 8, right: 96, top: 24, bottom: 26 } : { left: 40, right: 170, top: 30, bottom: 30 },
+          padding: pad,
           labelGap: narrow ? 16 : 20,
+          curve: 'smooth',
+          samples: (race.end_epoch - race.start_epoch + 1) * 8,
         }
       ),
-    [cast, byId, width, height, race.starts_at, race.ends_at, t, narrow, finalTop, exponent]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pad derives from narrow/height
+    [cast, byId, width, height, race.starts_at, race.ends_at, race.start_epoch, race.end_epoch, t, narrow, finalTop, exponent]
   );
   const ranked = useMemo(() => [...geo.lines].sort((a, b) => b.points - a.points), [geo]);
   const leader = ranked[0];
@@ -59,17 +73,12 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
   const x = (frac: number) => geo.plot.left + frac * (geo.plot.right - geo.plot.left);
 
   return (
-    <div ref={box} className="relative w-full overflow-hidden rounded-2xl border border-slate-800 bg-[linear-gradient(180deg,#070b1d_0%,#101a3d_55%,#1b2452_100%)]">
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${race.label} Cardanathon mountain: ${leader ? `${displayName(byId.get(leader.drep_id)!)} leads with ${leader.points} points` : 'no points yet'}`}>
+    <div ref={box} className="relative w-full overflow-hidden rounded-2xl border border-slate-800 bg-[#05071a]">
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${race.label} Cardanathon race: ${leader ? `${displayName(byId.get(leader.drep_id)!)} leads with ${leader.points} points` : 'no points yet'}`}>
         <defs>
-          <linearGradient id="mtn-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#1e1b4b" stopOpacity="0.05" />
-          </linearGradient>
-          <linearGradient id="mtn-far" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#334155" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
-          </linearGradient>
+          <filter id="race-glow" x="-5%" y="-20%" width="110%" height="140%">
+            <feGaussianBlur stdDeviation="4" />
+          </filter>
           {geo.lines.map((l) => (
             <clipPath key={l.drep_id} id={`av-${l.drep_id}`}>
               <circle cx={l.x} cy={l.y} r={narrow ? 9 : 12} />
@@ -77,29 +86,23 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
           ))}
         </defs>
 
-        {/* Stars and distant ranges, for atmosphere. */}
-        {Array.from({ length: 40 }, (_, i) => (
-          <circle key={i} cx={((i * 97) % 100) * (width / 100)} cy={((i * 53) % 45) * (height / 100)} r={i % 7 === 0 ? 1.2 : 0.6} fill="#fff" opacity={0.35} />
-        ))}
-        <path
-          d={`M0,${height} L${width * 0.12},${height * 0.62} L${width * 0.25},${height * 0.75} L${width * 0.42},${height * 0.5} L${width * 0.58},${height * 0.7} L${width * 0.75},${height * 0.45} L${width * 0.9},${height * 0.66} L${width},${height * 0.55} L${width},${height} Z`}
-          fill="url(#mtn-far)"
-        />
+        {/* Deep space and the destination planet */}
+        <image href={sky} x={0} y={0} width={width} height={height} preserveAspectRatio="none" />
 
         {/* Epoch markers */}
         {Array.from({ length: epochs + 1 }, (_, i) => (
           <g key={i}>
-            <line x1={x(i / epochs)} x2={x(i / epochs)} y1={geo.plot.top} y2={geo.plot.bottom} stroke="#94a3b8" strokeOpacity={0.12} strokeDasharray="3 5" />
+            <line x1={x(i / epochs)} x2={x(i / epochs)} y1={geo.plot.top} y2={geo.plot.bottom} stroke="#cbd5e1" strokeOpacity={0.08} strokeDasharray="2 6" />
             <text x={x(i / epochs)} y={height - 8} textAnchor="middle" fontSize={narrow ? 9 : 11} fill="#64748b">
               {i < epochs ? `E${race.start_epoch + i}` : '🏁'}
             </text>
           </g>
         ))}
 
-        {/* The mountain under the leader's climb */}
-        {geo.ridge && <path d={geo.ridge} fill="url(#mtn-fill)" />}
+        {/* The leader's trail glows */}
+        {leader && <path d={leader.d} fill="none" stroke={color.get(leader.drep_id)} strokeWidth={8} strokeOpacity={0.45} filter="url(#race-glow)" strokeLinecap="round" />}
 
-        {/* Climbs: lowest first so the leaders draw on top */}
+        {/* Flight paths: lowest first so the leaders draw on top */}
         {[...ranked].reverse().map((l) => {
           const lit = highlight.includes(l.drep_id);
           return (
@@ -110,6 +113,7 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
               stroke={color.get(l.drep_id)}
               strokeWidth={lit ? 4 : l === leader ? 3 : 2}
               strokeOpacity={highlight.length && !lit ? 0.3 : 0.95}
+              strokeLinecap="round"
               strokeLinejoin="round"
             />
           );
@@ -139,7 +143,7 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
                 </text>
               )}
               <Link href={`/dreps/${l.drep_id}`}>
-                <text x={geo.plot.right + 12} y={l.labelY + 4} fontSize={narrow ? 10 : 12} fontWeight={600} fill="#e2e8f0">
+                <text x={geo.plot.right + 12} y={l.labelY + 4} fontSize={narrow ? 10 : 12} fontWeight={600} fill="#e2e8f0" stroke="#020617" strokeWidth={3} strokeOpacity={0.85} paintOrder="stroke" strokeLinejoin="round">
                   <tspan fill={c}>{i + 1}.</tspan> {short} <tspan fill={c}>{l.points}</tspan>
                 </text>
               </Link>

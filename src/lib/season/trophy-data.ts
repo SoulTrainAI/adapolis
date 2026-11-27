@@ -10,7 +10,7 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { getCards } from '@/lib/cards/data';
 import { getSeasonData } from './data';
 import { getLeaderboard, type LeaderboardTeam } from './leaderboard';
-import { epochStart, seasonLabel, type PointEvent } from './points';
+import { epochStart, seasonLabel, type PointBreakdown, type PointEvent } from './points';
 import { isMissingSchema } from './schema';
 import type { Climber } from './mountain';
 import { medalFor, teamClimb, type Medal, type TrophyKind } from './trophy';
@@ -31,6 +31,11 @@ export interface TrophyWinner {
   drep_id?: string;
   /** Team trophies: the DReps the team drafted. */
   picks?: string[];
+  /** DRep trophies: where the points came from. */
+  breakdown?: PointBreakdown;
+  votes_cast?: number;
+  /** Team trophies: each pick's multiplier and contribution. */
+  pick_stats?: Array<{ name: string; multiplier: number; contribution: number }>;
 }
 
 export interface SeasonTrophies {
@@ -50,9 +55,17 @@ export interface SeasonTrophies {
   final: boolean;
   drep_field: number;
   team_field: number;
+  /** Governance actions voted on this season (by any scoring DRep). */
+  actions: number;
   drep_climbers: Climber[];
   team_climbers: Climber[];
   winners: TrophyWinner[];
+}
+
+function actionsVoted(standings: Array<{ events: PointEvent[] }>): number {
+  const ids = new Set<string>();
+  for (const s of standings) for (const e of s.events) if (e.kind === 'votes' && e.proposal_id) ids.add(e.proposal_id);
+  return ids.size;
 }
 
 const toSec = (iso: string) => Math.floor(new Date(iso).getTime() / 1000);
@@ -133,12 +146,22 @@ async function compute(requested: number | null): Promise<SeasonTrophies | null>
     const medal = medalFor(i + 1);
     if (!medal) return;
     const s = data.standings.find((x) => x.drep_id === id);
-    winners.push({ kind: 'drep', medal, place: i + 1, climber_id: id, name: name(id), image: card.get(id)?.image ?? null, points: s?.points ?? 0, drep_id: id });
+    winners.push({ kind: 'drep', medal, place: i + 1, climber_id: id, name: name(id), image: card.get(id)?.image ?? null, points: s?.points ?? 0, drep_id: id, breakdown: s?.breakdown, votes_cast: s?.votes_cast });
   });
   podium.forEach((t, i) => {
     const medal = medalFor(i + 1);
     if (!medal) return;
-    winners.push({ kind: 'team', medal, place: i + 1, climber_id: teamKey.get(t)!, name: t.name, image: null, points: round1(t.points), picks: t.picks.map((p) => name(p.drep_id)) });
+    winners.push({
+      kind: 'team',
+      medal,
+      place: i + 1,
+      climber_id: teamKey.get(t)!,
+      name: t.name,
+      image: null,
+      points: round1(t.points),
+      picks: t.picks.map((p) => name(p.drep_id)),
+      pick_stats: t.picks.map((p) => ({ name: name(p.drep_id), multiplier: p.multiplier, contribution: p.contribution })),
+    });
   });
 
   return {
@@ -154,6 +177,7 @@ async function compute(requested: number | null): Promise<SeasonTrophies | null>
     final: snap !== null,
     drep_field: data.standings.length,
     team_field: eligible.length,
+    actions: actionsVoted(data.standings),
     drep_climbers,
     team_climbers,
     winners,
@@ -183,6 +207,8 @@ async function computeSample(): Promise<SeasonTrophies | null> {
     image: card.get(s.drep_id)?.image ?? null,
     points: s.points,
     drep_id: s.drep_id,
+    breakdown: s.breakdown,
+    votes_cast: s.votes_cast,
   }));
   return {
     season_number: data.season ?? 0,
@@ -197,6 +223,7 @@ async function computeSample(): Promise<SeasonTrophies | null> {
     final: false,
     drep_field: data.standings.length,
     team_field: 0,
+    actions: actionsVoted(data.standings),
     drep_climbers: top.slice(0, FIELD).map((s) => ({ drep_id: s.drep_id, events: asOf(s.events) })),
     team_climbers: [],
     winners,

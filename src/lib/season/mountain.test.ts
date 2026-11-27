@@ -60,3 +60,15 @@ describe('summit curve', () => {
     expect(y.b).toBeLessThan(y.c);
   });
 });
+
+import { monotonePath } from './mountain';
+
+describe('smooth flight paths', () => {
+  it('never dips below an earlier point (screen y never increases on a rising climb)', () => {
+    const pts: Array<[number, number]> = [[0, 100], [10, 100], [20, 60], [30, 60], [40, 20], [50, 20]];
+    const nums = monotonePath(pts).match(/-?\d+(\.\d+)?/g)!.map(Number);
+    const ys = nums.filter((_, i) => i % 2 === 1);
+    for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeLessThanOrEqual(100);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(20);
+  });
+});

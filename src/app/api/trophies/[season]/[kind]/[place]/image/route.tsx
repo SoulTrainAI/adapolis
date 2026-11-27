@@ -5,20 +5,23 @@ import { findTrophy } from '../../../../params';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/trophies/<season|current>/<drep|team>/<1|2|3>/image → the trophy as
- * a 1000×1250 PNG. ?download=1 saves it as a file. A season still in play
- * gives a preview from the standings so far.
+ * GET /api/trophies/<season|current|sample>/<drep|team>/<1|2|3>/image → the
+ * trophy card as a 500×700 PNG, like the All-Star cards. ?side=back for the
+ * back (the season's record); ?download=1 saves it as a file. A season still in
+ * play gives a preview from the standings so far.
  */
 export async function GET(request: Request, { params }: { params: { season: string; kind: string; place: string } }) {
   const found = await findTrophy(params, getSeasonTrophies);
   if ('error' in found) return new Response(found.error, { status: found.status });
   const { season, winner } = found;
   try {
-    const image = await renderTrophyImage(season, winner);
+    const url = new URL(request.url);
+    const side = url.searchParams.get('side') === 'back' ? 'back' : 'front';
+    const image = await renderTrophyImage(season, winner, side);
     const headers = new Headers(image.headers);
     headers.set('Cache-Control', season.final ? 'public, max-age=86400' : 'public, max-age=600');
-    if (new URL(request.url).searchParams.get('download') === '1') {
-      headers.set('Content-Disposition', `attachment; filename="adapolis-${season.label.toLowerCase().replace(/\s+/g, '-')}-${winner.kind}-${winner.medal}-trophy.png"`);
+    if (url.searchParams.get('download') === '1') {
+      headers.set('Content-Disposition', `attachment; filename="adapolis-${season.label.toLowerCase().replace(/\s+/g, '-')}-${winner.kind}-${winner.medal}-trophy${side === 'back' ? '-back' : ''}.png"`);
     }
     return new Response(image.body, { status: 200, headers });
   } catch (error) {

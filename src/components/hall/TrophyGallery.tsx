@@ -1,6 +1,7 @@
 import { Trophy } from 'lucide-react';
 import { getSampleTrophies, getSeasonTrophies, type SeasonTrophies } from '@/lib/season/trophy-data';
 import { MEDALS, trophyTitle } from '@/lib/season/trophy';
+import { TrophyCard } from './TrophyCard';
 
 /**
  * The six DRep All-Star Season Trophies as they'll be minted. For a season
@@ -35,8 +36,9 @@ export async function TrophyGallery({ season = null }: { season?: number | null 
             : data.season_number === 0
             ? 'Preseason trophies are a test run of the art: drawn like the real ones, never minted.'
             : data.final
-              ? 'Six one-of-one trophies: the season’s mountain with the winner’s climb lit up.'
-              : 'If the season ended now, these would be the six one-of-one trophies. They change as the race does and are only minted once the season is final.'}
+              ? 'Six one-of-one trophies: the season’s race drawn as a flight through space, with the winner’s path lit in their medal’s colour.'
+              : 'If the season ended now, these would be the six one-of-one trophies. They change as the race does and are only minted once the season is final.'}{' '}
+          Tap a trophy to flip it and see the season’s record.
         </p>
       </div>
       {rows.map(([kind, title]) => {
@@ -45,16 +47,13 @@ export async function TrophyGallery({ season = null }: { season?: number | null 
         return (
           <div key={kind} className="space-y-2">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">{title}</h3>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
               {winners.map((w) => {
                 const src = `/api/trophies/${data!.key}/${w.kind}/${w.place}/image`;
                 return (
                   <li key={w.place} className="min-w-0">
-                    <a href={src} target="_blank" rel="noopener" className="block overflow-hidden rounded-xl border border-slate-800 transition hover:border-slate-500">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- generated PNG from our own API */}
-                      <img src={src} alt={`${trophyTitle(data!.label)}, ${MEDALS[w.medal].label} ${kind === 'drep' ? 'DRep' : 'Team'}: ${w.name}`} width={1000} height={1250} loading="lazy" className="h-auto w-full" />
-                    </a>
-                    <p className="mt-1 truncate text-xs text-slate-400">
+                    <TrophyCard src={src} label={`${trophyTitle(data!.label)}, ${MEDALS[w.medal].label} ${kind === 'drep' ? 'DRep' : 'Team'}: ${w.name}`} />
+                    <p className="mt-2 truncate text-xs text-slate-400">
                       <span className="font-semibold text-slate-200">{MEDALS[w.medal].label}</span> · {w.name}
                     </p>
                   </li>

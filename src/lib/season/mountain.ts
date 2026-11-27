@@ -49,6 +49,10 @@ export interface MountainOptions {
   labelGap?: number;
   /** Height curve: 1 = proportional; see summitExponent(). */
   exponent?: number;
+  /** 'step' climbs in switchbacks; 'smooth' draws a flowing flight path through the same points. */
+  curve?: 'step' | 'smooth';
+  /** With 'smooth': read each climb at this many even moments across the season, for a flowing path. */
+  samples?: number;
 }
 
 /**
@@ -78,6 +82,20 @@ export function mountain(climbers: Climber[], o: MountainOptions): MountainGeome
       pts.push([e.t, sum]);
     }
     pts.push([Math.min(o.t, o.ends_at), sum]);
+    if (o.curve === 'smooth' && o.samples) {
+      // Even steps across the whole season, so the grid doesn't shift while a replay runs.
+      const step = span / o.samples;
+      const end = Math.min(o.t, o.ends_at);
+      const even: Array<[number, number]> = [];
+      let j = 0;
+      let v = 0;
+      for (let tt = o.starts_at; tt < end; tt += step) {
+        while (j < pts.length && pts[j][0] <= tt) v = pts[j++][1];
+        even.push([tt, v]);
+      }
+      even.push([end, sum]);
+      return { drep_id: c.drep_id, pts: even, points: sum };
+    }
     return { drep_id: c.drep_id, pts, points: sum };
   });
 
@@ -93,13 +111,16 @@ export function mountain(climbers: Climber[], o: MountainOptions): MountainGeome
   const lines: MountainLine[] = series.map((s) => {
     // A step climb (flat, then up at each scoring moment) reads like switchbacks on a trail.
     let d = '';
-    let prevY = Y(0);
-    s.pts.forEach(([t, v], i) => {
-      const x = X(t);
-      const y = Y(v);
-      d += i === 0 ? `M${x.toFixed(1)},${y.toFixed(1)}` : `L${x.toFixed(1)},${prevY.toFixed(1)}L${x.toFixed(1)},${y.toFixed(1)}`;
-      prevY = y;
-    });
+    if (o.curve === 'smooth') d = monotonePath(s.pts.map(([t, v]) => [X(t), Y(v)]));
+    else {
+      let prevY = Y(0);
+      s.pts.forEach(([t, v], i) => {
+        const x = X(t);
+        const y = Y(v);
+        d += i === 0 ? `M${x.toFixed(1)},${y.toFixed(1)}` : `L${x.toFixed(1)},${prevY.toFixed(1)}L${x.toFixed(1)},${y.toFixed(1)}`;
+        prevY = y;
+      });
+    }
     const [lt, lv] = s.pts[s.pts.length - 1];
     return { drep_id: s.drep_id, points: s.points, d, x: X(lt), y: Y(lv), labelY: Y(lv) };
   });
@@ -117,4 +138,32 @@ export function mountain(climbers: Climber[], o: MountainOptions): MountainGeome
   const ridge = leader ? `${leader.d}L${leader.x.toFixed(1)},${plot.bottom}L${plot.left},${plot.bottom}Z` : '';
 
   return { lines, ridge, yMax, yMin, plot };
+}
+
+/**
+ * A smooth path through points that never overshoots them (monotone cubic,
+ * Fritsch–Carlson, as in d3.curveMonotoneX): a climb never dips on screen.
+ */
+export function monotonePath(raw: Array<[number, number]>): string {
+  const pts = raw.filter((p, i) => i === 0 || p[0] > raw[i - 1][0]);
+  if (pts.length === 0) return '';
+  const fx = (n: number) => n.toFixed(1);
+  if (pts.length < 3) return pts.map(([x, y], i) => `${i ? 'L' : 'M'}${fx(x)},${fx(y)}`).join('');
+  const n = pts.length;
+  const h = pts.slice(1).map((p, i) => p[0] - pts[i][0]);
+  const dd = pts.slice(1).map((p, i) => (p[1] - pts[i][1]) / h[i]);
+  const m = new Array<number>(n);
+  m[0] = dd[0];
+  m[n - 1] = dd[n - 2];
+  for (let k = 1; k < n - 1; k++) {
+    m[k] = dd[k - 1] * dd[k] <= 0 ? 0 : (3 * (h[k - 1] + h[k])) / ((2 * h[k] + h[k - 1]) / dd[k - 1] + (h[k] + 2 * h[k - 1]) / dd[k]);
+  }
+  let d = `M${fx(pts[0][0])},${fx(pts[0][1])}`;
+  for (let k = 0; k < n - 1; k++) {
+    const [x0, y0] = pts[k];
+    const [x1, y1] = pts[k + 1];
+    const t = h[k] / 3;
+    d += `C${fx(x0 + t)},${fx(y0 + m[k] * t)} ${fx(x1 - t)},${fx(y1 - m[k + 1] * t)} ${fx(x1)},${fx(y1)}`;
+  }
+  return d;
 }

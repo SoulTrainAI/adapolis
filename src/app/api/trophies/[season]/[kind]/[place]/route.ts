@@ -40,6 +40,7 @@ export async function GET(_request: Request, { params }: { params: { season: str
       metadata,
       sample: season.sample,
       image: `/api/trophies/${season.key}/${winner.kind}/${winner.place}/image`,
+      back: `/api/trophies/${season.key}/${winner.kind}/${winner.place}/image?side=back`,
     },
     { headers: { 'Cache-Control': 'public, max-age=600' } }
   );

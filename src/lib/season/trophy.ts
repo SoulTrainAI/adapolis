@@ -9,6 +9,7 @@
  */
 
 import { mountain, summitExponent, type Climber } from './mountain';
+import { planetNear, spaceLayers } from './space';
 import { epochAt, pickContribution, type PointEvent } from './points';
 
 export type TrophyKind = 'drep' | 'team';
@@ -78,22 +79,6 @@ export function teamClimb(slots: TeamSlot[], eventsByDrep: Map<string, PointEven
   return out;
 }
 
-function hash(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
-  return h >>> 0;
-}
-
-function rng(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 export interface TrophyArtInput {
   width: number;
   height: number;
@@ -101,94 +86,81 @@ export interface TrophyArtInput {
   winner: string;
   medal: Medal;
   starts_at: number;
+  /** Where the time axis ends: the season's end, or "now" for a preview (so the race so far fills the frame). */
   ends_at: number;
   /** Draw up to here: the season's end, or now while it's still being played. */
   t: number;
-  /** Makes the stars and far ridges unique to this trophy. */
+  /** Makes the sky unique to this trophy. */
   seed: string;
+  /** Optional licensed logo for the destination planet (data URI). */
+  logo?: string | null;
 }
 
 /**
  * The trophy artwork as a self-contained SVG (no text, so it renders the same
- * anywhere): night sky, far ridges, the field's climbs in grey and the
- * winner's in their medal colour with a glow, a lit slope under it and a star
- * at the summit.
+ * anywhere): deep space, the field's flight paths toward the destination
+ * planet in faint silver, and the winner's as a comet trail in their medal's
+ * colour, with a sparkle at its head.
  */
 export function trophyArt(o: TrophyArtInput): string {
   const m = MEDALS[o.medal];
+  const W = o.width;
+  const H = o.height;
   const final = o.climbers.map((c) => c.events.filter((e) => e.t <= o.t).reduce((s, e) => s + e.pts, 0));
   const g = mountain(o.climbers, {
-    width: o.width,
-    height: o.height,
+    width: W,
+    height: H,
     starts_at: o.starts_at,
     ends_at: o.ends_at,
     t: o.t,
     scaleTo: Math.max(0, ...final),
     exponent: summitExponent(final),
-    padding: { left: 24, right: 48, top: Math.round(o.height * 0.14), bottom: 24 },
+    padding: { left: Math.round(W * 0.05), right: Math.round(W * 0.2), top: Math.round(H * 0.36), bottom: Math.round(H * 0.07) },
+    curve: 'smooth',
+    samples: 28,
   });
   const { plot } = g;
-  const r = rng(hash(o.seed));
-  const W = o.width;
-  const H = o.height;
+  const lead = [...g.lines].sort((a, b) => b.points - a.points)[0];
+  const r = W * 0.14;
+  const planet = planetNear(lead?.x ?? plot.right, lead?.y ?? plot.top, r, W * 0.035);
+  const layers = spaceLayers({ width: W, height: H, seed: o.seed, planet, logo: o.logo, id: 't' });
 
-  const stars = Array.from({ length: 70 }, () => {
-    const x = r() * W;
-    const y = r() * H * 0.7;
-    const rad = 0.6 + r() * 1.4;
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(2)}" fill="#fff" opacity="${(0.25 + r() * 0.6).toFixed(2)}"/>`;
-  }).join('');
-
-  const ridge = (base: number, amp: number, n: number, fill: string, opacity: number) => {
-    let d = `M0,${H}L0,${(base + (r() - 0.5) * amp).toFixed(1)}`;
-    for (let i = 1; i <= n; i++) d += `L${((W * i) / n).toFixed(1)},${(base + (r() - 0.5) * amp).toFixed(1)}`;
-    return `<path d="${d}L${W},${H}Z" fill="${fill}" opacity="${opacity}"/>`;
-  };
-  const far = ridge(H * 0.55, H * 0.22, 9, '#312e81', 0.45) + ridge(H * 0.68, H * 0.18, 7, '#1e1b4b', 0.7);
+  const trail = `<linearGradient id="trail" gradientUnits="userSpaceOnUse" x1="${plot.left}" y1="0" x2="${plot.right}" y2="0"><stop offset="0" stop-color="#e2e8f0" stop-opacity="0"/><stop offset="0.6" stop-color="#e2e8f0" stop-opacity="0.22"/><stop offset="1" stop-color="#f8fafc" stop-opacity="0.55"/></linearGradient>`;
+  const comet = `<linearGradient id="comet" gradientUnits="userSpaceOnUse" x1="${plot.left}" y1="0" x2="${plot.right}" y2="0"><stop offset="0" stop-color="${m.deep}" stop-opacity="0.15"/><stop offset="0.55" stop-color="${m.deep}" stop-opacity="0.85"/><stop offset="1" stop-color="${m.light}"/></linearGradient>`;
+  const halo = `<radialGradient id="head"><stop offset="0" stop-color="#fff"/><stop offset="0.18" stop-color="${m.light}" stop-opacity="0.9"/><stop offset="1" stop-color="${m.deep}" stop-opacity="0"/></radialGradient>`;
+  const glow = `<filter id="cglow" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="${(W * 0.009).toFixed(1)}"/></filter>`;
+  const spike = `<filter id="spk" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.2"/></filter>`;
 
   const win = g.lines.find((l) => l.drep_id === o.winner);
   const others = g.lines
     .filter((l) => l.drep_id !== o.winner)
-    .map((l) => `<path d="${l.d}" fill="none" stroke="#94a3b8" stroke-width="2" stroke-opacity="0.38" stroke-linejoin="round"/>`)
+    .map((l) => `<path d="${l.d}" fill="none" stroke="url(#trail)" stroke-width="${(W * 0.0035).toFixed(2)}" stroke-linecap="round"/><circle cx="${l.x.toFixed(1)}" cy="${l.y.toFixed(1)}" r="${(W * 0.005).toFixed(1)}" fill="#f8fafc" opacity="0.75"/>`)
     .join('');
 
-  let slopeFill = '';
   let lit = '';
   if (win) {
-    const slope = `${win.d}L${win.x.toFixed(1)},${plot.bottom}L${plot.left},${plot.bottom}Z`;
-    const sx = win.x.toFixed(1);
-    const sy = win.y.toFixed(1);
-    const star = (cx: number, cy: number, R: number) => {
-      const pts = Array.from({ length: 10 }, (_, i) => {
-        const a = -Math.PI / 2 + (i * Math.PI) / 5;
-        const rad = i % 2 ? R * 0.45 : R;
-        return `${(cx + Math.cos(a) * rad).toFixed(1)},${(cy + Math.sin(a) * rad).toFixed(1)}`;
-      });
-      return `<polygon points="${pts.join(' ')}" fill="${m.light}" stroke="${m.deep}" stroke-width="2"/>`;
-    };
-    slopeFill = `<path d="${slope}" fill="url(#slope)"/>`;
+    const x = win.x.toFixed(1);
+    const y = win.y.toFixed(1);
+    const L = W * 0.06;
     lit =
-      `<path d="${win.d}" fill="none" stroke="${m.deep}" stroke-width="12" stroke-opacity="0.55" filter="url(#glow)" stroke-linejoin="round"/>` +
-      `<path d="${win.d}" fill="none" stroke="${m.light}" stroke-width="4.5" stroke-linejoin="round"/>` +
-      `<circle cx="${sx}" cy="${sy}" r="${(H * 0.12).toFixed(1)}" fill="url(#halo)"/>` +
-      `<circle cx="${sx}" cy="${sy}" r="9" fill="${m.light}" stroke="#fff" stroke-width="3"/>` +
-      star(win.x, win.y - 34, 18);
+      `<path d="${win.d}" fill="none" stroke="${m.deep}" stroke-width="${(W * 0.022).toFixed(1)}" stroke-opacity="0.55" filter="url(#cglow)" stroke-linecap="round"/>` +
+      `<path d="${win.d}" fill="none" stroke="url(#comet)" stroke-width="${(W * 0.009).toFixed(1)}" stroke-linecap="round"/>` +
+      `<path d="${win.d}" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="${(W * 0.0025).toFixed(1)}" stroke-linecap="round"/>` +
+      `<circle cx="${x}" cy="${y}" r="${(W * 0.07).toFixed(1)}" fill="url(#head)" opacity="0.85"/>` +
+      `<ellipse cx="${x}" cy="${y}" rx="${L.toFixed(1)}" ry="1.1" fill="${m.light}" filter="url(#spk)"/>` +
+      `<ellipse cx="${x}" cy="${y}" rx="1.1" ry="${L.toFixed(1)}" fill="${m.light}" filter="url(#spk)"/>` +
+      `<ellipse cx="${x}" cy="${y}" rx="${(L * 0.9).toFixed(1)}" ry="0.6" fill="#fff"/>` +
+      `<ellipse cx="${x}" cy="${y}" rx="0.6" ry="${(L * 0.9).toFixed(1)}" fill="#fff"/>` +
+      `<circle cx="${x}" cy="${y}" r="${(W * 0.009).toFixed(1)}" fill="#fff"/>`;
   }
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">` +
-    `<defs>` +
-    `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070b1f"/><stop offset="1" stop-color="#1e1b4b"/></linearGradient>` +
-    `<linearGradient id="slope" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${m.deep}" stop-opacity="0.42"/><stop offset="1" stop-color="${m.deep}" stop-opacity="0.04"/></linearGradient>` +
-    `<radialGradient id="halo"><stop offset="0" stop-color="${m.light}" stop-opacity="0.55"/><stop offset="1" stop-color="${m.light}" stop-opacity="0"/></radialGradient>` +
-    `<filter id="glow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="5"/></filter>` +
-    `</defs>` +
-    `<rect width="${W}" height="${H}" fill="url(#sky)"/>` +
-    stars +
-    far +
-    `<line x1="${plot.left}" y1="${plot.bottom}" x2="${plot.right}" y2="${plot.bottom}" stroke="#475569" stroke-width="1.5"/>` +
-    slopeFill +
+    layers.sky +
+    layers.planet +
+    `<defs>${trail}${comet}${halo}${glow}${spike}</defs>` +
     others +
+    layers.vignette +
     lit +
     `</svg>`
   );
