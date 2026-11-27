@@ -71,14 +71,9 @@ export async function CardanathonHook({ seasonLine }: { seasonLine: string | nul
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-brand-gold/30 bg-brand-ink/80 p-5 sm:p-6">
             <p className="text-slate-200">
-              Draft a team of five DReps. Every vote they cast, every rationale they publish and every early call scores your team points. Climb the
-              Team Leaderboard and win one-of-one <span className="font-semibold text-brand-gold-light">DRep All-Star Trophies</span>.
+              Draft a team of five DReps. Every vote they cast, every early call and every original rationale scores your team points. Climb the
+              Leaderboard for a chance to mint exclusive <span className="font-semibold text-brand-gold-light">digital collectibles</span>.
             </p>
-            <ul className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
-              <li className="rounded-full bg-emerald-500/15 px-3 py-1 text-emerald-300">🆓 Free to play</li>
-              <li className="rounded-full bg-sky-500/15 px-3 py-1 text-sky-300">⏱️ 2-minute draft</li>
-              <li className="rounded-full bg-amber-500/15 px-3 py-1 text-amber-300">🏆 Real trophies</li>
-            </ul>
             <Link
               href="/draft"
               className="mt-4 flex min-h-[56px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 px-6 text-lg font-black uppercase tracking-wide text-slate-950 shadow-lg shadow-amber-900/40 transition hover:scale-[1.02] hover:shadow-amber-500/40"

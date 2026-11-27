@@ -53,13 +53,13 @@ function Ability({ a }: { a: CardAbility }) {
 
 function SeasonHistory({ seasons }: { seasons: SeasonLine[] }) {
   const rows = seasons.filter((s) => s.played || s.in_progress).slice().reverse();
-  if (rows.length === 0) return <p className="text-slate-400">No windows played yet.</p>;
+  if (rows.length === 0) return <p className="text-slate-400">No seasons played yet.</p>;
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[36rem] text-right text-sm">
         <thead className="text-xs uppercase tracking-wider text-slate-500">
           <tr>
-            <th className="py-1 text-left font-semibold">Window</th>
+            <th className="py-1 text-left font-semibold">Season</th>
             <th className="font-semibold">Points</th>
             <th className="font-semibold">Votes</th>
             <th className="font-semibold">Explained</th>
@@ -194,7 +194,7 @@ export function DrepProfile({ drepId }: { drepId: string }) {
               <JourneyTrends drepId={drepId} />
             </Section>
 
-            <Section title="Every window played">
+            <Section title="Season Stats">
               <SeasonHistory seasons={detail.seasons} />
             </Section>
 

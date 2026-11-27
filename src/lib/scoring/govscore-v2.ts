@@ -2,8 +2,9 @@
  * GovScore v2 — the game's process scoring, career-long
  *
  * Every governance action a DRep could vote on is scored exactly as the
- * Cardanathon scores it: +10 for voting, +10 for a rationale, +5 when that
- * rationale is new, +5 for voting in the first half of the window, nothing
+ * Cardanathon scores it: +10 for voting, +5 for voting in the first half of
+ * the window, +5 for an original rationale (not identical to any posted
+ * before, by anyone), nothing
  * for an action that closed without their vote, plus streak bonuses for
  * consecutive clean epochs. GovScore is the share of the points a perfect DRep would have
  * earned on the same actions (votes on all of them, early, each with a new

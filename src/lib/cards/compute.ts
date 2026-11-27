@@ -12,7 +12,6 @@ import { processScores } from '@/lib/scoring/govscore-v2';
 import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
 import { seasonLabel,
   computeSeasonPoints,
-  POINT_RULES,
   seasonNumber,
   underdogScale,
   windowEpochs,
@@ -167,8 +166,9 @@ export function computeCards(input: CardInputs): CardComputation {
         played: r.votes_cast > 0 || r.actions_missed > 0,
         points: r.points,
         votes: r.votes_cast,
-        rationales: r.breakdown.rationales / POINT_RULES.rationale,
-        early: r.breakdown.early / POINT_RULES.early,
+        // Counted from events: a rationale is worth 0 points on its own, so points can't be divided back into counts.
+        rationales: r.events.filter((e) => e.kind === 'rationales').length,
+        early: r.events.filter((e) => e.kind === 'early').length,
         missed: r.actions_missed,
         streak_points: r.breakdown.streak,
         govscore_end: gs[i] ?? null,

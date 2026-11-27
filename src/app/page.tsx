@@ -215,18 +215,11 @@ export default async function Home() {
           The civic engine for Cardano governance
         </p>
         <div className="brand-hairline mx-auto h-px w-64" />
-        <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto text-balance">
-          Democracy only works if people care. ADApolis aligns incentives across the Cardano community to promote good
-          governance and civic engagement: every DRep scored on how reliably they do the job, a monthly race to cheer on,
-          and a quiz to find a DRep who shares your values.
+        <p className="mx-auto max-w-[66rem] text-[15px] leading-relaxed text-slate-300 sm:text-base text-balance">
+          ADApolis is a civic engagement platform that aligns incentives across the Cardano community to promote good governance. Learn about
+          DReps and proposals, find a DRep who shares your values, and see every DRep scored on consistent voting and thoughtful rationales.
+          Then draft a team in the monthly Cardanathon and compete for bragging rights and digital collectibles.
         </p>
-        <Link
-          href={SECTIONS.methodology.href}
-          title={SECTIONS.methodology.blurb}
-          className="inline-flex items-center gap-2 rounded-lg border border-brand-lilac/30 bg-brand-ink px-5 py-2.5 text-sm font-semibold text-slate-100 transition-colors hover:border-brand-lilac/60"
-        >
-          <Calculator className="h-4 w-4" aria-hidden /> How scoring works
-        </Link>
 
         <nav aria-label="Find your path" className="flex flex-wrap justify-center gap-2 pt-3 text-sm">
           <span className="text-slate-500 self-center">I’m</span>

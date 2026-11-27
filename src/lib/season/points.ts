@@ -11,8 +11,9 @@ import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
 
 export const POINT_RULES = {
   vote: 10,
-  rationale: 10,
-  /** Rationale whose hash this DRep hasn't attached to any earlier vote. */
+  /** Attaching a rationale earns nothing by itself; only an original one does (Jason, 2026-11-27; was +10). */
+  rationale: 0,
+  /** Original rationale: no rationale with the same content hash was posted before, by anyone. */
   freshRationale: 5,
   /** Voted in the first half of the action's voting window. */
   early: 5,
@@ -144,8 +145,8 @@ function wasRegisteredAt(periods: RegistrationPeriod[], epoch: number): boolean 
 
 /**
  * Pure: points every DRep earned in epochs [from, to]. `allVotes` must include
- * votes before `from` so "fresh rationale" can see earlier reuse, and streaks
- * are counted from the first epoch of the range.
+ * every vote (all DReps, all epochs) so an original rationale can be told from a
+ * copy. Streaks are counted from the first epoch of the range.
  */
 export function computeSeasonPoints(
   drepIds: string[],
@@ -160,6 +161,16 @@ export function computeSeasonPoints(
     const list = votesByDRep.get(v.drep_id) ?? [];
     list.push(v);
     votesByDRep.set(v.drep_id, list);
+  }
+  // Each rationale (by content hash) is original only on the first vote that posted it, by any DRep.
+  const firstPost = new Map<string, SeasonVote>();
+  const when = (v: SeasonVote) => v.time ?? Math.floor(epochStart(v.epoch + 1).getTime() / 1000) - 1;
+  for (const v of allVotes) {
+    if (!v.rationale_hash) continue;
+    const prev = firstPost.get(v.rationale_hash);
+    if (!prev || when(v) < when(prev) || (when(v) === when(prev) && `${v.drep_id}|${v.proposal_id}` < `${prev.drep_id}|${prev.proposal_id}`)) {
+      firstPost.set(v.rationale_hash, v);
+    }
   }
 
   return drepIds.map((drepId) => {
@@ -189,14 +200,12 @@ export function computeSeasonPoints(
     const missedEpochs = new Set<number>();
 
     const votes = (votesByDRep.get(drepId) ?? []).slice().sort((a, b) => a.epoch - b.epoch);
-    const seenHashes = new Set<string>();
     const voted = new Set<string>();
     let votesCast = 0;
 
     for (const v of votes) {
       voted.add(v.proposal_id);
-      const isFresh = v.rationale_hash !== null && !seenHashes.has(v.rationale_hash);
-      if (v.rationale_hash) seenHashes.add(v.rationale_hash);
+      const isFresh = v.rationale_hash !== null && firstPost.get(v.rationale_hash) === v;
       if (v.epoch < range.from || v.epoch > range.to) continue;
       const p = proposalById.get(v.proposal_id);
       if (!p) continue;

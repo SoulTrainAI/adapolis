@@ -10,7 +10,7 @@ export const TIPS = {
   govscoreTrend: 'GovScore at the end of each season, oldest to newest.',
   provisional: 'Provisional: fewer than 10 governance actions to judge by yet, so the score can move a lot.',
   seasonPoints:
-    'Season points (this 6-epoch season): +10 per vote, +10 for a rationale, +5 if the rationale is fresh, +5 for voting in the first half of the window, up to +20 per clean epoch for streaks, −5 per action missed. Yes, No and Abstain earn the same.',
+    'Season points (this 6-epoch season): +10 per vote, +5 for voting in the first half of the window, +5 for an original rationale (not identical to any posted before), up to +20 per clean epoch for streaks. Points are never taken away. Yes, No and Abstain earn the same.',
   seasonRank: 'Rank by season points among DReps who have voted this season.',
   seasonTrend: 'Season points in each recent season, oldest to newest.',
   tier: 'Card tier, by GovScore rank among active DReps: Legend #1, Silver #2, Bronze #3, Holographic top 10, Rare top 50, Common the rest.',

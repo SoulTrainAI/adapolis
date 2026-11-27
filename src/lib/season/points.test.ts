@@ -23,3 +23,36 @@ describe('computeSeasonPoints and vote direction', () => {
     expect(ev?.proposal_id).toBe('p1');
   });
 });
+
+describe('original rationales', () => {
+  const proposals = [
+    { proposal_id: 'p1', start: 100, end: 110, expiration: 110 },
+    { proposal_id: 'p2', start: 100, end: 110, expiration: 110 },
+  ];
+  const v = (drep_id: string, proposal_id: string, time: number, hash: string | null): SeasonVote => ({
+    drep_id,
+    proposal_id,
+    epoch: 101,
+    time,
+    rationale_url: hash ? `ipfs://${hash}` : null,
+    rationale_hash: hash,
+  });
+  const run = (votes: SeasonVote[], ids: string[]) => computeSeasonPoints(ids, proposals, votes, new Map(), { from: 100, to: 110 });
+
+  it('a vote early with an original rationale earns 20; a rationale alone earns nothing extra unless original', () => {
+    const [a] = run([v('a', 'p1', 1, 'h1')], ['a']);
+    expect(a.breakdown.votes + a.breakdown.rationales + a.breakdown.fresh + a.breakdown.early).toBe(20);
+  });
+
+  it('only the first DRep to post a rationale gets the +5; a copy gets nothing', () => {
+    const [a, b] = run([v('a', 'p1', 1, 'same'), v('b', 'p1', 2, 'same')], ['a', 'b']);
+    expect(a.breakdown.fresh).toBe(5);
+    expect(b.breakdown.fresh).toBe(0);
+    expect(b.breakdown.rationales).toBe(0);
+  });
+
+  it('reusing your own earlier rationale earns nothing', () => {
+    const [a] = run([v('a', 'p1', 1, 'mine'), v('a', 'p2', 2, 'mine')], ['a']);
+    expect(a.breakdown.fresh).toBe(5);
+  });
+});

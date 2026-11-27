@@ -247,7 +247,7 @@ function Back({ season, winner, mark }: { season: SeasonTrophies; winner: Trophy
         {b
           ? [
               <Row key="v" label={`Votes cast${winner.votes_cast !== undefined ? ` (${winner.votes_cast})` : ''}`} value={signed(b.votes)} />,
-              <Row key="r" label="Rationales published" value={signed(b.rationales + b.fresh)} />,
+              <Row key="r" label="Original rationales" value={signed(b.rationales + b.fresh)} />,
               <Row key="e" label="Early votes" value={signed(b.early)} />,
               <Row key="s" label="Streak bonuses" value={signed(b.streak)} />,
             ]

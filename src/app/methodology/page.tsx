@@ -198,7 +198,7 @@ export default function MethodologyPage() {
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
             <h3 className="text-xl font-semibold text-slate-100">Formula</h3>
             <Formula>
-              {`Per action they could vote on:  vote +${POINT_RULES.vote}, rationale +${POINT_RULES.rationale}, new rationale +${POINT_RULES.freshRationale}, early +${POINT_RULES.early}
+              {`Per action they could vote on:  vote +${POINT_RULES.vote}, early +${POINT_RULES.early}, original rationale +${POINT_RULES.freshRationale}
 Missed action: 0 (never a penalty) and the streak starts over
 Streak: +${POINT_RULES.streakStep} per clean epoch in a row, up to +${POINT_RULES.streakStep * POINT_RULES.streakCap}
 
@@ -214,15 +214,15 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
             items={[
               <>
                 <strong>A perfect record</strong> votes on every action, early,
-                each time with a new rationale. That earns{" "}
-                {POINT_RULES.vote + POINT_RULES.rationale + POINT_RULES.freshRationale + POINT_RULES.early}{" "}
+                each time with an original rationale. That earns{" "}
+                {POINT_RULES.vote + POINT_RULES.freshRationale + POINT_RULES.early}{" "}
                 points per action plus the streak.
               </>,
               <>
-                <strong>Explaining matters:</strong> voting on everything but
-                never publishing a rationale earns about half the points.
-                Explaining every vote but always voting late earns about five
-                sixths.
+                <strong>Every part counts:</strong> voting on everything early
+                but never posting an original rationale earns about three
+                quarters of the points, and so does explaining every vote but
+                always voting late.
               </>,
               <>
                 <strong>Yes, No and Abstain</strong> score exactly the same.
@@ -374,17 +374,12 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
             </li>
             <li>
               <span className="text-emerald-400 font-semibold">
-                +{POINT_RULES.rationale}
-              </span>{" "}
-              <strong>Rationale</strong> attached to the vote (CIP-100 anchor).
-            </li>
-            <li>
-              <span className="text-emerald-400 font-semibold">
                 +{POINT_RULES.freshRationale}
               </span>{" "}
-              <strong>Fresh rationale</strong>: one this DRep hasn&apos;t
-              attached to an earlier vote, so writing for each action beats
-              pasting one text everywhere.
+              <strong>Original rationale</strong> attached to the vote
+              (CIP-100 anchor): its content can&apos;t be identical to any
+              rationale posted before, by this DRep or anyone else (compared by
+              the document&apos;s hash). Copies and reused texts earn nothing.
             </li>
             <li>
               <span className="text-emerald-400 font-semibold">

@@ -88,13 +88,10 @@ export default async function SeasonPage() {
               Vote on a governance action: <Plus>+{POINT_RULES.vote}</Plus>
             </li>
             <li>
-              Publish a rationale with it: <Plus>+{POINT_RULES.rationale}</Plus>
-            </li>
-            <li>
               Vote in the first half of the window: <Plus>+{POINT_RULES.early}</Plus>
             </li>
             <li>
-              Fresh rationale, not reused: <Plus>+{POINT_RULES.freshRationale}</Plus>
+              Post an original rationale (not identical to any posted before): <Plus>+{POINT_RULES.freshRationale}</Plus>
             </li>
             <li>
               Streak: <Plus>+{POINT_RULES.streakStep}</Plus> per clean epoch in a row, up to{' '}

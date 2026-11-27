@@ -193,9 +193,8 @@ export default function AboutPage() {
             is so that 5 of 5 doesn&apos;t outrank 159 of 164, then gently dampened for very large ADA holdings.
           </p>
           <p>
-            <B>Season points</B> (this season) reward voting (+10), attaching a rationale (+10), writing a fresh one (+5),
-            voting early (+5) and clean-epoch streaks (up to +20), and take 5 points for each action a DRep let close
-            without voting.
+            <B>Season points</B> (this season) reward voting (+10), voting early (+5), posting an original rationale (+5)
+            and clean-epoch streaks (up to +20). Points are never taken away.
           </p>
           <p>
             Data comes from the Cardano blockchain via Koios: new votes are picked up every hour. The{" "}

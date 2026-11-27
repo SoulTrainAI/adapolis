@@ -70,14 +70,14 @@ bonus for delegating to any DRep: where someone delegates is personal.
 | Event | Points |
 |---|---|
 | Vote on a governance action | +10 |
-| Rationale attached (CIP-100) | +10 |
-| Fresh rationale (not reused) | +5 |
 | Early vote (first half of the voting window) | +5 |
+| Original rationale (CIP-100; not identical to any rationale posted before, by anyone) | +5 |
 | Clean-epoch streak | +5, +10, +15, then +20 per epoch |
 | Action closed with no vote while registered | 0 (ends the streak) |
 
 No penalties: points are only ever added (Jason, 2026-11-27; was −5 for a
-missed action). Team points = Σ each pick's season points × the underdog
+missed action). A rationale alone no longer scores (was +10); only an original
+one does, compared by content hash against every earlier rationale. Team points = Σ each pick's season points × the underdog
 multiplier.
 
 ### 1.7 Underdog multiplier — Decided

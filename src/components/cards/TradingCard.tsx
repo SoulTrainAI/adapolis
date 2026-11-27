@@ -661,7 +661,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
             <StatLine label="Avg / window" tip={TIPS.avgWindow} value={num(c.avg_points)} />
             <StatLine label="Best window" tip={TIPS.bestWindow} value={`${c.best_points}`} />
             <StatLine label="Lifetime pts" tip={TIPS.lifetimePoints} value={lt.points.toLocaleString()} />
-            <StatLine label="Windows played" tip={TIPS.windowsPlayed} value={`${lt.seasons}`} />
+            <StatLine label="Seasons played" tip={TIPS.windowsPlayed} value={`${lt.seasons}`} />
             <StatLine label="Missed votes" tip={TIPS.missedVotes} value={`${lt.missed}`} tone={lt.missed > 0 ? 'text-rose-200' : undefined} />
           </div>
         </div>
