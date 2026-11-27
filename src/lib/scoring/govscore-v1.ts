@@ -143,11 +143,12 @@ export function scoreDReps(
 export async function loadAll<T>(table: string, columns: string): Promise<T[]> {
   const rows: T[] = [];
   for (let from = 0; ; from += DB_PAGE_SIZE) {
-    const { data, error } = await supabaseAdmin
-      .from(table)
-      .select(columns)
-      .order(columns.split(',')[0].trim())
-      .range(from, from + DB_PAGE_SIZE - 1);
+    // Sort by the first two columns (e.g. drep_id, epoch): sorting by drep_id alone isn't a stable order when a
+    // DRep has several rows, so pages could skip or repeat rows.
+    const [first, second] = columns.split(',').map((c) => c.trim());
+    let query = supabaseAdmin.from(table).select(columns).order(first);
+    if (second) query = query.order(second);
+    const { data, error } = await query.range(from, from + DB_PAGE_SIZE - 1);
     if (error) {
       throw new Error(`Failed to read ${table} for scoring: ${error.message}. Check SUPABASE_SERVICE_ROLE_KEY and table grants (migration 006).`);
     }

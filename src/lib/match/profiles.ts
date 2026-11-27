@@ -80,11 +80,10 @@ export type Proposal = { proposal_id: string; action_type: string; proposed_epoc
 async function loadAll<T>(table: string, columns: string, orderBy: string): Promise<T[]> {
   const rows: T[] = [];
   for (let from = 0; ; from += DB_PAGE_SIZE) {
-    const { data, error } = await supabaseAdmin
-      .from(table)
-      .select(columns)
-      .order(orderBy)
-      .range(from, from + DB_PAGE_SIZE - 1);
+    // orderBy may list several columns ("drep_id, epoch"): pages need a stable order or rows get skipped.
+    let query = supabaseAdmin.from(table).select(columns);
+    for (const col of orderBy.split(',')) query = query.order(col.trim());
+    const { data, error } = await query.range(from, from + DB_PAGE_SIZE - 1);
     if (error) throw new Error(`Failed to read ${table} for matching: ${error.message}. Check table grants (migration 006).`);
     rows.push(...((data ?? []) as T[]));
     if (!data || data.length < DB_PAGE_SIZE) return rows;
@@ -192,7 +191,7 @@ async function computeMatchData(): Promise<MatchData> {
       'dreps', 'drep_id, amount_lovelace, delegator_count, is_registered, metadata, metadata_fetch_status', 'drep_id'
     ),
     loadAll<MatchInputs['scores'][number]>(
-      'drep_scores', 'drep_id, epoch, participation_rate, votes_cast, votes_eligible, adjusted_govscore', 'drep_id'
+      'drep_scores', 'drep_id, epoch, participation_rate, votes_cast, votes_eligible, adjusted_govscore', 'drep_id, epoch'
     ),
     loadAll<Vote>('votes', 'drep_id, proposal_id, vote, rationale_url', 'vote_id'),
     loadAll<Proposal>('proposals', 'proposal_id, action_type, proposed_epoch, title, abstract', 'proposal_id'),
@@ -345,7 +344,7 @@ async function loadStated(): Promise<NonNullable<MatchInputs['stated']>> {
     const rows = await loadAll<NonNullable<MatchInputs['stated']>[number]>(
       'drep_stated_positions',
       'drep_id, topic_id, stance, confidence, quote, source_kind, source_url, proposal_id, origin',
-      'drep_id'
+      'drep_id, topic_id'
     );
     return rows.filter((r) => quoteFitsTopic(r.topic_id, r.quote));
   } catch (error) {

@@ -1,7 +1,7 @@
 /**
  * Score API Route
  * POST /api/score?epoch=600
- * Computes GovScore v1 for a given epoch
+ * Computes GovScore (v2) for a given epoch
  * Requires Authorization header with CRON_SECRET
  */
 
@@ -15,6 +15,13 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
  * Returns: top 10 DReps by raw_govscore
  */
 export async function POST(request: Request): Promise<Response> {
+  const secret = process.env.CRON_SECRET?.trim();
+  if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized. Send Authorization: Bearer <CRON_SECRET> (set in Railway variables).' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
   try {
     // Get epoch from query params
     const url = new URL(request.url);
