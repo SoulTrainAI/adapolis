@@ -39,6 +39,7 @@ export function AdminPanel() {
   const [edit, setEdit] = useState({ image: '', bio: '' });
   const [log, setLog] = useState<Json[]>([]);
   const [reports, setReports] = useState<Json[]>([]);
+  const [v2, setV2] = useState<Json | null>(null);
 
   const loadMe = useCallback(() => {
     api('?view=me')
@@ -186,6 +187,67 @@ export function AdminPanel() {
           ))}
           {reports.length === 0 && <li className="text-slate-500">None open.</li>}
         </ul>
+      </Card>
+
+      <Card title="GovScore v2 preview (nothing public changes)">
+        <p className="text-sm text-slate-400">
+          v2 scores every action a DRep could vote on the way the game does (vote, rationale, new rationale, early, missed, streaks), as a share of what a perfect DRep would earn, then the same confidence and ADA adjustments as v1.
+        </p>
+        <button className={`${btn} bg-violet-700`} disabled={busy} onClick={() => void run(async () => setV2(await api('?view=govscore_v2')), 'Preview ready.')}>
+          {v2 ? 'Refresh preview' : 'Compare v1 and v2'}
+        </button>
+        {v2 && (
+          <div className="space-y-4 text-xs">
+            <p className="text-slate-300">
+              {String(v2.scored)} DReps scored · {String(v2.moved_10_plus)} move 10+ places
+            </p>
+            {(
+              [
+                ['Top 40 under v2', 'top'],
+                ['Biggest risers (20+ actions)', 'risers'],
+                ['Biggest fallers (20+ actions)', 'fallers'],
+              ] as const
+            ).map(([title, key]) => (
+              <div key={key} className="overflow-x-auto">
+                <h3 className="mb-1 font-semibold text-slate-200">{title}</h3>
+                <table className="w-full min-w-[620px] text-left">
+                  <thead className="text-slate-500">
+                    <tr>
+                      <th className="py-1">DRep</th>
+                      <th>v1</th>
+                      <th>v2</th>
+                      <th>Rank v1 → v2</th>
+                      <th>Actions</th>
+                      <th>Voted</th>
+                      <th>With rationale</th>
+                      <th>Early</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {((v2[key] as Json[]) ?? []).map((r) => (
+                      <tr key={String(r.drep_id)} className="border-t border-slate-800">
+                        <td className="max-w-[200px] truncate py-1">
+                          <a className="text-sky-300 hover:underline" href={`/dreps/${String(r.drep_id)}`} target="_blank" rel="noreferrer">
+                            {String(r.name ?? String(r.drep_id).slice(0, 14))}
+                          </a>
+                        </td>
+                        <td>{r.v1 === null ? '—' : Number(r.v1).toFixed(1)}</td>
+                        <td className="font-semibold text-white">{r.v2 === null ? '—' : Number(r.v2).toFixed(1)}</td>
+                        <td>
+                          {String(r.v1_rank ?? '—')} → {String(r.v2_rank ?? '—')}
+                        </td>
+                        <td>{String(r.actions)}</td>
+                        <td>{String(r.votes_cast)}</td>
+                        <td>{r.rationale_share === null ? '—' : `${Math.round(Number(r.rationale_share) * 100)}%`}</td>
+                        <td>{r.early_share === null ? '—' : `${Math.round(Number(r.early_share) * 100)}%`}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       <Card title="Run jobs">
