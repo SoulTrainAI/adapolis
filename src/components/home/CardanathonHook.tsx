@@ -81,7 +81,11 @@ export async function CardanathonHook({ seasonLine }: { seasonLine: string | nul
               Play for free <ArrowRight className="h-5 w-5" aria-hidden />
             </Link>
             <p className="mt-2 text-center text-xs text-slate-400">
-              {seasonLine ? `${seasonLine} · ` : ''}Anyone can play. Prizes go to wallets delegated with 100+ ADA.
+              {seasonLine ? `${seasonLine} · ` : ''}Anyone can play. Only wallets with 100+ ADA delegated are eligible to claim prizes. See{' '}
+              <Link href="/methodology#game" className="text-slate-300 underline hover:text-white">
+                Game Rules
+              </Link>
+              .
             </p>
           </div>
 
