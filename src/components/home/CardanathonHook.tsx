@@ -10,6 +10,12 @@ import { TradingCard } from '@/components/cards/TradingCard';
 
 const EMOJI: Record<CommentaryLine['tone'], string> = { lead: '👑', move: '🚀', hot: '⚡', streak: '🔥', slip: '😬', info: '🗳️' };
 
+/** Some calls already open with their own emoji; show it once. */
+function leadsWithEmoji(text: string): boolean {
+  const cp = text.codePointAt(0) ?? 0;
+  return cp >= 0x1f300 || (cp >= 0x2600 && cp <= 0x27bf);
+}
+
 async function load(): Promise<{ race: Race | null; lines: CommentaryLine[]; cards: CardSummary[]; hall: HallOfFame | null }> {
   const [race, hall, deck] = await Promise.all([getRace().catch(() => null), getHallOfFame().catch(() => null), getCards().catch(() => null)]);
   const until = race ? Math.min(race.now, race.ends_at) : 0;
@@ -49,21 +55,21 @@ export async function CardanathonHook({ seasonLine }: { seasonLine: string | nul
         </p>
       </div>
 
-      <div className="relative mt-8 grid gap-6 lg:grid-cols-5">
+      <div className="relative mt-8 space-y-6">
         <Link
           href="/cardanathon"
-          className="group relative block overflow-hidden rounded-2xl border border-slate-700 shadow-2xl shadow-violet-950/50 transition hover:border-sky-400/60 lg:col-span-3"
+          className="group relative block overflow-hidden rounded-2xl border border-slate-700 shadow-2xl shadow-violet-950/50 transition hover:border-sky-400/60"
           aria-label="Watch the Cardanathon live"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- generated PNG from our own API */}
           <img src="/api/cardanathon/image" alt="The Cardanathon right now: the top DReps' flight paths toward Planet Cardano, with the top 5 and their points" width={1200} height={630} className="block h-auto w-full transition duration-500 group-hover:scale-[1.02]" />
-          <span className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition group-hover:bg-sky-500">
+          <span className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition group-hover:bg-sky-500 sm:bottom-5 sm:right-5 sm:px-5 sm:py-2.5 sm:text-base">
             <Play className="h-4 w-4" aria-hidden /> {live ? 'Watch it live' : 'Replay the race'}
           </span>
         </Link>
 
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          <div className="rounded-2xl border border-brand-gold/30 bg-brand-ink/80 p-5">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-2xl border border-brand-gold/30 bg-brand-ink/80 p-5 sm:p-6">
             <p className="text-slate-200">
               Draft a team of five DReps. Every vote they cast, every rationale they publish and every early call scores your team points. Climb the
               Team Leaderboard and win one-of-one <span className="font-semibold text-brand-gold-light">DRep All-Star Trophies</span>.
@@ -85,7 +91,7 @@ export async function CardanathonHook({ seasonLine }: { seasonLine: string | nul
           </div>
 
           {lines.length > 0 && (
-            <div className="flex-1 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 sm:p-6">
               <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-rose-300">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -96,10 +102,10 @@ export async function CardanathonHook({ seasonLine }: { seasonLine: string | nul
               <ul className="space-y-2">
                 {lines.map((l) => (
                   <li key={`${l.t}-${l.text}`} className="flex gap-2 text-sm text-slate-200">
-                    <span aria-hidden>{EMOJI[l.tone]}</span>
+                    <span aria-hidden>{leadsWithEmoji(l.text) ? Array.from(l.text)[0] : EMOJI[l.tone]}</span>
                     <span>
                       <span className="mr-1 text-xs text-slate-500">Day {l.day}</span>
-                      {l.text}
+                      {leadsWithEmoji(l.text) ? Array.from(l.text).slice(1).join('').trimStart() : l.text}
                     </span>
                   </li>
                 ))}
