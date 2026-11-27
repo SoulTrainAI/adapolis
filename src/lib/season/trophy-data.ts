@@ -10,7 +10,7 @@ import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { getCards } from '@/lib/cards/data';
 import { getSeasonData } from './data';
 import { getLeaderboard, type LeaderboardTeam } from './leaderboard';
-import { seasonLabel, type PointEvent } from './points';
+import { epochStart, seasonLabel, type PointEvent } from './points';
 import { isMissingSchema } from './schema';
 import type { Climber } from './mountain';
 import { medalFor, teamClimb, type Medal, type TrophyKind } from './trophy';
@@ -35,6 +35,10 @@ export interface TrophyWinner {
 
 export interface SeasonTrophies {
   season_number: number;
+  /** URL segment: the season number, or "sample" for the Warm-up sample. */
+  key: string;
+  /** A Warm-up sample shown before any season is played: never minted. */
+  sample: boolean;
   label: string;
   start_epoch: number;
   end_epoch: number;
@@ -139,6 +143,8 @@ async function compute(requested: number | null): Promise<SeasonTrophies | null>
 
   return {
     season_number: season.season_number,
+    key: String(season.season_number),
+    sample: false,
     label: seasonLabel(season.season_number),
     start_epoch: season.start_epoch,
     end_epoch: season.end_epoch,
@@ -154,7 +160,58 @@ async function compute(requested: number | null): Promise<SeasonTrophies | null>
   };
 }
 
+/**
+ * Before any season is being played: the three DRep trophies as they'd look
+ * from the current Warm-up race, so people can see what winners get. No team
+ * trophies (there are no teams in the Warm-up). Never minted.
+ */
+async function computeSample(): Promise<SeasonTrophies | null> {
+  const [data, cards] = await Promise.all([getSeasonData(), getCards()]);
+  const top = data.standings.filter((s) => s.points > 0);
+  if (!top.length) return null;
+  const card = new Map(cards.cards.map((c) => [c.drep_id, c]));
+  const starts_at = Math.floor(epochStart(data.start_epoch).getTime() / 1000);
+  const ends_at = Math.floor(epochStart(data.end_epoch + 1).getTime() / 1000);
+  const until = Math.min(Math.floor(Date.now() / 1000), ends_at);
+  const asOf = (events: PointEvent[]) => events.map((e) => (e.t > until ? { ...e, t: until } : e));
+  const winners: TrophyWinner[] = top.slice(0, 3).map((s, i) => ({
+    kind: 'drep',
+    medal: medalFor(i + 1)!,
+    place: i + 1,
+    climber_id: s.drep_id,
+    name: card.get(s.drep_id)?.name ?? s.profile.name ?? `${s.drep_id.slice(0, 12)}…`,
+    image: card.get(s.drep_id)?.image ?? null,
+    points: s.points,
+    drep_id: s.drep_id,
+  }));
+  return {
+    season_number: data.season ?? 0,
+    key: 'sample',
+    sample: true,
+    label: seasonLabel(data.season),
+    start_epoch: data.start_epoch,
+    end_epoch: data.end_epoch,
+    starts_at,
+    ends_at,
+    until,
+    final: false,
+    drep_field: data.standings.length,
+    team_field: 0,
+    drep_climbers: top.slice(0, FIELD).map((s) => ({ drep_id: s.drep_id, events: asOf(s.events) })),
+    team_climbers: [],
+    winners,
+  };
+}
+
 const cache = new Map<string, { at: number; data: SeasonTrophies | null }>();
+
+export async function getSampleTrophies(): Promise<SeasonTrophies | null> {
+  const hit = cache.get('sample');
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.data;
+  const data = await computeSample();
+  cache.set('sample', { at: Date.now(), data });
+  return data;
+}
 
 /** A season's trophies; `null` season = the one being played (or the last one finished). */
 export async function getSeasonTrophies(season: number | null = null): Promise<SeasonTrophies | null> {

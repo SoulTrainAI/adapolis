@@ -43,15 +43,15 @@ export async function renderTrophyImage(season: SeasonTrophies, winner: TrophyWi
     starts_at: season.starts_at,
     ends_at: season.ends_at,
     t: season.until,
-    seed: `${season.season_number}:${winner.kind}:${winner.place}`,
+    seed: `${season.key}:${winner.kind}:${winner.place}`,
   });
   const art = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
   const who = winner.kind === 'drep' ? 'DRep' : 'Team';
   const field = winner.kind === 'drep' ? season.drep_field : season.team_field;
   const nameSize = winner.name.length <= 18 ? 50 : winner.name.length <= 28 ? 40 : 32;
   const dates = `${format(new Date(season.starts_at * 1000), 'MMM d')} – ${format(new Date(season.ends_at * 1000), 'MMM d, yyyy')}`;
-  const test = season.season_number === 0;
-  const badge = test ? 'PRESEASON TEST · NEVER MINTED' : season.final ? '1 OF 1' : 'PREVIEW · SEASON IN PLAY';
+  const test = season.sample || season.season_number === 0;
+  const badge = season.sample ? 'SAMPLE · NEVER MINTED' : test ? 'PRESEASON TEST · NEVER MINTED' : season.final ? '1 OF 1' : 'PREVIEW · SEASON IN PLAY';
   const badgeColor = season.final && !test ? m.light : '#fbbf24';
   const pts = Number.isInteger(winner.points) ? String(winner.points) : winner.points.toFixed(1);
 

@@ -38,7 +38,8 @@ export async function GET(_request: Request, { params }: { params: { season: str
       drep_id: winner.drep_id ?? null,
       picks: winner.picks ?? null,
       metadata,
-      image: `/api/trophies/${season.season_number}/${winner.kind}/${winner.place}/image`,
+      sample: season.sample,
+      image: `/api/trophies/${season.key}/${winner.kind}/${winner.place}/image`,
     },
     { headers: { 'Cache-Control': 'public, max-age=600' } }
   );

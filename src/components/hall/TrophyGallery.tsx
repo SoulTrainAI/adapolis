@@ -1,5 +1,5 @@
 import { Trophy } from 'lucide-react';
-import { getSeasonTrophies, type SeasonTrophies } from '@/lib/season/trophy-data';
+import { getSampleTrophies, getSeasonTrophies, type SeasonTrophies } from '@/lib/season/trophy-data';
 import { MEDALS, trophyTitle } from '@/lib/season/trophy';
 
 /**
@@ -11,6 +11,8 @@ export async function TrophyGallery({ season = null }: { season?: number | null 
   let data: SeasonTrophies | null = null;
   try {
     data = await getSeasonTrophies(season);
+    // Before the first season is played, show what the trophies look like from the Warm-up race.
+    if (!data && season === null) data = await getSampleTrophies();
   } catch (error) {
     console.error(JSON.stringify({ event: 'trophy_gallery_failed', season, error: error instanceof Error ? error.message : String(error) }));
   }
@@ -24,10 +26,13 @@ export async function TrophyGallery({ season = null }: { season?: number | null 
       <div className="space-y-1">
         <h2 id="trophy-gallery" className="flex items-center gap-2 text-xl font-bold text-white">
           <Trophy className="h-5 w-5 text-brand-gold" aria-hidden /> {trophyTitle(data.label)}
-          {!data.final && <span className="rounded-full border border-amber-400/50 px-2 py-0.5 text-xs font-semibold text-amber-300">Preview</span>}
+          {data.sample && <span className="rounded-full border border-sky-400/50 px-2 py-0.5 text-xs font-semibold text-sky-300">Sample</span>}
+          {!data.final && !data.sample && <span className="rounded-full border border-amber-400/50 px-2 py-0.5 text-xs font-semibold text-amber-300">Preview</span>}
         </h2>
         <p className="max-w-3xl text-sm text-slate-400">
-          {data.season_number === 0
+          {data.sample
+            ? 'The first race hasn’t started yet, so here’s what the trophies look like, drawn from the Warm-up race so far. Samples are never minted. Team trophies appear once teams are playing.'
+            : data.season_number === 0
             ? 'Preseason trophies are a test run of the art: drawn like the real ones, never minted.'
             : data.final
               ? 'Six one-of-one trophies: the season’s mountain with the winner’s climb lit up.'
@@ -42,7 +47,7 @@ export async function TrophyGallery({ season = null }: { season?: number | null 
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">{title}</h3>
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
               {winners.map((w) => {
-                const src = `/api/trophies/${data!.season_number}/${w.kind}/${w.place}/image`;
+                const src = `/api/trophies/${data!.key}/${w.kind}/${w.place}/image`;
                 return (
                   <li key={w.place} className="min-w-0">
                     <a href={src} target="_blank" rel="noopener" className="block overflow-hidden rounded-xl border border-slate-800 transition hover:border-slate-500">
