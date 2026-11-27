@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   title: 'Cardanathon — ADApolis',
   description:
     'Watch the top 20 DReps race through the season: points for voting, explaining votes and voting early, live commentary, replay any day. Never scored on which way they vote.',
+  openGraph: { images: [{ url: '/api/cardanathon/image', width: 1200, height: 630, alt: 'The Cardanathon right now' }] },
+  twitter: { card: 'summary_large_image', images: ['/api/cardanathon/image'] },
 };
 
 function Plus({ children }: { children: React.ReactNode }) {

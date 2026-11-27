@@ -173,7 +173,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
         embeds: [
           {
             title: `Epoch ${season.current_epoch} standings · ${label}`,
-            url: `${SITE}/season`,
+            url: `${SITE}/cardanathon`,
             color: COLORS.gold,
             description: [
               lines.length ? lines.join('\n') : 'No DRep has voted yet this season.',
@@ -211,7 +211,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
             embeds: [
               {
                 title: `🎙️ Cardanathon day ${lastFullDay} · ${race.label}`,
-                url: `${SITE}/season`,
+                url: `${SITE}/cardanathon`,
                 color: COLORS.gold,
                 description: clip(text.join('\n'), 3500),
                 fields: [{ name: 'Standings', value: top.join('\n') || '—' }],

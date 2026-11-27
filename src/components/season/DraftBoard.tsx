@@ -136,7 +136,7 @@ export function DraftBoard() {
       <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-6 text-slate-300">
         <p className="text-lg font-semibold text-white">Drafting opens when Season 1 is scheduled.</p>
         <p className="mt-2 text-sm">
-          Until then, follow the <Link href="/season" className="text-violet-300 hover:text-violet-200">preview standings</Link> to
+          Until then, follow the <Link href="/cardanathon" className="text-violet-300 hover:text-violet-200">preview standings</Link> to
           scout DReps: points come only from voting, explaining votes and voting on time.
         </p>
       </div>

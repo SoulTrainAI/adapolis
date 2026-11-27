@@ -32,7 +32,7 @@ const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
     body: "The governance actions being decided now: how DReps are splitting, who explained their vote, and the strongest arguments on each side in DReps' own words.",
   },
   {
-    href: "/season",
+    href: "/cardanathon",
     title: "Cardanathon",
     body: "The monthly race between DReps, with live commentary and the Team Leaderboard. DReps earn points for voting, explaining their votes and voting early.",
   },

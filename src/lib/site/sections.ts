@@ -24,7 +24,7 @@ export const SECTIONS = {
     blurb: 'Governance actions open for voting now: how DReps are splitting and the best arguments on each side.',
   },
   season: {
-    href: '/season',
+    href: '/cardanathon',
     label: 'Cardanathon',
     blurb: 'The Cardanathon: watch the top 20 DReps race through the season next to the Team Leaderboard, with live commentary.',
   },

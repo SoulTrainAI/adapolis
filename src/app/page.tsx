@@ -21,8 +21,7 @@ import { LogoMark } from '@/components/brand/Logo';
 import { draftSeason } from '@/lib/season/fantasy';
 import { seasonLabel } from '@/lib/season/points';
 import { SECTIONS } from '@/lib/site/sections';
-import { getHallOfFame, type HallOfFame } from '@/lib/season/hall-of-fame';
-import { HallOfFameView } from '@/components/hall/HallOfFameView';
+import { CardanathonHook } from '@/components/home/CardanathonHook';
 import { DISCORD_URL } from '@/lib/site/social';
 
 export const revalidate = 300;
@@ -195,7 +194,7 @@ const LOOP: Array<{ icon: LucideIcon; title: string; body: string }> = [
 ];
 
 export default async function Home() {
-  const [stats, seasonLine, hall] = await Promise.all([getStats(), getSeasonLine(), getHallOfFame().catch((): HallOfFame | null => null)]);
+  const [stats, seasonLine] = await Promise.all([getStats(), getSeasonLine()]);
 
   return (
     <div className="relative overflow-hidden bg-brand-navy px-4 sm:px-6 lg:px-8 pb-16">
@@ -267,6 +266,9 @@ export default async function Home() {
         </Link>
       </section>
 
+      {/* The hook: the race right now, the commentary, the Hall of Fame and Play for free */}
+      <CardanathonHook seasonLine={seasonLine} />
+
       {/* The game */}
       <section className="relative max-w-5xl mx-auto mt-20">
         <SectionTitle eyebrow="The game" title="Governance, played like a sport">
@@ -286,12 +288,6 @@ export default async function Home() {
           <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="Cardanathon" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
           <GameTile href="/hall-of-fame" icon={Trophy} title="Hall of Fame" body="Last season’s top 10 DReps and the six trophy winners." accent="bg-sky-500/15 text-sky-300" />
         </div>
-        {hall && (
-          <div className="mt-10">
-            <h3 className="mb-4 text-center font-display text-2xl font-bold text-white">Hall of Fame: {seasonLabel(hall.season_number)}</h3>
-            <HallOfFameView hall={hall} seasonName={seasonLabel(hall.season_number)} compact />
-          </div>
-        )}
       </section>
 
       {/* Paths */}

@@ -266,10 +266,6 @@ function Back({ season, winner, mark }: { season: SeasonTrophies; winner: Trophy
         </div>
       </Box>
 
-      <div style={{ display: 'flex', fontSize: 11, color: '#94a3b8', margin: '8px 14px', lineHeight: 1.35 }}>
-        Points come only from taking part: voting, explaining votes and voting on time. Never from how anyone votes.
-      </div>
-
       <Footer season={season} mark={mark} left="adapolis.net" />
     </Frame>
   );

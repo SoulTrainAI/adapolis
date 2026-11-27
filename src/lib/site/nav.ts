@@ -27,7 +27,7 @@ export const NAV: NavGroup[] = [
   {
     label: 'Play Cardanathon',
     items: [
-      { label: 'Cardanathon', href: '/season', blurb: 'The live race, the Team Leaderboard and the commentary.' },
+      { label: 'Cardanathon', href: '/cardanathon', blurb: 'The live race, the Team Leaderboard and the commentary.' },
       { label: 'Draft Teams', href: '/draft', blurb: 'Pick 5 DReps for the season. Free to play.' },
       { label: 'Join Leagues', href: '/leagues', blurb: 'Play against friends or the whole community.' },
       { label: 'Hall of Fame', href: '/hall-of-fame', blurb: "Last season's top 10 DReps and the trophy winners." },

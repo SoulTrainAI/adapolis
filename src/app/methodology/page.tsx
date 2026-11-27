@@ -175,7 +175,7 @@ export default function MethodologyPage() {
                 <strong>Season points</strong> (this season): how well a DRep
                 did the job over the current 6-epoch season: voting, explaining,
                 voting early and not missing actions. They drive the{" "}
-                <A href="/season">season standings</A> and the game.
+                <A href="/cardanathon">season standings</A> and the game.
               </>,
             ]}
           />

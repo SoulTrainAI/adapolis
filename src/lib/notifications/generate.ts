@@ -63,7 +63,7 @@ async function daily(now: Date, live: SeasonRow, out: NewNotification[]): Promis
       type: 'team_daily',
       title: `${gained >= 0 ? '📈' : '📉'} ${t.name} ${pts} today${rank}`,
       body: `${t.points} points so far this season.`,
-      url: '/season',
+      url: '/cardanathon',
       dedupe_key: `team:${live.season_number}:${day}`,
     });
   }
@@ -80,7 +80,7 @@ async function daily(now: Date, live: SeasonRow, out: NewNotification[]): Promis
       type: 'commentary',
       title: `🎙️ ${mine.length} call${mine.length === 1 ? '' : 's'} on your DReps today`,
       body: mine.map((c) => `• ${c.text}`).join('\n'),
-      url: '/season',
+      url: '/cardanathon',
       dedupe_key: `commentary:${day}`,
     });
   }
@@ -121,7 +121,7 @@ async function epochRecap(live: SeasonRow, out: NewNotification[]): Promise<void
       type: 'season_update',
       title: `📣 ${seasonLabel(live.season_number)}, epoch ${finished} recap`,
       body: lines.join('\n'),
-      url: '/season',
+      url: '/cardanathon',
       dedupe_key: `epoch:${finished}`,
     });
   }
@@ -139,7 +139,7 @@ async function seasonEvents(now: Date, seasons: SeasonRow[], out: NewNotificatio
 
     if (now.getTime() - end.getTime() < RECENT_MS) {
       for (const w of wallets)
-        out.push({ stake_address: w.stake_address, type: 'season_end', title: `🏁 ${label} is over!`, body: 'Final standings are being checked. Winners are announced shortly.', url: '/season', dedupe_key: `season:${s.season_number}:end` });
+        out.push({ stake_address: w.stake_address, type: 'season_end', title: `🏁 ${label} is over!`, body: 'Final standings are being checked. Winners are announced shortly.', url: '/cardanathon', dedupe_key: `season:${s.season_number}:end` });
     }
 
     if (s.finalized_at && now.getTime() - new Date(s.finalized_at).getTime() < RECENT_MS) {
