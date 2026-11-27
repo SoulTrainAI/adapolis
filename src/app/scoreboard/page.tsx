@@ -46,7 +46,7 @@ export default async function ScoreboardPage() {
         <div className="mb-12">
           <h1 className="text-5xl font-bold mb-4">Scoreboard</h1>
           <p className="text-lg text-slate-300">
-            Every Cardano DRep&apos;s lifetime record, ranked by GovScore: long-term participation, adjusted for ADA-power dampening.
+            Every Cardano DRep&apos;s lifetime record, ranked by GovScore: voting, voting early and original rationales across their whole career, adjusted for ADA-power dampening.
           </p>
           <p className="mt-2 text-lg text-slate-300">
             <Link href="/match" className="font-semibold text-violet-300 underline decoration-violet-500/50 underline-offset-4 hover:text-violet-200">
