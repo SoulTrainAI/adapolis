@@ -199,7 +199,8 @@ export function AdminPanel() {
         {v2 && (
           <div className="space-y-4 text-xs">
             <p className="text-slate-300">
-              {String(v2.scored)} DReps scored · {String(v2.moved_10_plus)} move 10+ places
+              {String(v2.scored)} DReps scored · {String(v2.moved_10_plus)} who have voted move 10+ places · voted but score 0: {String(v2.zero_with_votes)} with the −5 per miss,{' '}
+              {String(v2.zero_with_votes_no_penalty)} without
             </p>
             {(
               [
@@ -216,6 +217,7 @@ export function AdminPanel() {
                       <th className="py-1">DRep</th>
                       <th>v1</th>
                       <th>v2</th>
+                      <th>v2 (no −5)</th>
                       <th>Rank v1 → v2</th>
                       <th>Actions</th>
                       <th>Voted</th>
@@ -233,6 +235,7 @@ export function AdminPanel() {
                         </td>
                         <td>{r.v1 === null ? '—' : Number(r.v1).toFixed(1)}</td>
                         <td className="font-semibold text-white">{r.v2 === null ? '—' : Number(r.v2).toFixed(1)}</td>
+                        <td className="font-semibold text-violet-200">{r.v2_no_penalty === null ? '—' : Number(r.v2_no_penalty).toFixed(1)}</td>
                         <td>
                           {String(r.v1_rank ?? '—')} → {String(r.v2_rank ?? '—')}
                         </td>

@@ -47,7 +47,13 @@ export function processScores(
   proposals: SeasonProposal[],
   votes: SeasonVote[],
   periods: Map<string, RegistrationPeriod[]>,
-  currentEpoch: number
+  currentEpoch: number,
+  /**
+   * Whether a missed action also costs the game's −5. Over a career it counts
+   * the miss twice (a missed action already earns 0 of its points), which puts
+   * anyone under about a third participation at 0.
+   */
+  options: { missedPenalty?: boolean } = {}
 ): ProcessScore[] {
   const from = proposals.length ? Math.min(...proposals.map((p) => p.start)) : currentEpoch;
   const points = computeSeasonPoints(
@@ -75,7 +81,7 @@ export function processScores(
     // A perfect DRep votes early on each one, so it scores a clean epoch for every epoch an action opened.
     const epochs = new Set(ids.map((id) => byId.get(id)!.start)).size;
     const possible = actions * PERFECT_ACTION + perfectStreak(epochs);
-    const earned = p.points;
+    const earned = options.missedPenalty === false ? p.points - p.breakdown.missed : p.points;
     const ratio = possible > 0 ? Math.min(1, Math.max(0, earned / possible)) : null;
     const raw = ratio === null ? null : Math.round(wilsonLowerBound(ratio * actions, actions) * 1000) / 10;
     return {

@@ -51,3 +51,13 @@ describe('GovScore v2 (career process score)', () => {
     expect(short.raw!).toBeLessThan(long.raw!);
   });
 });
+
+describe('GovScore v2 without the extra miss penalty', () => {
+  it('tells a part-time voter apart from one who never votes', () => {
+    const some = [vote('d', 0), vote('d', 1)];
+    const [withPenalty] = processScores([{ drep_id: 'd', amount_lovelace: 0 }], proposals, some, new Map(), 620);
+    const [without] = processScores([{ drep_id: 'd', amount_lovelace: 0 }], proposals, some, new Map(), 620, { missedPenalty: false });
+    expect(without.raw!).toBeGreaterThan(0);
+    expect(without.raw!).toBeGreaterThan(withPenalty.raw!);
+  });
+});
