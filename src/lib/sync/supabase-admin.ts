@@ -19,4 +19,11 @@ if (!supabaseUrl || !serviceRoleKey) {
  * Admin client with full write access via service role
  * Use for ETL sync jobs and admin operations only
  */
-export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+/**
+ * Every query skips Next.js's data cache. supabase-js goes through fetch, and
+ * Next keeps fetch results on disk until the next deploy, so a GET route could
+ * keep serving rows from before the last sync (seen with the scoreboard).
+ */
+export const noStoreFetch: typeof fetch = (input, init) => fetch(input, { ...init, cache: 'no-store' });
+
+export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, { global: { fetch: noStoreFetch } });

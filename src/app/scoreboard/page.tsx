@@ -24,6 +24,7 @@ async function getCurrentEpoch(): Promise<number> {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
   });
 
   const { data: latestEpochData } = await supabaseAdmin

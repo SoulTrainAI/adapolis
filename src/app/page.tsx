@@ -41,7 +41,7 @@ async function getStats(): Promise<HomeStats | null> {
   if (!url || !anonKey) return null;
 
   try {
-    const supabase = createClient(url, anonKey, { auth: { persistSession: false } });
+    const supabase = createClient(url, anonKey, { auth: { persistSession: false }, global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) } });
     const [dreps, votes, proposals, epoch] = await Promise.all([
       supabase.from('dreps').select('*', { count: 'exact', head: true }).eq('is_registered', true),
       supabase.from('votes').select('*', { count: 'exact', head: true }),
