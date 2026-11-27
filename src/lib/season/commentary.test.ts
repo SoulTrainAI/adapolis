@@ -7,7 +7,7 @@ const ev = (day: number, kind: 'votes' | 'fresh' | 'rationales' | 'missed' | 'st
 
 const racers = [
   { drep_id: 'drep1aaa', name: 'Kurdopia', events: [ev(1, 'votes', 10), ev(1, 'rationales', 10), ev(1, 'fresh', 5)] },
-  { drep_id: 'drep1bbb', name: 'THOR', events: [ev(0, 'votes', 10), ev(2, 'missed', -5)] },
+  { drep_id: 'drep1bbb', name: 'THOR', events: [ev(0, 'votes', 10), ev(2, 'missed', 0)] },
 ];
 
 describe('race commentary', () => {

@@ -5,7 +5,7 @@
 
 export const TIPS = {
   govscore:
-    'GovScore (career, 0–100): the share of governance actions this DRep voted on, adjusted for how long their record is (95% Wilson lower bound) so 5 of 5 can’t outrank 159 of 164, then gently reduced for very large ADA holdings. Vote direction never counts.',
+    'GovScore (career, 0–100): the Cardanathon’s scoring over a DRep’s whole career (voting, explaining with rationales, voting early, streaks) as a share of what a perfect record would earn. Adjusted for how long the record is, so 5 actions can’t outrank 160, then gently reduced for very large ADA holdings. Vote direction never counts.',
   govscoreDelta: 'Change in GovScore since the end of the previous 6-epoch season. ▲ up, ▼ down.',
   govscoreTrend: 'GovScore at the end of each season, oldest to newest.',
   provisional: 'Provisional: fewer than 10 governance actions to judge by yet, so the score can move a lot.',
@@ -54,7 +54,7 @@ export const TIPS = {
   seasonMissed: 'Actions that closed unvoted that season.',
   seasonScore: 'GovScore at the end of that season.',
   dampened: 'Adjusted GovScore = raw score × ADA dampening, 1 ÷ (1 + log₁₀(ADA in millions + 1) ÷ 4).',
-  raw: 'GovScore (dry): confidence-adjusted participation before ADA dampening.',
+  raw: 'GovScore (dry): the career score before the large-ADA adjustment.',
   rationaleRate: 'Share of this DRep’s votes that have a published rationale.',
 } as const;
 

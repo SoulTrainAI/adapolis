@@ -5,7 +5,6 @@ import { notify } from '@/lib/notifications/store';
 import { runOverviews } from '@/lib/overview/generate';
 import { openReports, resolveReport } from '@/lib/overview/data';
 import { isSameOriginJson } from '@/lib/auth/same-origin';
-import { govScoreV2Preview } from '@/lib/scoring/govscore-v2-preview';
 import {
   editUnclaimedProfile,
   logAction,
@@ -36,7 +35,6 @@ export async function GET(request: Request) {
     if (view === 'profile') return NextResponse.json({ profile: await getProfileRow(q) });
     if (view === 'log') return NextResponse.json({ log: await recentActions() });
     if (view === 'reports') return NextResponse.json({ reports: await openReports() });
-    if (view === 'govscore_v2') return NextResponse.json(await govScoreV2Preview());
     return NextResponse.json({ error: 'Unknown view.' }, { status: 400 });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });

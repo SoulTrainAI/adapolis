@@ -16,8 +16,12 @@ export const POINT_RULES = {
   freshRationale: 5,
   /** Voted in the first half of the action's voting window. */
   early: 5,
-  /** Action closed while the DRep was registered and it never voted. */
-  missed: -5,
+  /**
+   * Action closed while the DRep was registered and it never voted: no points
+   * (there are no penalties; Jason, 2026-11-27). Still recorded: it ends a
+   * streak, and the commentary mentions it.
+   */
+  missed: 0,
   /** Per consecutive clean epoch (voted, missed nothing), capped. */
   streakStep: 5,
   streakCap: 4,

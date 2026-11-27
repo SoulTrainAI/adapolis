@@ -7,8 +7,8 @@
  * except the plain Yes/No/Abstain tally shown on the card back.
  */
 
-import { calculateDampener, type ProposalWindow } from '@/lib/scoring/govscore-v1';
-import { wilsonLowerBound } from '@/lib/scoring/confidence';
+import type { ProposalWindow } from '@/lib/scoring/govscore-v1';
+import { processScores } from '@/lib/scoring/govscore-v2';
 import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
 import { seasonLabel,
   computeSeasonPoints,
@@ -81,6 +81,11 @@ export function computeCards(input: CardInputs): CardComputation {
     votesByDRep.set(v.drep_id, list);
   }
   const govscoreAt = new Map<string, Array<number | null>>();
+  // GovScore v2 (the game's scoring, career-long) at the end of each window, so trends stay on one formula.
+  const sized = dreps.map((d) => ({ drep_id: d.drep_id, amount_lovelace: d.ada * 1_000_000 }));
+  const govscoreByWindow = windows.map(
+    (w) => new Map(processScores(sized, proposals, votes, periods, Math.min(windowEpochs(w).end, currentEpoch)).map((s) => [s.drep_id, s.adjusted]))
+  );
   /** Career votes and participation at the end of each window, for the journey chart. */
   const careerAt = new Map<string, Array<{ votes: number; participation: number | null }>>();
   const sizeById = new Map(dreps.map((d) => [d.drep_id, d]));
@@ -100,16 +105,17 @@ export function computeCards(input: CardInputs): CardComputation {
     }
     counted.sort((a, b) => a - b);
     const voted = Array.from(voteEpoch.values()).sort((a, b) => a - b);
-    const damp = calculateDampener(d.ada * 1_000_000);
     const series: Array<number | null> = [];
     const career: Array<{ votes: number; participation: number | null }> = [];
     let ci = 0;
     let vi = 0;
-    for (const w of windows) {
+    for (let i = 0; i < windows.length; i++) {
+      const w = windows[i];
       const e = Math.min(windowEpochs(w).end, currentEpoch);
       while (ci < counted.length && counted[ci] <= e) ci++;
       while (vi < voted.length && voted[vi] <= e) vi++;
-      series.push(ci > 0 ? Math.round(wilsonLowerBound(vi, ci) * 1000 * damp) / 10 : null);
+      // GovScore v2 as it stood at this window's end.
+      series.push(govscoreByWindow[i].get(d.drep_id) ?? null);
       career.push({ votes: vi, participation: ci > 0 ? Math.min(1, vi / ci) : null });
     }
     govscoreAt.set(d.drep_id, series);

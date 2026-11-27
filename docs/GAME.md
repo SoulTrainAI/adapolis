@@ -74,10 +74,11 @@ bonus for delegating to any DRep: where someone delegates is personal.
 | Fresh rationale (not reused) | +5 |
 | Early vote (first half of the voting window) | +5 |
 | Clean-epoch streak | +5, +10, +15, then +20 per epoch |
-| Action closed with no vote while registered | −5 |
+| Action closed with no vote while registered | 0 (ends the streak) |
 
-Team points = Σ each pick's season points, with **gains × underdog multiplier;
-losses count at 1×**.
+No penalties: points are only ever added (Jason, 2026-11-27; was −5 for a
+missed action). Team points = Σ each pick's season points × the underdog
+multiplier.
 
 ### 1.7 Underdog multiplier — Decided
 

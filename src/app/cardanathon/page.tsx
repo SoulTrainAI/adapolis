@@ -22,10 +22,6 @@ function Plus({ children }: { children: React.ReactNode }) {
   return <span className="font-semibold text-emerald-400">{children}</span>;
 }
 
-function Minus({ children }: { children: React.ReactNode }) {
-  return <span className="font-semibold text-rose-400">{children}</span>;
-}
-
 /** What this window is, and what comes next. */
 function stage(race: Race): string {
   const launch = seasonOneStartEpoch();
@@ -69,8 +65,8 @@ export default async function SeasonPage() {
             <Flag className="h-9 w-9 text-amber-300" /> Cardanathon
           </h1>
           <p className="mt-2 max-w-3xl text-slate-200">
-            The season-long DRep race. Every DRep starts at zero. Points for voting, explaining their votes and voting early push them up the track;
-            missed actions pull them back. Yes, No and Abstain all score the same. Hit play to watch the season unfold.
+            The season-long DRep race. Every DRep starts at zero. Points for voting, explaining their votes and voting early push them up the track,
+            and points are never taken away. Yes, No and Abstain all score the same. Hit play to watch the season unfold.
           </p>
           {race && <p className="mt-2 max-w-3xl text-sm text-amber-100/90">{stage(race)}</p>}
           <div className="mt-4 flex flex-wrap gap-3">
@@ -105,7 +101,7 @@ export default async function SeasonPage() {
               <Plus>+{POINT_RULES.streakStep * POINT_RULES.streakCap}</Plus>
             </li>
             <li>
-              Let an action close without voting: <Minus>{POINT_RULES.missed}</Minus>
+              Let an action close without voting: no points, and the streak starts over
             </li>
           </ul>
           <p className="mt-2 text-slate-400">

@@ -177,7 +177,7 @@ export function buildCommentary(
         candidates.push({
           heat: 28,
           line: {
-            text: `${name(e.drep_id)} ${pick(SLIP, seed)}${missed > 1 ? ` (${missed} actions)` : ''}: ${missed * -5}`,
+            text: `${name(e.drep_id)} ${pick(SLIP, seed)}${missed > 1 ? ` (${missed} actions)` : ''}: nothing scored, and the streak starts over`,
             tone: 'slip',
             drep_ids: [e.drep_id],
             details: missDetails,

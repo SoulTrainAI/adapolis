@@ -1,11 +1,11 @@
 /**
- * GovScore v2 — the game's process scoring, career-long (proposed; preview only)
+ * GovScore v2 — the game's process scoring, career-long
  *
  * Every governance action a DRep could vote on is scored exactly as the
  * Cardanathon scores it: +10 for voting, +10 for a rationale, +5 when that
- * rationale is new, +5 for voting in the first half of the window, −5 for an
- * action that closed without their vote, plus streak bonuses for consecutive
- * clean epochs. GovScore is the share of the points a perfect DRep would have
+ * rationale is new, +5 for voting in the first half of the window, nothing
+ * for an action that closed without their vote, plus streak bonuses for
+ * consecutive clean epochs. GovScore is the share of the points a perfect DRep would have
  * earned on the same actions (votes on all of them, early, each with a new
  * rationale), so it stays on 0–100.
  *
@@ -47,13 +47,7 @@ export function processScores(
   proposals: SeasonProposal[],
   votes: SeasonVote[],
   periods: Map<string, RegistrationPeriod[]>,
-  currentEpoch: number,
-  /**
-   * Whether a missed action also costs the game's −5. Over a career it counts
-   * the miss twice (a missed action already earns 0 of its points), which puts
-   * anyone under about a third participation at 0.
-   */
-  options: { missedPenalty?: boolean } = {}
+  currentEpoch: number
 ): ProcessScore[] {
   const from = proposals.length ? Math.min(...proposals.map((p) => p.start)) : currentEpoch;
   const points = computeSeasonPoints(
@@ -81,7 +75,7 @@ export function processScores(
     // A perfect DRep votes early on each one, so it scores a clean epoch for every epoch an action opened.
     const epochs = new Set(ids.map((id) => byId.get(id)!.start)).size;
     const possible = actions * PERFECT_ACTION + perfectStreak(epochs);
-    const earned = options.missedPenalty === false ? p.points - p.breakdown.missed : p.points;
+    const earned = p.points;
     const ratio = possible > 0 ? Math.min(1, Math.max(0, earned / possible)) : null;
     const raw = ratio === null ? null : Math.round(wilsonLowerBound(ratio * actions, actions) * 1000) / 10;
     return {

@@ -188,10 +188,21 @@ export default function MethodologyPage() {
         </Section>
 
         <Section id="govscore" n={next()} title="GovScore">
+          <P>
+            GovScore is the Cardanathon&apos;s scoring applied to a DRep&apos;s
+            whole career: how reliably they vote, explain their votes and vote
+            on time. Every governance action they could have voted on is scored
+            exactly as the game scores it, and GovScore is the share of the
+            points a perfect DRep would have earned on the same actions.
+          </P>
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
             <h3 className="text-xl font-semibold text-slate-100">Formula</h3>
             <Formula>
-              {`Participation  p = Votes Cast / Eligible Actions   (n = Eligible Actions)
+              {`Per action they could vote on:  vote +${POINT_RULES.vote}, rationale +${POINT_RULES.rationale}, new rationale +${POINT_RULES.freshRationale}, early +${POINT_RULES.early}
+Missed action: 0 (never a penalty) and the streak starts over
+Streak: +${POINT_RULES.streakStep} per clean epoch in a row, up to +${POINT_RULES.streakStep * POINT_RULES.streakCap}
+
+p = points earned / points a perfect DRep would earn on the same actions   (n = actions)
 
 Raw GovScore = 100 × Wilson lower bound of p at 95% confidence
              = 100 × ( p + z²/2n − z·√( p(1−p)/n + z²/4n² ) ) / ( 1 + z²/n ),  z = 1.96
@@ -202,26 +213,34 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
           <Bullets
             items={[
               <>
-                <strong>Votes cast:</strong> governance actions the DRep voted
-                on (Yes, No or Abstain all count the same).
+                <strong>A perfect record</strong> votes on every action, early,
+                each time with a new rationale. That earns{" "}
+                {POINT_RULES.vote + POINT_RULES.rationale + POINT_RULES.freshRationale + POINT_RULES.early}{" "}
+                points per action plus the streak.
               </>,
               <>
-                <strong>Eligible actions:</strong> actions that were open while
-                the DRep was registered. A DRep who joined recently is measured
-                only against actions since they joined.
+                <strong>Explaining matters:</strong> voting on everything but
+                never publishing a rationale earns about half the points.
+                Explaining every vote but always voting late earns about five
+                sixths.
               </>,
               <>
-                <strong>Actions still open</strong> count only once the DRep has
-                voted on them. A vote can&apos;t be missed until its window
-                closes.
+                <strong>Yes, No and Abstain</strong> score exactly the same.
+                GovScore never looks at which way anyone voted.
               </>,
               <>
-                <strong>Why the confidence adjustment:</strong> 5 of 5 is
-                promising but tells us far less than 159 of 164. The Wilson
-                lower bound is the participation rate we can be 95% sure the
-                DRep is at or above, so a long, steady record ranks highest and
-                newcomers who keep voting climb as their record grows. There is
-                no tuning constant.
+                <strong>Actions they could vote on:</strong> actions that closed
+                while the DRep was registered, plus open ones they&apos;ve
+                already voted on. A vote can&apos;t be missed until its window
+                closes, and a DRep who joined recently is measured only against
+                actions since they joined.
+              </>,
+              <>
+                <strong>Why the confidence adjustment:</strong> a perfect record
+                over 5 actions tells us far less than one over 160. The Wilson
+                lower bound is the share we can be 95% sure the DRep is at or
+                above, so a long, steady record ranks highest and newcomers
+                climb as their record grows. There is no tuning constant.
               </>,
               <>
                 <strong>Provisional:</strong> DReps with fewer than{" "}
@@ -229,39 +248,23 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
                 provisional.
               </>,
               <>
+                <strong>Participation</strong> (votes cast ÷ actions they could
+                vote on) is still shown on every card as Stamina.
+              </>,
+              <>
                 <strong>Who is ranked:</strong> by default the Scoreboard and
                 card ranks cover <em>active</em> DReps: registered, at least one
                 vote cast, and some ADA delegated. The Scoreboard&apos;s Show
                 filter can include all registered or retired DReps.
               </>,
+              <>
+                <strong>History:</strong> until 27 November 2026 GovScore was
+                participation only (votes cast ÷ eligible actions, with the same
+                confidence adjustment). Trend lines are recalculated with the
+                current formula.
+              </>,
             ]}
           />
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-slate-100">
-              Worked example
-            </h3>
-            <div className="bg-slate-900/30 border border-slate-700 rounded p-4 font-mono text-sm text-slate-300 space-y-3">
-              <p>
-                DRep A: 93 of 100 (93%) →{" "}
-                <strong className="text-slate-100">Raw 86.3</strong>
-              </p>
-              <p>
-                DRep B: 5 of 5 (100%) →{" "}
-                <strong className="text-slate-100">
-                  Raw 56.6 (provisional)
-                </strong>
-              </p>
-              <p>
-                DRep C: 159 of 164 (97%) →{" "}
-                <strong className="text-slate-100">Raw 93.1</strong>
-              </p>
-            </div>
-            <P>
-              DRep B has the highest rate but only five votes, so DRep C ranks
-              first. If DRep B keeps voting on everything, their score rises
-              toward their rate: 50 of 50 scores 92.9.
-            </P>
-          </div>
         </Section>
 
         <Section id="dampening" n={next()} title="ADA-power dampening">
@@ -402,11 +405,10 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
               with nothing to vote on neither extend nor break a streak.
             </li>
             <li>
-              <span className="text-red-400 font-semibold">
-                {POINT_RULES.missed}
-              </span>{" "}
+              <span className="text-slate-400 font-semibold">0</span>{" "}
               <strong>Missed</strong>: an action closed while the DRep was
-              registered and they never voted. Counted in the epoch it closed.
+              registered and they never voted. No points, and it ends the
+              streak. Points are never taken away.
             </li>
           </ul>
           <P muted>

@@ -1,4 +1,8 @@
 /**
+ * Since 2026-11-27 the published GovScore is v2 (govscore-v2.ts: the game's
+ * scoring over a whole career). This file still computes participation, votes
+ * and streaks, stored beside it, and runs the nightly scoring job.
+ *
  * GovScore v1 — Participation Rate (confidence-adjusted)
  *
  * A DRep is judged only on governance actions it had the chance to vote on:
@@ -16,6 +20,8 @@
 
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { wilsonLowerBound } from './confidence';
+import { processScores } from './govscore-v2';
+import { blockTimeToEpoch } from '@/lib/koios/drep-registrations';
 
 export { PROVISIONAL_BELOW_ELIGIBLE, wilsonLowerBound } from './confidence';
 import { fetchDRepRegistrationPeriods, type RegistrationPeriod } from '@/lib/koios/drep-registrations';
@@ -161,7 +167,10 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
       expired_epoch: number | null;
       voting_ends_epoch: number | null;
     }>('proposals', 'proposal_id, proposed_epoch, status, ratified_epoch, expired_epoch, voting_ends_epoch'),
-    loadAll<{ drep_id: string; proposal_id: string }>('votes', 'drep_id, proposal_id'),
+    loadAll<{ drep_id: string; proposal_id: string; block_time: string; rationale_url: string | null; rationale_hash: string | null }>(
+      'votes',
+      'drep_id, proposal_id, block_time, rationale_url, rationale_hash'
+    ),
     fetchDRepRegistrationPeriods(),
   ]);
 
@@ -172,13 +181,23 @@ export async function computeGovScoresForEpoch(epoch: number): Promise<ComputeRe
     votesByDRep.set(v.drep_id, set);
   }
 
-  const scores = scoreDReps(
-    dreps.map((d) => ({ drep_id: d.drep_id, amount_lovelace: Number(d.amount_lovelace ?? 0) })),
-    proposalRows.map(proposalWindow),
-    votesByDRep,
-    periods,
-    epoch
+  const sized = dreps.map((d) => ({ drep_id: d.drep_id, amount_lovelace: Number(d.amount_lovelace ?? 0) }));
+  // Participation, votes and streak still come from v1 (shown as Stamina and
+  // XP); the score itself is GovScore v2, the game's scoring over a career.
+  const participation = scoreDReps(sized, proposalRows.map(proposalWindow), votesByDRep, periods, epoch);
+  const v2 = new Map(
+    processScores(
+      sized,
+      proposalRows.map((p) => ({ ...proposalWindow(p), expiration: p.voting_ends_epoch })),
+      votes.map((v) => {
+        const time = Math.floor(new Date(v.block_time).getTime() / 1000);
+        return { drep_id: v.drep_id, proposal_id: v.proposal_id, epoch: blockTimeToEpoch(time), time, rationale_url: v.rationale_url, rationale_hash: v.rationale_hash };
+      }),
+      periods,
+      epoch
+    ).map((s) => [s.drep_id, s])
   );
+  const scores = participation.map((s) => ({ ...s, raw_govscore: v2.get(s.drep_id)?.raw ?? null, adjusted_govscore: v2.get(s.drep_id)?.adjusted ?? null }));
 
   const computedAt = new Date().toISOString();
   const rows = scores.map((s) => ({ ...s, epoch, computed_at: computedAt }));

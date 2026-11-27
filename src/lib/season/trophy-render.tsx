@@ -250,7 +250,6 @@ function Back({ season, winner, mark }: { season: SeasonTrophies; winner: Trophy
               <Row key="r" label="Rationales published" value={signed(b.rationales + b.fresh)} />,
               <Row key="e" label="Early votes" value={signed(b.early)} />,
               <Row key="s" label="Streak bonuses" value={signed(b.streak)} />,
-              <Row key="m" label="Missed actions" value={signed(b.missed)} color={b.missed < 0 ? '#fca5a5' : '#e2e8f0'} />,
             ]
           : null}
         {(winner.pick_stats ?? []).map((p) => (
