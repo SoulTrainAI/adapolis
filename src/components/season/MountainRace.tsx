@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Race } from '@/lib/season/race';
-import { mountain } from '@/lib/season/mountain';
+import { mountain, summitExponent } from '@/lib/season/mountain';
 import { displayName, orderAt } from '@/lib/season/commentary';
 
 const COLORS = ['#fbbf24', '#e2e8f0', '#fb923c', '#a78bfa', '#38bdf8', '#34d399', '#f472b6', '#60a5fa', '#facc15', '#2dd4bf'];
@@ -33,6 +33,8 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
   const cast = useMemo(() => orderAt(race.racers, t).slice(0, CLIMBERS), [race, t]);
   const color = useMemo(() => new Map(orderAt(race.racers, until).map((c, i) => [c.drep_id, COLORS[i % COLORS.length]])), [race, until]);
   const finalTop = useMemo(() => orderAt(race.racers, until)[0]?.points ?? 0, [race, until]);
+  // One curve for the whole replay, set by where the final top 10 finish.
+  const exponent = useMemo(() => summitExponent(orderAt(race.racers, until).slice(0, CLIMBERS).map((o) => o.points)), [race, until]);
   const geo = useMemo(
     () =>
       mountain(
@@ -44,11 +46,12 @@ export function MountainRace({ race, t, until, highlight }: { race: Race; t: num
           ends_at: race.ends_at,
           t,
           scaleTo: finalTop,
+          exponent,
           padding: narrow ? { left: 8, right: 96, top: 24, bottom: 26 } : { left: 40, right: 170, top: 30, bottom: 30 },
           labelGap: narrow ? 16 : 20,
         }
       ),
-    [cast, byId, width, height, race.starts_at, race.ends_at, t, narrow, finalTop]
+    [cast, byId, width, height, race.starts_at, race.ends_at, t, narrow, finalTop, exponent]
   );
   const ranked = useMemo(() => [...geo.lines].sort((a, b) => b.points - a.points), [geo]);
   const leader = ranked[0];

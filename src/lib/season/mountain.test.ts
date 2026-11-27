@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mountain } from './mountain';
+import { mountain, summitExponent } from './mountain';
 
 const ev = (t: number, pts: number) => ({ t, pts, kind: 'votes' as const });
 
@@ -34,5 +34,29 @@ describe('mountain', () => {
     );
     const [l1, l2] = tight.lines.map((l) => l.labelY).sort((x, y) => x - y);
     expect(l2 - l1).toBeGreaterThanOrEqual(18);
+  });
+});
+
+
+describe('summit curve', () => {
+  it('stays proportional when the field is already spread out', () => {
+    expect(summitExponent([300, 200, 100, 50, 40, 30, 20, 15, 10, 5])).toBe(1);
+  });
+  it('stretches a bunched top 10 so 10th sits near a third of the height', () => {
+    const final = [165, 135, 130, 130, 120, 115, 110, 95, 90, 85];
+    const k = summitExponent(final);
+    expect(k).toBeGreaterThan(1);
+    expect(Math.pow(85 / 165, k)).toBeCloseTo(0.35, 2);
+  });
+  it('keeps order and puts a bigger lead higher', () => {
+    const climbers = [
+      { drep_id: 'a', events: [{ t: 1, pts: 165, kind: 'votes' as const }] },
+      { drep_id: 'b', events: [{ t: 1, pts: 135, kind: 'votes' as const }] },
+      { drep_id: 'c', events: [{ t: 1, pts: 85, kind: 'votes' as const }] },
+    ];
+    const g = mountain(climbers, { width: 1000, height: 400, starts_at: 0, ends_at: 100, t: 100, exponent: 2, padding: { left: 0, right: 0, top: 0, bottom: 0 } });
+    const y = Object.fromEntries(g.lines.map((l) => [l.drep_id, l.y]));
+    expect(y.a).toBeLessThan(y.b);
+    expect(y.b).toBeLessThan(y.c);
   });
 });
