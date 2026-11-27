@@ -96,7 +96,9 @@ export async function POST(request: Request) {
       const path = b.job === 'full' ? '/api/cron' : '/api/cron/votes';
       await logAction(admin, 'run_job', path, {});
       // Runs the same endpoint Railway's cron calls, server to server; the secret never reaches the browser.
-      const res = await fetch(new URL(path, request.url), { method: 'POST', headers: { Authorization: `Bearer ${secret}` } });
+      // The app's own port: the public address the request came in on isn't reachable from inside the container.
+      const self = `http://127.0.0.1:${process.env.PORT ?? '3000'}`;
+      const res = await fetch(new URL(path, self), { method: 'POST', headers: { Authorization: `Bearer ${secret}` } });
       if (!res.ok && res.status !== 202) throw new Error(`${path} returned HTTP ${res.status}.`);
     }
     return NextResponse.json({ ok: true });
