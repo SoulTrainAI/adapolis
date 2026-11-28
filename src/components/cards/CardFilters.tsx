@@ -136,7 +136,8 @@ export function CardFilters({ spec, onChange, cards, defaults, resultCount, extr
 
   const set = (patch: Partial<FilterSpec>) => onChange({ ...spec, ...patch });
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const n = activeCount(spec);
+  // A list's own default pool (e.g. all registered on the Draft) isn't a filter the visitor switched on.
+  const n = activeCount(spec) - (spec.pool !== 'active' && spec.pool === defaults.pool ? 1 : 0);
 
   // Tap a badge: off → any tier → Bronze+ → Silver+ → Gold → off (one-level badges: off ↔ on).
   const cycleBadge = (id: string) => {
