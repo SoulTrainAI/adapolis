@@ -255,7 +255,7 @@ function Back({ season, winner, mark }: { season: SeasonTrophies; winner: Trophy
             ]
           : null}
         {(winner.pick_stats ?? []).map((p) => (
-          <Row key={p.name} label={`${p.name} · ×${p.multiplier.toFixed(2)}`} value={signed(p.contribution)} />
+          <Row key={p.name} label={p.name} value={signed(p.contribution)} />
         ))}
       </Box>
 

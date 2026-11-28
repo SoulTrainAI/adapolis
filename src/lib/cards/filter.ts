@@ -50,7 +50,7 @@ export const STATS: StatDef[] = [
   { key: 'last_points', label: 'Last season', group: 'Game', get: (c) => c.last_points, format: (v) => fmt(v), integer: true, tip: 'Points in the last finished season.' },
   { key: 'lifetime_points', label: 'Lifetime points', group: 'Game', get: (c) => c.lifetime.points, format: (v) => fmt(v), integer: true, tip: 'All points across every season.' },
   { key: 'draft_cost', label: 'Draft Cost', group: 'Game', get: (c) => c.draft_cost ?? 1, format: (v) => `${v}★`, integer: true, tip: 'Stars this DRep costs in a 10-star team.' },
-  { key: 'underdog', label: 'Underdog bonus', group: 'Game', get: (c) => c.underdog, format: (v) => `${v.toFixed(2)}×`, tip: 'Multiplier on the points this DRep earns for your team; smaller DReps earn more.' },
+  { key: 'underdog', label: 'Underdog bonus', group: 'Backing', get: (c) => c.underdog, format: (v) => `${v.toFixed(2)}×`, tip: 'Size-based bonus, 1.00–1.50×: higher for smaller DReps. The Match-maker’s Decentralization weight uses it.' },
   { key: 'ownership', label: 'Drafted by (% of teams)', group: 'Game', get: (c) => c.ownership, format: pct, percent: true, tip: 'Share of this season’s teams that picked them.' },
   { key: 'drafted_by', label: 'Drafted by (teams)', group: 'Game', get: (c) => c.drafted_by ?? null, format: (v) => fmt(v), integer: true, optional: true, tip: 'Number of teams that picked them this season.' },
   { key: 'ada', label: 'ADA delegated', group: 'Backing', get: (c) => c.ada, format: ada, log: true, tip: 'Voting power (Power).' },

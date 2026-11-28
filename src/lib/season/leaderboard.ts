@@ -1,8 +1,9 @@
 /**
  * Fantasy leaderboard: every team's score for a season.
  *
- * Team points = Σ each picked DRep's season points, with gains multiplied by
- * the underdog multiplier locked in when it was picked (losses count at 1×). Season points are process-only (voting,
+ * Team points = Σ each picked DRep's season points. (Until 2026-11-27 gains
+ * were multiplied by an underdog multiplier; it now lives only in the DRep
+ * Match-maker, and multiplier fields here are always 1.) Season points are process-only (voting,
  * explaining, voting on time), so the leaderboard never rewards which way a
  * DRep voted (Cardinal Rule).
  */
@@ -101,19 +102,19 @@ export function rankTeams(
         // The slot keeps the retired DRep's points from before the swap and the replacement's after it.
         const oldPts = pointsBetween(byEpoch.get(p.swapped_from), -Infinity, p.swap_epoch);
         const newPts = pointsBetween(byEpoch.get(p.drep_id), p.swap_epoch, Infinity);
-        const oldMult = p.swapped_from_multiplier ?? 1;
+        const oldMult = 1;
         return {
           drep_id: p.drep_id,
           name: who?.name ?? null,
           image: who?.image ?? null,
           points: newPts,
-          multiplier: p.underdog_multiplier,
-          contribution: round1(pickContribution(oldPts, oldMult) + pickContribution(newPts, p.underdog_multiplier)),
+          multiplier: 1,
+          contribution: round1(pickContribution(oldPts, oldMult) + pickContribution(newPts, 1)),
           swapped_from: { drep_id: p.swapped_from, name: people.get(p.swapped_from)?.name ?? null, points: oldPts, multiplier: oldMult, swap_epoch: p.swap_epoch },
         };
       }
       const pts = points.get(p.drep_id) ?? 0;
-      return { drep_id: p.drep_id, name: who?.name ?? null, image: who?.image ?? null, points: pts, multiplier: p.underdog_multiplier, contribution: round1(pickContribution(pts, p.underdog_multiplier)) };
+      return { drep_id: p.drep_id, name: who?.name ?? null, image: who?.image ?? null, points: pts, multiplier: 1, contribution: round1(pickContribution(pts, 1)) };
     });
     return { row: r, picks, points: round1(picks.reduce((s, p) => s + p.contribution, 0)) };
   });

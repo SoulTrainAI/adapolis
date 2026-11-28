@@ -38,8 +38,6 @@ export type CardVariant = 'scoreboard' | 'draft' | 'season';
 interface TradingCardProps {
   card: CardSummary;
   variant: CardVariant;
-  /** Multiplier locked in on a saved fantasy pick; shown instead of today's */
-  lockedUnderdog?: number;
   /** Fantasy teams that drafted this DRep this season */
   draftedBy?: number;
   /** Rendered under the card (e.g. Pick button); kept outside the card's own button */
@@ -256,16 +254,16 @@ function REP_STATS(c: CardSummary): Array<{ label: string; value: string; sub: s
 }
 
 /** Draft-page facts shown under the card (they're about the pick, not part of the card). */
-function DraftStrip({ card, mult, drafted }: { card: CardSummary; mult: number; drafted: number | null }) {
+function DraftStrip({ card, drafted }: { card: CardSummary; drafted: number | null }) {
   return (
     <div className="grid grid-cols-4 gap-1 text-center text-xs">
       {[
         ['Proj.', num(card.projection), TIPS.projection],
         ['Form', num(card.form), TIPS.form],
-        ['Bonus', `${mult.toFixed(2)}×`, TIPS.underdog],
+        ['Last', num(card.last_points), TIPS.lastWindow],
         ['Teams', drafted !== null ? String(drafted) : card.ownership !== null ? pct(card.ownership) : '0', TIPS.teams],
       ].map(([k, v, tip]) => (
-        <div key={k} title={tip} className={`border border-slate-700 bg-slate-900/70 py-1 ${k === 'Bonus' && mult >= 1.25 ? 'text-amber-200' : 'text-slate-100'}`}>
+        <div key={k} title={tip} className="border border-slate-700 bg-slate-900/70 py-1 text-slate-100">
           <p className="text-[10px] uppercase tracking-wider text-slate-400">{k}</p>
           <p className="font-bold">{v}</p>
         </div>
@@ -635,7 +633,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
           />
           <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `rank #${c.season.rank}` : 'points'} tip={TIPS.seasonPoints} />
           <Tile label="Projected" value={num(c.projection)} sub="next season" tip={TIPS.projection} />
-          <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="draft bonus" tip={TIPS.underdog} />
+          <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="decentral. bonus" tip={TIPS.underdog} />
         </div>
 
         {/* Career and fantasy lines */}
@@ -798,7 +796,7 @@ export function TradingCard(props: TradingCardProps) {
       >
         <CardFront {...props} />
       </motion.button>
-      {props.variant === 'draft' && <DraftStrip card={card} mult={props.lockedUnderdog ?? card.underdog} drafted={props.draftedBy ?? null} />}
+      {props.variant === 'draft' && <DraftStrip card={card} drafted={props.draftedBy ?? null} />}
       {props.action}
 
       {mounted &&

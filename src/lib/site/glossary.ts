@@ -29,7 +29,7 @@ export const TIPS = {
   projection: 'Projected points next season: average of the last 3 completed seasons (form), or the career average if none are complete.',
   form: 'Form: average season points over the last 3 completed seasons.',
   underdog:
-    'Underdog multiplier (1.00–1.50×): smaller DReps by delegated ADA and delegator count multiply the points they gain for your game team. Locked when you pick. Losses are never multiplied.',
+    'Underdog bonus (1.00–1.50×): higher for smaller DReps, by delegated ADA and delegator count. The DRep Match-maker’s Decentralization weight uses it to favor small DReps. It doesn’t change game points.',
   teams: 'Share of game teams that drafted this DRep this season.',
   lastWindow: 'Season points in the last completed season.',
   avgWindow: 'Average season points across every season played.',

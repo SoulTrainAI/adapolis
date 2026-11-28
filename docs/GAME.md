@@ -62,8 +62,6 @@ bonus for delegating to any DRep: where someone delegates is personal.
   play in leagues only** (not the global prize game); built once NFTs exist.
 - The next season's draft is always open. Change picks freely until the
   **roster lock, 24 hours after the season's first epoch begins.**
-- DReps you keep when you edit your team keep the multiplier they had when you
-  first picked them.
 
 ### 1.6 Scoring — Decided
 
@@ -77,15 +75,16 @@ bonus for delegating to any DRep: where someone delegates is personal.
 
 No penalties: points are only ever added (Jason, 2026-11-27; was −5 for a
 missed action). A rationale alone no longer scores (was +10); only an original
-one does, compared by content hash against every earlier rationale. Team points = Σ each pick's season points × the underdog
-multiplier.
+one does, compared by content hash against every earlier rationale. Team points = Σ each pick's season points.
 
-### 1.7 Underdog multiplier — Decided
+### 1.7 Underdog multiplier — Removed from the game (Jason, 2026-11-27)
 
-- 1.00× to 1.50×: `1 + 0.5 × smallness`, smallness = 1 − mean(ADA percentile,
-  delegator percentile) among DReps active in the last finished season.
-- Size-based, never rank-based (no reason to tank). Smooth, no cut-off.
-- Locked when picked; boosts gains only.
+Dropped before the Preseason: the 10-star Draft Cost already balances the
+draft, and stars priced on projected points made small DReps with a 1.5×
+multiplier underpriced. The same size-based bonus (`1 + 0.5 × smallness`,
+smallness = 1 − mean(ADA percentile, delegator percentile)) now drives the DRep
+Match-maker's Decentralization weight instead. Cards still show it.
+Stored `underdog_multiplier` values on picks are ignored.
 
 ### 1.8 Leaderboard — Decided
 
@@ -100,8 +99,8 @@ without a lawyer's review** (Hawaii gambling law; roadmap Gate 4).
 ### 1.10 Retirements mid-season — Decided (2026-11-22)
 
 If a drafted DRep deregisters mid-season they stop earning points, and the
-player gets **one free replacement** for that slot, at the replacement's current
-multiplier, any time before the season ends. Points already earned by the
+player gets **one free replacement** for that slot, any time before the season
+ends. Points already earned by the
 retired DRep stay on the team.
 
 ### 1.11 Leagues — Decided (2026-11-22), built (needs migration 014)

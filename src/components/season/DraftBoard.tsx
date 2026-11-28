@@ -39,20 +39,6 @@ function displayName(d: Pick<PoolDRep, 'name' | 'drep_id'>): string {
   return d.name ?? `${d.drep_id.slice(0, 12)}…${d.drep_id.slice(-4)}`;
 }
 
-function UnderdogChip({ value }: { value: number }) {
-  const strong = value >= 1.25;
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        strong ? 'bg-amber-900/50 text-amber-300 border border-amber-800/60' : 'bg-slate-800 text-slate-300'
-      }`}
-      title="Underdog multiplier: smaller DReps (by ADA and delegators) multiply the points they gain for your team (losses count at 1×). Fixed when you pick them."
-    >
-      {value.toFixed(2)}×
-    </span>
-  );
-}
-
 export function DraftBoard() {
   const [data, setData] = useState<Response | null>(null);
   const [signedIn, setSignedIn] = useState(false);
@@ -93,10 +79,6 @@ export function DraftBoard() {
 
   const pool = useMemo(() => (data?.enabled ? data.pool : []), [data]);
   const byId = useMemo(() => new Map(pool.map((d) => [d.drep_id, d])), [pool]);
-  const snapshot = useMemo(
-    () => new Map((data?.enabled ? data.roster?.picks ?? [] : []).map((p) => [p.drep_id, p.underdog_multiplier])),
-    [data]
-  );
 
   const cardFor = useCallback(
     (d: PoolDRep): CardSummary => ({
@@ -107,7 +89,7 @@ export function DraftBoard() {
     [cards]
   );
 
-  // The pool as filterable cards: this draft's underdog multiplier, Draft Cost and team count.
+  // The pool as filterable cards, with this draft's Draft Cost and team count.
   const poolCards = useMemo<FilterCard[]>(
     () =>
       pool
@@ -249,7 +231,7 @@ export function DraftBoard() {
         {signedIn && <EligibilityNote />}
         <p className="text-slate-300">
           Pick {ROSTER_SIZE} DReps. Your team scores their season points: voting, explaining votes and voting on time,
-          never which way they vote. Smaller DReps carry an underdog multiplier on the points they gain, fixed when you pick them; losses are never multiplied.
+          never which way they vote. Points are never taken away.
         </p>
         <p className="text-sm text-slate-400">
           {started ? 'Season started' : `Season starts ${format(new Date(season.starts_at), 'PPp')}`} · Rosters lock{' '}
@@ -274,7 +256,7 @@ export function DraftBoard() {
               onClick={() => {
                 setPicked(team.drep_ids.slice(0, ROSTER_SIZE));
                 if (!teamName && team.team_name) setTeamName(team.team_name);
-                setMessage({ kind: 'ok', text: 'Picks copied. Multipliers are recalculated for this season when you save.' });
+                setMessage({ kind: 'ok', text: 'Picks copied. Save to keep them for this season.' });
               }}
               className="rounded-lg bg-sky-700 px-3 py-1.5 font-semibold text-white hover:bg-sky-600"
             >
@@ -326,8 +308,7 @@ export function DraftBoard() {
             </div>
           </div>
           <p className="text-xs text-slate-500">
-            &quot;Last season&quot; is epochs {data.reference_window.start_epoch}–{data.reference_window.end_epoch}; multipliers
-            are scaled against the DReps active then.
+            &quot;Last season&quot; is epochs {data.reference_window.start_epoch}–{data.reference_window.end_epoch}.
           </p>
 
           {view === 'cards' && (
@@ -344,7 +325,6 @@ export function DraftBoard() {
                   <TradingCard
                     variant="draft"
                     card={cardFor(d)}
-                    lockedUnderdog={snapshot.get(d.drep_id)}
                     draftedBy={d.drafted_by}
                     selected={isPicked}
                     action={
@@ -389,7 +369,6 @@ export function DraftBoard() {
                     </p>
                   </div>
                   <CostStars n={costOf(d.drep_id)} className="text-xs" />
-                  <UnderdogChip value={snapshot.get(d.drep_id) ?? d.underdog} />
                   <button
                     type="button"
                     disabled={locked || (!isPicked && (full || !fits(d.drep_id)))}
@@ -449,7 +428,6 @@ export function DraftBoard() {
                       <>
                         <span className="min-w-0 flex-1 truncate text-slate-100">{d ? displayName(d) : id.slice(0, 14)}</span>
                         <CostStars n={costOf(id)} className="text-[10px]" />
-                        <UnderdogChip value={snapshot.get(id) ?? d?.underdog ?? 1} />
                         {!locked && (
                           <button type="button" onClick={() => toggle(id)} aria-label="Remove" className="-m-2 flex h-10 w-10 items-center justify-center text-slate-400 hover:text-white">
                             <X className="h-4 w-4" />
@@ -505,7 +483,7 @@ export function DraftBoard() {
             {message && <p className={`text-sm ${message.kind === 'ok' ? 'text-emerald-300' : 'text-red-300'}`}>{message.text}</p>}
             <p className="text-[11px] text-slate-500">
               Free to play. Each DRep costs 1–{MAX_STARS} stars (★) in proportion to their Projected Points, and a team can spend up to {TEAM_STAR_BUDGET}.
-              Costs and multipliers lock when you pick; DReps already on your saved team keep theirs.
+              Costs lock when you pick; DReps already on your saved team keep theirs.
             </p>
           </div>
         </aside>

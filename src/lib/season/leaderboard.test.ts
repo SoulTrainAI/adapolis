@@ -4,7 +4,7 @@ process.env.NEXT_PUBLIC_SUPABASE_URL ??= 'http://localhost';
 process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test';
 
 describe('fantasy leaderboard scoring', () => {
-  it('multiplies each pick by its locked multiplier, ranks, and handles ties', async () => {
+  it('adds up picks\' season points (no multiplier), ranks, and handles ties', async () => {
     const { rankTeams, teamName } = await import('./leaderboard');
     const rosters = [
       { stake_address: 'stake1u' + 'a'.repeat(52), team_name: 'Alpha', created_at: '2026-12-01T00:00:00Z', picks: [{ drep_id: 'd1', underdog_multiplier: 1.5 }, { drep_id: 'd2', underdog_multiplier: 1 }] },
@@ -14,24 +14,24 @@ describe('fantasy leaderboard scoring', () => {
     const points = new Map([['d1', 40], ['d2', 30], ['d3', 20]]);
     const teams = rankTeams(rosters, points, new Map(), 'stake1u' + 'b'.repeat(52));
     expect(teams.map((t) => [t.rank, t.name, t.points])).toEqual([
-      [1, 'Alpha', 90], // 40×1.5 + 30
-      [2, 'Team bbbbbb', 55], // 30 + 20×1.25
-      [2, 'Late', 55], // tie keeps the rank; earlier draft listed first
+      [1, 'Alpha', 70], // 40 + 30: a stored multiplier no longer counts
+      [2, 'Team bbbbbb', 50], // 30 + 20
+      [2, 'Late', 50], // tie keeps the rank; earlier draft listed first
     ]);
     expect(teams[1].mine).toBe(true);
-    expect(teams[0].picks[0]).toMatchObject({ drep_id: 'd1', contribution: 60 });
+    expect(teams[0].picks[0]).toMatchObject({ drep_id: 'd1', contribution: 40, multiplier: 1 });
     // Never the whole stake address
     expect(teamName({ team_name: null, stake_address: 'stake1u' + 'x'.repeat(52) })).toBe('Team xxxxxx');
   });
 
-  it('applies the underdog multiplier to gains only', async () => {
+  it('ignores stored underdog multipliers', async () => {
     const { rankTeams } = await import('./leaderboard');
     const rosters = [
       { stake_address: 'stake1u' + 'a'.repeat(52), team_name: 'Small', created_at: '2026-12-01T00:00:00Z', picks: [{ drep_id: 'small', underdog_multiplier: 1.5 }] },
       { stake_address: 'stake1u' + 'b'.repeat(52), team_name: 'Big', created_at: '2026-12-02T00:00:00Z', picks: [{ drep_id: 'big', underdog_multiplier: 1 }] },
     ];
-    const teams = rankTeams(rosters, new Map([['small', -20], ['big', -20]]), new Map(), null);
-    expect(teams.map((t) => t.points)).toEqual([-20, -20]);
+    const teams = rankTeams(rosters, new Map([['small', 20], ['big', 20]]), new Map(), null);
+    expect(teams.map((t) => t.points)).toEqual([20, 20]);
   });
 
   it('scores a swapped slot: retired DRep before the swap, replacement after', async () => {
@@ -49,7 +49,7 @@ describe('fantasy leaderboard scoring', () => {
       ['new', { 679: 50, 680: 10, 681: 10 }], // 50 before the swap must not count
     ]);
     const [team] = rankTeams(rosters, new Map([['old', 129], ['new', 70]]), new Map(), null, byEpoch);
-    expect(team.points).toBe(30 + 20 * 1.5);
+    expect(team.points).toBe(30 + 20);
     expect(team.picks[0]).toMatchObject({ points: 20, swapped_from: { drep_id: 'old', points: 30 } });
   });
 });

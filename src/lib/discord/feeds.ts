@@ -241,7 +241,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
             title: `🏟️ The ${seasonLabel(draft.season_number)} draft is open`,
             url: `${SITE}/draft`,
             color: COLORS.green,
-            description: `Pick 5 DReps for epochs ${draft.start_epoch}–${draft.end_epoch}. Smaller DReps carry an underdog multiplier. Rosters lock ${lockText}. Free to play.`,
+            description: `Pick 5 DReps for epochs ${draft.start_epoch}–${draft.end_epoch}. Spend up to 10 stars. Rosters lock ${lockText}. Free to play.`,
           },
         ],
       }),

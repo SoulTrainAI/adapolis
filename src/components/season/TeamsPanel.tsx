@@ -77,7 +77,7 @@ export function TeamsPanel() {
                         {p.name ?? `${p.drep_id.slice(0, 14)}…`}
                       </Link>
                       <span className="whitespace-nowrap text-slate-400">
-                        {p.points} × {p.multiplier.toFixed(2)} = <span className="font-semibold text-white">{p.contribution}</span>
+                        <span className="font-semibold text-white">{p.contribution}</span>
                       </span>
                     </li>
                   ))}

@@ -39,7 +39,7 @@ const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
   {
     href: "/draft",
     title: "Draft Teams",
-    body: "Free to play. Draft 5 DReps each season and score their season points. Smaller DReps carry an underdog multiplier, so scouting reliable newcomers pays off.",
+    body: "Free to play. Draft 5 DReps each season within a 10-star budget and score their season points.",
   },
   {
     href: "/leagues",
@@ -79,7 +79,7 @@ const PRINCIPLES: Array<[string, ReactNode]> = [
   ],
   [
     "Decentralization by design",
-    "The DRep Match-maker favors small DReps with a Decentralization weight you control, GovScore gently dampens very large ones, and the game rewards drafting underdogs, all to help voting power spread out.",
+    "The DRep Match-maker favors small DReps with a Decentralization weight you control and GovScore gently dampens very large ones, both to help voting power spread out.",
   ],
   [
     "Transparent",
@@ -243,11 +243,6 @@ export default function AboutPage() {
                 them. One star is worth a fifth of the season&apos;s top projections (the 99th percentile), so prices rescale every
                 season and every star buys about the same expected points. Go for one superstar and fill with long shots, or build a
                 balanced team: both can win.
-              </>,
-              <>
-                <B>Underdog multiplier.</B> Smaller DReps (by delegated ADA and number of delegators) multiply the points
-                they <em>gain</em> for your team, up to 1.5×. It&apos;s locked when you pick them, and losses are never
-                multiplied, so backing a small DRep never costs you more than backing a big one.
               </>,
               <>
                 <B>If a DRep retires</B> (deregisters) mid-season, you get one free replacement for that slot. Points

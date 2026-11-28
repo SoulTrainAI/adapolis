@@ -441,18 +441,16 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
                 scale resets every season, and a pick&apos;s cost locks when
                 picked. The next season&apos;s draft is
                 always open; picks can change until the roster lock, 24 hours
-                after the season&apos;s first epoch begins. DReps you keep hold
-                their original multiplier.
+                after the season&apos;s first epoch begins.
               </>,
               <>
                 <strong>Team points</strong> are the sum of your DReps&apos;
-                season points, with gains multiplied by each pick&apos;s
-                underdog multiplier (below).
+                season points. Points are never taken away.
               </>,
               <>
                 <strong>Retirements:</strong> if a drafted DRep deregisters
-                mid-season, you get one free replacement for that slot, at the
-                new DRep&apos;s current multiplier. Points already earned stay.
+                mid-season, you get one free replacement for that slot. Points
+                already earned stay.
               </>,
               <>
                 <strong>Leaderboards:</strong> the global game (opt in when you
@@ -480,14 +478,17 @@ GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
           />
           <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
             <h3 className="text-xl font-semibold text-slate-100">
-              Underdog multiplier
+              Underdog bonus
             </h3>
+            <P>
+              A size-based bonus every DRep card shows. It doesn&apos;t change
+              game points (until 27 November 2026 it multiplied a team&apos;s
+              gains); the DRep Match-maker&apos;s Decentralization weight uses
+              it to favor smaller DReps.
+            </P>
             <Formula>
-              {`smallness  = 1 − mean(ADA percentile, delegator percentile)
-multiplier = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to ${MAX_UNDERDOG.toFixed(2)}×)
-
-pick contribution = points × multiplier   if points > 0
-                  = points                if points ≤ 0`}
+              {`smallness = 1 − mean(ADA percentile, delegator percentile)
+bonus     = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to ${MAX_UNDERDOG.toFixed(2)}×)`}
             </Formula>
             <Bullets
               items={[
@@ -502,26 +503,16 @@ pick contribution = points × multiplier   if points > 0
                   sit just under.
                 </>,
                 <>
-                  <strong>Locked when you pick.</strong> The multiplier is fixed
-                  for that pick for the whole season, even if the DRep grows.
-                </>,
-                <>
-                  <strong>Gains only.</strong> The multiplier boosts positive
-                  points; losses count at 1×. Drafting a small DRep never costs
-                  you more in a bad stretch than drafting a large one would.
-                </>,
-                <>
-                  <strong>Why it exists:</strong> big DReps already get
-                  attention. The multiplier makes it worth scouting the reliable
-                  small DReps most people never look at.
+                  <strong>Why it exists:</strong> a few large DReps hold much of
+                  the voting power. The bonus lets people who care about
+                  decentralization find reliable small DReps to delegate to.
                 </>,
               ]}
             />
           </div>
           <P muted>
             Leagues, the global opt-in and retirement replacements arrive with
-            Season 1. The DRep Match-maker tilts toward small DReps for a different
-            reason: to spread voting power (see DRep Match-maker below).
+            Season 1.
           </P>
         </Section>
 
@@ -955,8 +946,8 @@ pick contribution = points × multiplier   if points > 0
                 calendar as well as with effort.
               </>,
               <>
-                <strong>Size is a snapshot.</strong> Underdog multipliers use
-                the last finished season&apos;s sizes, and lock at draft time.
+                <strong>Size is a snapshot.</strong> Underdog bonuses use the
+                last finished season&apos;s sizes.
               </>,
               <>
                 <strong>Indexer lag.</strong> Data can trail the chain slightly,

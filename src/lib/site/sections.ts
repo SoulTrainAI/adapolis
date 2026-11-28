@@ -31,7 +31,7 @@ export const SECTIONS = {
   draft: {
     href: '/draft',
     label: 'Draft Teams',
-    blurb: 'Free to play: draft 5 DReps and score their season points. Small DReps carry an underdog bonus.',
+    blurb: 'Free to play: draft 5 DReps and score their season points, within a 10-star budget.',
   },
   collection: {
     href: '/collection',

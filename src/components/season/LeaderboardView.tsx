@@ -54,8 +54,7 @@ function TeamRow({ team, live }: { team: LeaderboardTeam; live: boolean }) {
           <tr>
             <th className="px-4 py-2 text-left font-semibold">DRep</th>
             <th className="px-2 text-right font-semibold" title={TIPS.seasonPoints}>Season pts</th>
-            <th className="px-2 text-right font-semibold" title={TIPS.underdog}>Multiplier</th>
-            <th className="px-4 text-right font-semibold" title="This pick's contribution: season points, with gains multiplied by the locked underdog multiplier.">Team pts</th>
+            <th className="px-4 text-right font-semibold" title="This pick's points for the team, including a retired DRep's points before a swap.">Team pts</th>
           </tr>
         </thead>
         <tbody className="text-slate-200">
@@ -66,14 +65,13 @@ function TeamRow({ team, live }: { team: LeaderboardTeam; live: boolean }) {
                 {p.swapped_from && (
                   <span
                     className="block truncate text-xs text-slate-400"
-                    title={`Replaced ${p.swapped_from.name ?? p.swapped_from.drep_id} (retired) at epoch ${p.swapped_from.swap_epoch}. Their ${p.swapped_from.points} points from before stay on the team at ${p.swapped_from.multiplier.toFixed(2)}×.`}
+                    title={`Replaced ${p.swapped_from.name ?? p.swapped_from.drep_id} (retired) at epoch ${p.swapped_from.swap_epoch}. Their ${p.swapped_from.points} points from before stay on the team.`}
                   >
                     replaced {p.swapped_from.name ?? 'a retired DRep'} (+{p.swapped_from.points})
                   </span>
                 )}
               </td>
               <td className="px-2 text-right">{p.points}</td>
-              <td className="px-2 text-right">{p.multiplier.toFixed(2)}×</td>
               <td className="px-4 text-right font-semibold text-white">{p.contribution}</td>
             </tr>
           ))}
@@ -146,7 +144,7 @@ export function LeaderboardView({
         </h1>
         {children}
         <p className="text-slate-300">
-          Team points are each drafted DRep&apos;s season points, with gains multiplied by the underdog multiplier locked in when they were picked (losses count at 1×). Season points come only from
+          Team points are the sum of each drafted DRep&apos;s season points. Season points come only from
           voting, explaining votes and voting on time, never from how a DRep votes.
           {data.scope.kind === 'global' && ' Only teams in the global game appear here; the top 3 win DRep All-Star Season Trophy NFTs.'}
         </p>

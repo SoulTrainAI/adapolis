@@ -122,7 +122,7 @@ export function CollectionView() {
                 const card =
                   cards.get(p.drep_id) ??
                   placeholderCard({ drep_id: p.drep_id, name: d?.name ?? null, image: d?.image ?? null, ada: d?.ada, delegators: d?.delegators });
-                return <TradingCard key={p.drep_id} variant="season" card={card} lockedUnderdog={p.underdog_multiplier} />;
+                return <TradingCard key={p.drep_id} variant="season" card={card} />;
               })}
             </div>
           </>

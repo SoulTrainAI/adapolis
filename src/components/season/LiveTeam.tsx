@@ -138,7 +138,7 @@ export function LiveTeam() {
                     onClick={() => setChoice(c.drep_id)}
                     className={`rounded-full border px-3 py-1 ${choice === c.drep_id ? 'border-emerald-400 bg-emerald-900/40 text-white' : 'border-slate-700 hover:border-slate-500'}`}
                   >
-                    {cardName(c)} · {c.underdog.toFixed(2)}×
+                    {cardName(c)}
                   </button>
                 </li>
               ))}
