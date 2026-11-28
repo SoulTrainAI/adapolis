@@ -500,6 +500,7 @@ export function MatchQuiz() {
             results={hasAnswers && !quickPick ? results : []}
             hasAnswers={hasAnswers && !quickPick}
             quickPick={quickPick}
+            answers={answers}
           />
 
           {hasAnswers && !quickPick && statedAnswered.length > 0 && rankMode === 'votes' && (
@@ -616,7 +617,7 @@ function TopicQuestion({
     <div className="space-y-6">
       <div>
         <p className="text-xs uppercase tracking-wider text-violet-300 mb-2">
-          {topic.group === 'decentralization' ? 'Decentralization' : topic.group === 'deeper' ? 'Going deeper' : 'Your values'}
+          {topic.group === 'decentralization' ? 'Decentralization' : topic.group === 'drep' ? 'Your DRep' : topic.group === 'deeper' ? 'Going deeper' : 'Your values'}
           {topic.source === 'stated' && ' · not yet measurable from votes'}
         </p>
         <h2 className="text-3xl font-bold text-white leading-tight">{topic.statement}</h2>

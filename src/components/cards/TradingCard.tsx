@@ -633,7 +633,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
           />
           <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `rank #${c.season.rank}` : 'points'} tip={TIPS.seasonPoints} />
           <Tile label="Projected" value={num(c.projection)} sub="next season" tip={TIPS.projection} />
-          <Tile label="Underdog" value={`${c.underdog.toFixed(2)}×`} sub="decentral. bonus" tip={TIPS.underdog} />
+          <Tile label="Draft Cost" value={`${c.draft_cost ?? 1}★`} sub="of 10 stars" tip="Stars this DRep costs in a 10-star Cardanathon team, in proportion to their projected points." />
         </div>
 
         {/* Career and fantasy lines */}
@@ -697,7 +697,7 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
               “{detail.quote}”
             </p>
           ) : (
-            <p className="italic text-slate-400" style={{ fontSize: cq(2.6), lineHeight: 1.3 }} title="Flavor text by ADApolis, based only on this card's record. The DRep can replace it with its own words by claiming the card.">
+            <p className="italic text-slate-400" style={{ fontSize: cq(2.6), lineHeight: 1.3 }} title="Flavor text by ADApolis, based only on this card's record. The DRep can replace it with their own words by claiming the card.">
               {detail.quote}
             </p>
           )

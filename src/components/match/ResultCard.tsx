@@ -32,7 +32,7 @@ export function DRepAvatar({ drep }: { drep: MatchDRep }) {
   return <Image src={getAvatarDataUri(drep.drep_id)} alt={`${label} avatar`} width={56} height={56} className="rounded-full border-2 border-slate-600" />;
 }
 
-export function ResultCard({ result, rank, bonus }: { result: MatchResult; rank: number; /** Decentralization bonus from the visitor's weights (0.25 = +25%). */ bonus?: number }) {
+export function ResultCard({ result, rank, bonus }: { result: MatchResult; rank: number; /** Bonus from the visitor's weights (0.25 = +25%). */ bonus?: number }) {
   const [copied, setCopied] = useState(false);
   const name = result.drep.name ?? `${result.drep.drep_id.slice(0, 18)}…`;
   return (
@@ -59,8 +59,8 @@ export function ResultCard({ result, rank, bonus }: { result: MatchResult; rank:
               </span>
             )}
             {bonus !== undefined && bonus >= 0.005 && (
-              <span className="px-2 py-0.5 rounded bg-emerald-900/40 text-emerald-300" title="This DRep's underdog bonus, scaled by your Decentralization weight.">
-                +{Math.round(bonus * 100)}% decentralization bonus
+              <span className="px-2 py-0.5 rounded bg-emerald-900/40 text-emerald-300" title="From your Power, Charisma and Decentralization settings.">
+                +{Math.round(bonus * 100)}% bonus from your settings
               </span>
             )}
           </div>

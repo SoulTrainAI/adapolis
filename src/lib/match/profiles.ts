@@ -262,7 +262,7 @@ export function buildMatchData({ dreps, scores, votes, proposals, directions, st
   for (const d of eligible) positions.set(d.drep_id, {});
 
   for (const topic of TOPICS) {
-    if (topic.source === 'stated') continue;
+    if (topic.source === 'stated' || topic.source === 'preference') continue;
 
     const shrunk = new Map<string, number>();
     const meta = new Map<string, { rate: number; n: number }>();

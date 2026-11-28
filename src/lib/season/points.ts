@@ -2,7 +2,7 @@
  * Season points for the fantasy layer.
  *
  * Cardinal Rule (CONCEPT.md 2.4): every point comes from HOW a DRep does the
- * job — showing up, explaining, voting in time — never from HOW it voted.
+ * job — showing up, explaining, voting in time — never from HOW they voted.
  * Yes, No and Abstain earn exactly the same. Nothing here reads vote outcomes.
  */
 

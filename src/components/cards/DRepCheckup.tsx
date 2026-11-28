@@ -75,17 +75,17 @@ export function DRepCheckup({ findHref = '/match', findLabel = 'Find a DRep who 
       title = `${name} missed ${plural(missed, 'vote')} lately`;
       body = (
         <>
-          In the last two 6-epoch windows they voted {plural(votes, 'time')} and let {plural(missed, 'action')} close without voting. Worth keeping an eye on.
+          In the last two seasons they voted {plural(votes, 'time')} and let {plural(missed, 'action')} close without voting. Worth keeping an eye on.
         </>
       );
     } else if (votes > 0) {
       tone = 'good';
       title = `${name} is showing up`;
-      body = <>It voted {plural(votes, 'time')} in the last two 6-epoch windows and missed none.</>;
+      body = <>They voted {plural(votes, 'time')} in the last two seasons and missed none.</>;
     } else {
       tone = 'info';
       title = `Nothing for ${name} to vote on lately`;
-      body = <>No governance actions closed in the last two windows, so there&apos;s no attendance to judge yet.</>;
+      body = <>No governance actions closed in the last two seasons, so there&apos;s no attendance to judge yet.</>;
     }
   }
 

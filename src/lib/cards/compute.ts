@@ -224,7 +224,7 @@ export function computeCards(input: CardInputs): CardComputation {
     if (d.profile_complete) abilities.push({ id: 'identified', label: 'Identified', detail: 'Complete public profile: name, bio, image and links.', tier: null });
     // Only small DReps that are actually voting: a big multiplier on an idle DRep is a trap, not a sleeper.
     if (underdog >= 1.35 && activeLately)
-      abilities.push({ id: 'underdog', label: 'Underdog', detail: `Active small DRep: ${underdog.toFixed(2)}× underdog bonus.`, tier: null });
+      abilities.push({ id: 'underdog', label: 'Underdog', detail: 'Active small DRep: among the smallest by ADA and delegators.', tier: null });
     if (rookie) abilities.push({ id: 'rookie', label: 'Rookie', detail: 'First votes in the last two windows.', tier: null });
     const lastVote = (votesByDRep.get(d.drep_id) ?? []).reduce((m, v) => Math.max(m, v.epoch), -Infinity);
     const recentLines = myLines.filter((x) => x.window >= currentWindow - 1);

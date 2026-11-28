@@ -131,7 +131,7 @@ export default async function StatsAndTraitsPage() {
             <div key={g}>
               <h3 className="mb-2 mt-4 text-sm font-semibold uppercase tracking-wider text-slate-400">{GROUP_TITLE[g]}</h3>
               <dl className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/60">
-                {STATS.filter((s) => s.group === g).map((s) => (
+                {STATS.filter((s) => s.group === g && s.key !== 'underdog').map((s) => (
                   <div key={s.key} className="grid gap-1 px-4 py-2.5 sm:grid-cols-[14rem_1fr]">
                     <dt className="font-semibold text-white">{s.label}</dt>
                     <dd className="text-sm text-slate-300">{s.tip}</dd>

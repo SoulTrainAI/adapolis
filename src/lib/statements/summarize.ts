@@ -6,7 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { TOPICS, quoteFitsTopic } from '@/lib/match/topics';
+import { POSITION_TOPICS as TOPICS, quoteFitsTopic } from '@/lib/match/topics';
 import type { StatementSource } from './sources';
 
 export const DEFAULT_STATEMENTS_MODEL = 'claude-haiku-5-5';

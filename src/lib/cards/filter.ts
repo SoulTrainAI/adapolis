@@ -38,7 +38,7 @@ const ada = (v: number) => (v >= 1e9 ? `₳${(v / 1e9).toFixed(1)}B` : v >= 1e6 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export const STATS: StatDef[] = [
-  { key: 'govscore', label: 'GovScore', group: 'Scores', get: (c) => c.govscore, format: (v) => fmt(v), tip: 'Career score, 0–100: the game’s scoring over a whole career.' },
+  { key: 'govscore', label: 'GovScore', group: 'Scores', get: (c) => c.govscore, format: (v) => fmt(v), tip: 'How much of the job they’ve done over their career, 0–100: points earned ÷ points possible.' },
   { key: 'rank', label: 'GovScore rank', group: 'Scores', get: (c) => c.rank, format: (v) => `#${v}`, integer: true, lowFirst: true, tip: 'Position on the Scoreboard by GovScore (1 is best).' },
   { key: 'delta1', label: 'GovScore change', group: 'Scores', get: (c) => c.delta1, format: (v) => `${v > 0 ? '+' : ''}${fmt(v)}`, tip: 'Change since the end of last season.' },
   { key: 'participation', label: 'Participation', group: 'Scores', get: (c) => c.participation, format: pct, percent: true, tip: 'Votes cast ÷ actions they could vote on (Stamina).' },
@@ -50,7 +50,7 @@ export const STATS: StatDef[] = [
   { key: 'last_points', label: 'Last season', group: 'Game', get: (c) => c.last_points, format: (v) => fmt(v), integer: true, tip: 'Points in the last finished season.' },
   { key: 'lifetime_points', label: 'Lifetime points', group: 'Game', get: (c) => c.lifetime.points, format: (v) => fmt(v), integer: true, tip: 'All points across every season.' },
   { key: 'draft_cost', label: 'Draft Cost', group: 'Game', get: (c) => c.draft_cost ?? 1, format: (v) => `${v}★`, integer: true, tip: 'Stars this DRep costs in a 10-star team.' },
-  { key: 'underdog', label: 'Underdog bonus', group: 'Backing', get: (c) => c.underdog, format: (v) => `${v.toFixed(2)}×`, tip: 'Size-based bonus, 1.00–1.50×: higher for smaller DReps. The Match-maker’s Decentralization weight uses it.' },
+  { key: 'underdog', label: 'Underdog bonus', group: 'Backing', optional: true, get: (c) => c.underdog, format: (v) => `${v.toFixed(2)}×`, tip: 'Size-based bonus, 1.00–1.50×: higher for smaller DReps. The Match-maker’s Decentralization weight uses it.' },
   { key: 'ownership', label: 'Drafted by (% of teams)', group: 'Game', get: (c) => c.ownership, format: pct, percent: true, tip: 'Share of this season’s teams that picked them.' },
   { key: 'drafted_by', label: 'Drafted by (teams)', group: 'Game', get: (c) => c.drafted_by ?? null, format: (v) => fmt(v), integer: true, optional: true, tip: 'Number of teams that picked them this season.' },
   { key: 'ada', label: 'ADA delegated', group: 'Backing', get: (c) => c.ada, format: ada, log: true, tip: 'Voting power (Power).' },

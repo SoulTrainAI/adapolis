@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
-import type { MatchResult } from '@/lib/match/score';
+import type { Answers, MatchResult } from '@/lib/match/score';
+import { weightsFromAnswers, type WeightKey, type Weights } from '@/lib/match/weights';
 import type { MatchDRep } from '@/lib/match/profiles';
 import { MyDRepBadge, useMyDRep } from '@/components/auth/MyDRepBadge';
 import { DRepAvatar, ResultCard } from './ResultCard';
@@ -14,14 +15,18 @@ import { CardFilters } from '@/components/cards/CardFilters';
 import { applyFilters, DEFAULT_SPEC, type FilterSpec } from '@/lib/cards/filter';
 import type { CardSummary } from '@/lib/cards/types';
 
-type WeightKey = 'values' | 'track' | 'stamina' | 'xp' | 'insight' | 'power' | 'charisma' | 'decent';
-type Weights = Record<WeightKey, number>;
-/** Weights that add up a DRep's score; Decentralization then multiplies it. */
-const ADDITIVE: WeightKey[] = ['values', 'track', 'stamina', 'xp', 'insight', 'power', 'charisma'];
+/** Weights that add up a DRep's score. Power, Charisma and Decentralization are % bonuses on top. */
+const ADDITIVE: WeightKey[] = ['values', 'track', 'stamina', 'xp', 'insight'];
+/** Most Power or Charisma can add, at ±10 (0.25 = +25%). */
+const SIZE_BONUS_MAX = 0.25;
 // The list's own sorts, on top of every card stat.
 const EXPLORE_DEFAULTS: FilterSpec = { ...DEFAULT_SPEC, pool: 'registered', sort: 'personal' };
 
-const WEIGHTS_KEY = 'adapolis.explore.weights.v1';
+// v2: tied to the quiz answers they were tuned for, so retaking the quiz resets them.
+// Underdog is a Match-maker stat only, so it's filterable here and nowhere else.
+const EXPLORE_OPTIONAL_STATS = ['underdog'];
+
+const WEIGHTS_KEY = 'adapolis.explore.weights.v2';
 
 const SLIDERS: Array<{ key: WeightKey; label: string; help: string; bipolar?: [string, string] }> = [
   { key: 'values', label: 'Values', help: 'How closely they vote the way you answered' },
@@ -29,8 +34,8 @@ const SLIDERS: Array<{ key: WeightKey; label: string; help: string; bipolar?: [s
   { key: 'stamina', label: 'Stamina', help: 'Share of votes they showed up for' },
   { key: 'xp', label: 'XP', help: 'Total votes cast' },
   { key: 'insight', label: 'Insight', help: 'How often they explain their votes' },
-  { key: 'power', label: 'Power', help: 'ADA delegated to them', bipolar: ['Smaller', 'Bigger'] },
-  { key: 'charisma', label: 'Charisma', help: 'Number of delegators', bipolar: ['Fewer', 'More'] },
+  { key: 'power', label: 'Power', help: 'Bonus up to +25% by ADA delegated', bipolar: ['Smaller', 'Bigger'] },
+  { key: 'charisma', label: 'Charisma', help: 'Bonus up to +25% by number of delegators', bipolar: ['Fewer', 'More'] },
   {
     key: 'decent',
     label: 'Decentralization',
@@ -39,7 +44,7 @@ const SLIDERS: Array<{ key: WeightKey; label: string; help: string; bipolar?: [s
 ];
 
 const PRESETS: Array<{ id: string; label: string; weights: Weights; needsAnswers?: boolean }> = [
-  { id: 'values', label: 'Match my values', needsAnswers: true, weights: { values: 10, track: 4, stamina: 3, xp: 2, insight: 3, power: 0, charisma: 0, decent: 5 } },
+  { id: 'values', label: 'Values first', needsAnswers: true, weights: { values: 10, track: 4, stamina: 3, xp: 2, insight: 3, power: 0, charisma: 0, decent: 5 } },
   { id: 'reliable', label: 'Reliable & thoughtful', weights: { values: 0, track: 8, stamina: 6, xp: 3, insight: 8, power: 0, charisma: 0, decent: 5 } },
   { id: 'balanced', label: 'Balanced', needsAnswers: true, weights: { values: 6, track: 6, stamina: 4, xp: 3, insight: 5, power: 0, charisma: 1, decent: 5 } },
 ];
@@ -49,8 +54,9 @@ interface Row {
   result: MatchResult | null;
   parts: Record<WeightKey, number>;
   score: number;
-  /** Share added by the Decentralization weight (0.25 = +25%). */
+  /** Share added by the Power, Charisma and Decentralization weights (0.25 = +25%). */
   bonus: number;
+  bonusParts: { power: number; charisma: number; decent: number };
 }
 
 function percentiles(values: number[]): (v: number) => number {
@@ -65,13 +71,29 @@ function percentiles(values: number[]): (v: number) => number {
   };
 }
 
-function loadWeights(): Weights | null {
+function answersKey(answers: Answers | null | undefined): string {
+  const text = JSON.stringify(answers ?? null);
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
+  return String(h);
+}
+
+function loadWeights(key: string): Weights | null {
   try {
-    const raw = localStorage.getItem(WEIGHTS_KEY);
-    return raw ? (JSON.parse(raw) as Weights) : null;
+    const raw = JSON.parse(localStorage.getItem(WEIGHTS_KEY) ?? 'null') as { key: string; weights: Weights } | null;
+    return raw && raw.key === key ? raw.weights : null;
   } catch {
     return null;
   }
+}
+
+function bonusTitle(p: Row['bonusParts']): string {
+  const bits = [
+    p.decent >= 0.005 && `Decentralization +${Math.round(p.decent * 100)}%`,
+    p.power >= 0.005 && `Power +${Math.round(p.power * 100)}%`,
+    p.charisma >= 0.005 && `Charisma +${Math.round(p.charisma * 100)}%`,
+  ].filter(Boolean);
+  return `Bonus from your settings: ${bits.join(', ')}`;
 }
 
 export function ExploreDReps({
@@ -79,13 +101,20 @@ export function ExploreDReps({
   results,
   hasAnswers,
   quickPick,
+  answers,
 }: {
   dreps: MatchDRep[];
   results: MatchResult[];
   hasAnswers: boolean;
   quickPick: boolean;
+  answers?: Answers;
 }) {
-  const defaultPreset = PRESETS.find((p) => p.id === (quickPick || !hasAnswers ? 'reliable' : 'values'))!;
+  const presets = useMemo(
+    () => [{ id: 'answers', label: 'From your answers', needsAnswers: true, weights: weightsFromAnswers(answers) }, ...PRESETS],
+    [answers]
+  );
+  const key = answersKey(answers);
+  const defaultPreset = presets.find((p) => p.id === (quickPick || !hasAnswers ? 'reliable' : 'answers'))!;
   const [weights, setWeights] = useState<Weights>(defaultPreset.weights);
   const [preset, setPreset] = useState<string | null>(defaultPreset.id);
   const [showTuning, setShowTuning] = useState(false);
@@ -97,9 +126,8 @@ export function ExploreDReps({
 
   useEffect(() => {
     if (quickPick || !hasAnswers) return;
-    const saved = loadWeights();
+    const saved = loadWeights(key);
     if (saved) {
-      // Saved before Decentralization existed: keep the preset's.
       setWeights({ ...defaultPreset.weights, ...saved });
       setPreset(null);
     }
@@ -111,7 +139,7 @@ export function ExploreDReps({
     setWeights(next);
     setPreset(null);
     try {
-      localStorage.setItem(WEIGHTS_KEY, JSON.stringify(next));
+      localStorage.setItem(WEIGHTS_KEY, JSON.stringify({ key, weights: next }));
     } catch {
       // Storage can be unavailable (private mode); tuning still works for this visit.
     }
@@ -142,13 +170,18 @@ export function ExploreDReps({
       };
       let sum = 0;
       ADDITIVE.forEach((k) => {
-        const w = effective[k] ?? 0;
-        // Negative Power/Charisma weights favor the smaller side.
-        sum += w >= 0 ? w * parts[k] : -w * (1 - parts[k]);
+        sum += (effective[k] ?? 0) * parts[k];
       });
-      // Decentralization multiplies: the underdog bonus (up to +50%), scaled by how much the visitor cares.
-      const bonus = decent * parts.decent;
-      return { drep, result, parts, score: (sum / total) * 100 * (1 + bonus), bonus };
+      // Size is a % bonus, not points, so it can't outweigh how well a DRep does the job.
+      // Positive weights favor bigger DReps (by percentile), negative favor smaller.
+      const size = (k: 'power' | 'charisma') => {
+        const w = Math.max(-10, Math.min(10, effective[k] ?? 0));
+        return (Math.abs(w) / 10) * SIZE_BONUS_MAX * (w >= 0 ? parts[k] : 1 - parts[k]);
+      };
+      // Decentralization: the underdog bonus (up to +50%), scaled by how much the visitor cares.
+      const bonusParts = { power: size('power'), charisma: size('charisma'), decent: decent * parts.decent };
+      const bonus = bonusParts.power + bonusParts.charisma + bonusParts.decent;
+      return { drep, result, parts, score: (sum / total) * 100 * (1 + bonus), bonus, bonusParts };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `effective` is derived from weights and hasAnswers
   }, [dreps, results, weights, hasAnswers, cards]);
@@ -215,7 +248,7 @@ export function ExploreDReps({
       <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-slate-400">Rank by:</span>
-          {PRESETS.filter((p) => hasAnswers || !p.needsAnswers).map((p) => (
+          {presets.filter((p) => hasAnswers || !p.needsAnswers).map((p) => (
             <button
               key={p.id}
               type="button"
@@ -238,6 +271,11 @@ export function ExploreDReps({
             <SlidersHorizontal size={14} /> {preset === null ? 'Custom weights' : 'Fine-tune'}
           </button>
         </div>
+        {hasAnswers && preset === 'answers' && (
+          <p className="text-xs text-slate-400">
+            Weights set from your quiz answers, including the &ldquo;Your DRep&rdquo; questions. Fine-tune to change them.
+          </p>
+        )}
         {!hasAnswers && (
           <p className="text-xs text-slate-400">
             Ranked on how reliably DReps show up and explain their votes. Take the quiz to also match on your values.
@@ -286,9 +324,10 @@ export function ExploreDReps({
         }}
         cards={Array.from(cardOf.values())}
         defaults={EXPLORE_DEFAULTS}
+        optionalStats={EXPLORE_OPTIONAL_STATS}
         resultCount={listed.length}
         extraSorts={[
-          { value: 'personal', label: 'Your score', tip: 'Your score from the weights above, with the Decentralization bonus.' },
+          { value: 'personal', label: 'Your score', tip: 'Your score from the weights above, with your Power, Charisma and Decentralization bonuses.' },
           { value: 'match', label: 'Values match', disabled: !hasAnswers, tip: TIPS.alignment },
         ]}
       />
@@ -317,12 +356,12 @@ export function ExploreDReps({
                 ) : (
                   <span className="ml-auto text-slate-400">GovScore {r.drep.govscore.toFixed(1)}</span>
                 )}
-                <span className="text-slate-400" title="Your score from the weights above, including the Decentralization bonus.">
+                <span className="text-slate-400" title="Your score from the weights above, including your bonuses.">
                   · You {Math.round(r.score)}
                 </span>
                 {r.bonus >= 0.005 && (
-                  <span className="text-emerald-300" title="Decentralization bonus: this DRep's underdog bonus, scaled by your Decentralization weight.">
-                    +{Math.round(r.bonus * 100)}% decentral.
+                  <span className="text-emerald-300" title={bonusTitle(r.bonusParts)}>
+                    +{Math.round(r.bonus * 100)}% bonus
                   </span>
                 )}
               </div>

@@ -6,6 +6,7 @@
 import type { ReactNode } from "react";
 import { ABILITY_RULES, TIER_NAMES } from "@/lib/cards/abilities";
 import { PROVISIONAL_BELOW_ELIGIBLE } from "@/lib/scoring/confidence";
+import { BLANK_ACTIONS } from "@/lib/scoring/govscore-v2";
 import { POINT_RULES, SEASON_LENGTH_EPOCHS } from "@/lib/season/points";
 import { ROSTER_SIZE } from "@/lib/season/fantasy";
 import { MATCH_RULES } from "@/lib/match/topics";
@@ -189,79 +190,69 @@ export default function MethodologyPage() {
 
         <Section id="govscore" n={next()} title="GovScore">
           <P>
-            GovScore is the Cardanathon&apos;s scoring applied to a DRep&apos;s
-            whole career: how reliably they vote, explain their votes and vote
-            on time. Every governance action they could have voted on is scored
-            exactly as the game scores it, and GovScore is the share of the
-            points a perfect DRep would have earned on the same actions.
+            GovScore (0–100) is how much of the job a DRep has done over their
+            whole career. It uses the same points as the Cardanathon.
           </P>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-4">
-            <h3 className="text-xl font-semibold text-slate-100">Formula</h3>
-            <Formula>
-              {`Per action they could vote on:  vote +${POINT_RULES.vote}, early +${POINT_RULES.early}, original rationale +${POINT_RULES.freshRationale}
-Missed action: 0 (never a penalty) and the streak starts over
-Streak: +${POINT_RULES.streakStep} per clean epoch in a row, up to +${POINT_RULES.streakStep * POINT_RULES.streakCap}
-
-p = points earned / points a perfect DRep would earn on the same actions   (n = actions)
-
-Raw GovScore = 100 × Wilson lower bound of p at 95% confidence
-             = 100 × ( p + z²/2n − z·√( p(1−p)/n + z²/4n² ) ) / ( 1 + z²/n ),  z = 1.96
-
-GovScore     = Raw GovScore × D   (ADA-power dampening, next section)`}
-            </Formula>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-3">
+            <h3 className="text-xl font-semibold text-slate-100">In three lines</h3>
+            <ol className="list-decimal space-y-2 pl-5 text-slate-200">
+              <li>
+                Every governance action a DRep could vote on is worth{" "}
+                {POINT_RULES.vote + POINT_RULES.early + POINT_RULES.freshRationale} points: {POINT_RULES.vote} for
+                voting, {POINT_RULES.early} for voting early and {POINT_RULES.freshRationale} for an original
+                rationale. Voting every epoch without a miss adds a small streak bonus.
+              </li>
+              <li>GovScore = the points they earned ÷ the points they could have earned × 100.</li>
+              <li>
+                Every DRep starts with {BLANK_ACTIONS} blank actions, so a perfect first 5 votes score about 50–60, not 100.
+                The blanks matter less and less as their record grows.
+              </li>
+            </ol>
+            <p className="text-sm text-slate-400">
+              Very large DReps are then scaled down gently (next section), so reliable smaller DReps can stand out.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-slate-100">What that looks like</h3>
+            <div className="bg-slate-900/30 border border-slate-700 rounded p-4 text-sm text-slate-300 space-y-2">
+              <p>Votes on everything, early, explaining each vote in their own words → <strong className="text-slate-100">about 95</strong></p>
+              <p>Votes on everything, early, but never explains → <strong className="text-slate-100">about 80</strong></p>
+              <p>Explains every vote but always votes late → <strong className="text-slate-100">about 80</strong></p>
+              <p>Votes on half the actions, never explains → <strong className="text-slate-100">about 35</strong></p>
+            </div>
           </div>
           <Bullets
             items={[
-              <>
-                <strong>A perfect record</strong> votes on every action, early,
-                each time with an original rationale. That earns{" "}
-                {POINT_RULES.vote + POINT_RULES.freshRationale + POINT_RULES.early}{" "}
-                points per action plus the streak.
-              </>,
-              <>
-                <strong>Every part counts:</strong> voting on everything early
-                but never posting an original rationale earns about three
-                quarters of the points, and so does explaining every vote but
-                always voting late.
-              </>,
               <>
                 <strong>Yes, No and Abstain</strong> score exactly the same.
                 GovScore never looks at which way anyone voted.
               </>,
               <>
                 <strong>Actions they could vote on:</strong> actions that closed
-                while the DRep was registered, plus open ones they&apos;ve
-                already voted on. A vote can&apos;t be missed until its window
-                closes, and a DRep who joined recently is measured only against
-                actions since they joined.
+                while they were registered, plus open ones they&apos;ve already
+                voted on. A vote can&apos;t be missed until its window closes.
               </>,
               <>
-                <strong>Why the confidence adjustment:</strong> a perfect record
-                over 5 actions tells us far less than one over 160. The Wilson
-                lower bound is the share we can be 95% sure the DRep is at or
-                above, so a long, steady record ranks highest and newcomers
-                climb as their record grows. There is no tuning constant.
+                <strong>Original rationale:</strong> not identical to any
+                rationale posted before, by them or anyone else.
               </>,
               <>
                 <strong>Provisional:</strong> DReps with fewer than{" "}
-                {PROVISIONAL_BELOW_ELIGIBLE} eligible actions are marked
-                provisional.
+                {PROVISIONAL_BELOW_ELIGIBLE} actions are marked provisional.
               </>,
               <>
                 <strong>Participation</strong> (votes cast ÷ actions they could
-                vote on) is still shown on every card as Stamina.
+                vote on) is shown separately on every card, as Stamina.
               </>,
               <>
-                <strong>Who is ranked:</strong> by default the Scoreboard and
-                card ranks cover <em>active</em> DReps: registered, at least one
-                vote cast, and some ADA delegated. The Scoreboard&apos;s Show
-                filter can include all registered or retired DReps.
+                <strong>Who is ranked:</strong> by default the Scoreboard covers{" "}
+                <em>active</em> DReps: registered, at least one vote cast, and
+                some ADA delegated.
               </>,
               <>
                 <strong>History:</strong> until 27 November 2026 GovScore was
-                participation only (votes cast ÷ eligible actions, with the same
-                confidence adjustment). Trend lines are recalculated with the
-                current formula.
+                participation only. Trend lines are recalculated with today&apos;s
+                rules.
               </>,
             ]}
           />

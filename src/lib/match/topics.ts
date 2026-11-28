@@ -14,9 +14,12 @@
  *  - 'rationale': measured from how often the DRep publishes vote rationales
  *  - 'stated': only measurable from DReps' public statements (Phase 2/3); the
  *              quiz asks it, but it doesn't affect vote-record matching yet
+ *  - 'preference': what the visitor wants from a DRep (reliability, experience,
+ *              popularity). Never matched against positions; it only sets the
+ *              Match-maker's starting weights (lib/match/weights.ts)
  */
 
-export type TopicSource = 'votes' | 'params' | 'stake' | 'rationale' | 'stated';
+export type TopicSource = 'votes' | 'params' | 'stake' | 'rationale' | 'stated' | 'preference';
 
 export interface ParamRule {
   /** Koios camelCase parameter name inside a ParameterChange proposal */
@@ -35,7 +38,7 @@ export interface Topic {
   /** Balanced summary of the main arguments each way, shown under the question */
   argsFor: string[];
   argsAgainst: string[];
-  group: 'core' | 'decentralization' | 'deeper';
+  group: 'core' | 'decentralization' | 'drep' | 'deeper';
   source: TopicSource;
   /** For 'votes': action types; value 1 means a Yes agrees with the statement */
   actionTypes?: Partial<Record<string, 1 | 0>>;
@@ -121,6 +124,42 @@ export const TOPICS: Topic[] = [
     argsAgainst: ["Caps can be dodged by splitting stake across many wallets.", "Those with the most at stake bear the most risk.", "Enforcing a cap would need protocol changes that may not work in practice."],
     group: 'decentralization',
     source: 'stated',
+  },
+  {
+    id: 'pref_reliable',
+    statement: 'My DRep should vote on every governance action.',
+    context: 'Some DReps vote on nearly everything; others only on the actions they care about most.',
+    argsFor: ["A missed vote is your voting power left unused.", "Steady voters keep governance moving when turnout is low."],
+    argsAgainst: ["Abstaining from actions outside their expertise can be responsible.", "Quality of votes can matter more than quantity."],
+    group: 'drep',
+    source: 'preference',
+  },
+  {
+    id: 'pref_experience',
+    statement: "I'd rather back a DRep with a long track record than a newcomer.",
+    context: 'Long-serving DReps have a record you can check. Newcomers bring fresh perspectives.',
+    argsFor: ["A long record shows how they actually behave, not just what they promise.", "Experience with past actions helps judge new ones."],
+    argsAgainst: ["Newcomers need delegators to get started at all.", "Long-serving DReps can become entrenched."],
+    group: 'drep',
+    source: 'preference',
+  },
+  {
+    id: 'pref_popular',
+    statement: 'I trust DReps that many other delegators have already chosen.',
+    context: 'Some DReps have thousands of delegators, others only a handful.',
+    argsFor: ["Many delegators have already looked them over.", "Popular DReps are often well known and easy to follow."],
+    argsAgainst: ["Popularity concentrates power in fewer hands.", "Being well known isn't the same as doing the job well."],
+    group: 'drep',
+    source: 'preference',
+  },
+  {
+    id: 'pref_values_first',
+    statement: 'How a DRep votes on the issues matters more to me than how active they are.',
+    context: 'Your matches can lean on shared views, or on how reliably a DRep shows up and explains themselves.',
+    argsFor: ["A DRep who shows up but votes against your views doesn't represent you.", "Your delegation is a statement of what you believe."],
+    argsAgainst: ["Views are only measured on actions DReps have voted on.", "A reliable, transparent DRep is easier to hold to account."],
+    group: 'drep',
+    source: 'preference',
   },
   {
     id: 'committee_trust',
@@ -210,6 +249,9 @@ export const TOPICS: Topic[] = [
     source: 'stated',
   },
 ];
+
+/** Topics a DRep can hold a position on (everything except the visitor's DRep preferences). */
+export const POSITION_TOPICS = TOPICS.filter((t) => t.source !== 'preference');
 
 export const IMPORTANCE_LEVELS = [
   { value: 0, label: 'Not at all' },

@@ -6,22 +6,26 @@
  * the window, +5 for an original rationale (not identical to any posted
  * before, by anyone), nothing
  * for an action that closed without their vote, plus streak bonuses for
- * consecutive clean epochs. GovScore is the share of the points a perfect DRep would have
- * earned on the same actions (votes on all of them, early, each with a new
- * rationale), so it stays on 0–100.
+ * consecutive clean epochs.
  *
- * As in v1: confidence-adjusted with the Wilson lower bound over the number
- * of actions (a short perfect record isn't yet proven), then the ADA-power
- * dampener. Points never depend on how anyone voted (Cardinal Rule).
+ *   GovScore = points earned ÷ points possible × 100, then the ADA dampener.
+ *
+ * "Points possible" is what a perfect DRep would earn on the same actions
+ * (votes on all of them, early, each with an original rationale), plus five
+ * blank actions every DRep starts with, so 5 perfect votes can't outrank 160.
+ * (Replaced a Wilson confidence bound on 2026-11-27: same effect, explainable
+ * in a sentence.) Points never depend on how anyone voted (Cardinal Rule).
  */
 
 import { computeSeasonPoints, POINT_RULES, type PointBreakdown, type SeasonProposal, type SeasonVote } from '@/lib/season/points';
 import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
-import { wilsonLowerBound } from './confidence';
 import { calculateDampener } from './govscore-v1';
 
 /** What a perfect vote earns: voted, explained with a new rationale, early. */
 export const PERFECT_ACTION = POINT_RULES.vote + POINT_RULES.rationale + POINT_RULES.freshRationale + POINT_RULES.early;
+
+/** Every record starts with this many blank actions (worth nothing), so short records can't top long ones. */
+export const BLANK_ACTIONS = 5;
 
 export interface ProcessScore {
   drep_id: string;
@@ -77,8 +81,7 @@ export function processScores(
     const epochs = new Set(ids.map((id) => byId.get(id)!.start)).size;
     const possible = actions * PERFECT_ACTION + perfectStreak(epochs);
     const earned = p.points;
-    const ratio = possible > 0 ? Math.min(1, Math.max(0, earned / possible)) : null;
-    const raw = ratio === null ? null : Math.round(wilsonLowerBound(ratio * actions, actions) * 1000) / 10;
+    const raw = actions > 0 ? Math.round((Math.max(0, earned) / (possible + BLANK_ACTIONS * PERFECT_ACTION)) * 1000) / 10 : null;
     return {
       drep_id: p.drep_id,
       actions,

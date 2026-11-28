@@ -284,7 +284,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
             { name: 'Season pts', value: String(card.season.points), inline: true },
             { name: 'Projection', value: card.projection !== null ? String(card.projection) : '—', inline: true },
             { name: 'Career votes', value: String(card.lifetime.votes), inline: true },
-            { name: 'Underdog', value: `${card.underdog.toFixed(2)}×`, inline: true },
+            { name: 'Class', value: card.drep_class?.label ?? '—', inline: true },
             { name: 'Streak', value: `${card.streak} epochs`, inline: true },
           ],
           footer: { text: 'Collect, scout and draft at adapolis.net' },

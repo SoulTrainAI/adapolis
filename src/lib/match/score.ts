@@ -60,7 +60,7 @@ export function scoreMatches(
 
     for (const topic of TOPICS) {
       const answer = answers.topics[topic.id];
-      if (!answer || answer.importance <= 0 || topic.source === 'stated') continue;
+      if (!answer || answer.importance <= 0 || topic.source === 'stated' || topic.source === 'preference') continue;
       const u = toUnit(answer.agree);
       const position = drep.positions[topic.id]?.value ?? 0.5;
 

@@ -1,7 +1,7 @@
 /**
  * Card abilities: published rules, shared by the card engine and the
  * methodology page. Every rule counts how a DRep does the job (showing up,
- * explaining, voting early). None looks at which way it voted or whether
+ * explaining, voting early). None looks at which way they voted or whether
  * a proposal passed (Cardinal Rule).
  */
 
@@ -25,7 +25,7 @@ export const ABILITY_RULES: AbilityRule[] = [
   { id: 'ironclad', label: 'Ironclad', measures: 'most recent finished windows in a row with votes and no missed actions', tiers: [2, 4, 8] },
   { id: 'on_fire', label: 'On Fire', measures: 'current streak of epochs without a missed vote', tiers: [3, 6, 12] },
   { id: 'identified', label: 'Identified', measures: 'a complete CIP-119 profile: name, bio, image and at least one link' },
-  { id: 'underdog', label: 'Underdog', measures: 'a small DRep (by ADA and delegators) that voted in the latest finished window, with an underdog bonus of 1.35× or more' },
+  { id: 'underdog', label: 'Underdog', measures: 'a small DRep (by ADA and delegators) that voted in the latest finished window, among the smallest DReps by ADA and delegators combined' },
   { id: 'rookie', label: 'Rookie', measures: 'first votes in the current or previous window' },
 ];
 
