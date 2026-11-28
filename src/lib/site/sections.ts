@@ -8,10 +8,10 @@ export interface SiteSection {
 }
 
 export const SECTIONS = {
-  scoreboard: {
-    href: '/scoreboard',
-    label: 'Scoreboard',
-    blurb: 'Every active DRep ranked by lifetime GovScore: how reliably they vote, over their whole record. Rank by season points, projections, or your own Alignment after the DRep Match-maker quiz.',
+  hallOfFame: {
+    href: '/hall-of-fame',
+    label: 'Hall of Fame',
+    blurb: 'Every active DRep as a card, opening on last season’s top finishers. Re-sort by GovScore, season points, projections, or your own Alignment after the DRep Match-maker quiz.',
   },
   match: {
     href: '/match',

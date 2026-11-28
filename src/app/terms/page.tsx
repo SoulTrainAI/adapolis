@@ -8,7 +8,7 @@ export default function TermsPage() {
   return (
     <LegalPage title="Terms of Service" updated="25 November 2026">
       <p>
-        These terms cover your use of adapolis.net (&quot;ADApolis&quot;, &quot;we&quot;), including the Scoreboard, DRep Match-maker, Hot Takes, the
+        These terms cover your use of adapolis.net (&quot;ADApolis&quot;, &quot;we&quot;), including the Hall of Fame, DRep Match-maker, Hot Takes, the
         Cardanathon game and DRep All-Star NFTs. By using the site you agree to them. If you don&apos;t agree, please don&apos;t use the site.
       </p>
 

@@ -143,7 +143,7 @@ const PATHS: Path[] = [
     pitch: 'Your record, scored fairly and in public. Show delegators you do the work.',
     links: [
       { href: SECTIONS.claim.href, label: 'DReps: Claim your profile', tip: SECTIONS.claim.blurb },
-      { href: SECTIONS.scoreboard.href, label: 'See your rank', tip: SECTIONS.scoreboard.blurb },
+      { href: SECTIONS.hallOfFame.href, label: 'See your rank', tip: SECTIONS.hallOfFame.blurb },
       { href: SECTIONS.methodology.href, label: 'How you’re scored', tip: SECTIONS.methodology.blurb },
     ],
   },
@@ -167,7 +167,7 @@ const PATHS: Path[] = [
     who: 'Collectors and NFT holders',
     pitch: 'Every active DRep is a card with stats, tiers and abilities. Collectible editions are planned.',
     links: [
-      { href: SECTIONS.scoreboard.href, label: 'Browse every card', tip: 'The Scoreboard shows every DRep as a card. Tap one to flip it.' },
+      { href: SECTIONS.hallOfFame.href, label: 'Browse every card', tip: 'The Hall of Fame shows every DRep as a card. Tap one to flip it.' },
       { href: SECTIONS.collection.href, label: 'Your collection', tip: SECTIONS.collection.blurb },
       { href: `${SECTIONS.methodology.href}#card-abilities`, label: 'Tiers and abilities', tip: 'How card tiers and abilities are earned.' },
     ],
@@ -276,10 +276,10 @@ export default async function Home() {
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <GameTile href={SECTIONS.scoreboard.href} icon={Medal} title="Scoreboard" body={SECTIONS.scoreboard.blurb} accent="bg-brand-violet/20 text-brand-lilac" />
           <GameTile href={SECTIONS.draft.href} icon={Swords} title="Draft Teams" body={SECTIONS.draft.blurb} accent="bg-brand-gold/20 text-brand-gold-light" />
           <GameTile href={SECTIONS.season.href} icon={CalendarDays} title="Cardanathon" body={SECTIONS.season.blurb} accent="bg-emerald-500/15 text-emerald-300" />
-          <GameTile href="/hall-of-fame" icon={Trophy} title="Hall of Fame" body="Last season’s top 10 DReps and the six trophy winners." accent="bg-sky-500/15 text-sky-300" />
+          <GameTile href="/leagues" icon={Medal} title="Join Leagues" body="Play your team against friends or the whole community in public and private leagues." accent="bg-brand-violet/20 text-brand-lilac" />
+          <GameTile href={SECTIONS.hallOfFame.href} icon={Trophy} title="Hall of Fame" body="Every DRep’s card, opening on last season’s top finishers and the trophy winners." accent="bg-sky-500/15 text-sky-300" />
         </div>
       </section>
 

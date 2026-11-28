@@ -9,7 +9,18 @@ const MEDAL = ['text-amber-300', 'text-slate-200', 'text-orange-300'];
 const PLACE = ['Gold', 'Silver', 'Bronze'];
 
 /** Last finished season's top 10 DReps and the six trophy winners. */
-export function HallOfFameView({ hall, seasonName, compact = false }: { hall: HallOfFame; seasonName: string; compact?: boolean }) {
+export function HallOfFameView({
+  hall,
+  seasonName,
+  compact = false,
+  trophiesOnly = false,
+}: {
+  hall: HallOfFame;
+  seasonName: string;
+  compact?: boolean;
+  /** Just the trophy winners; the page's card grid already shows the top 10. */
+  trophiesOnly?: boolean;
+}) {
   const cards = hall.champions.map((c) => ({ ...c, card: c.card ?? placeholderCard({ drep_id: c.drep_id, name: null, image: null }) }));
   const podium = cards.slice(0, 3);
   return (
@@ -60,6 +71,7 @@ export function HallOfFameView({ hall, seasonName, compact = false }: { hall: Ha
         </section>
       )}
 
+      {!trophiesOnly && (
       <section>
         <h2 className="mb-4 text-xl font-bold text-white">{seasonName} DRep All-Stars: the top 10</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
@@ -68,6 +80,7 @@ export function HallOfFameView({ hall, seasonName, compact = false }: { hall: Ha
           ))}
         </div>
       </section>
+      )}
     </div>
   );
 }

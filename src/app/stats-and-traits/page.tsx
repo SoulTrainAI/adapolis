@@ -94,8 +94,8 @@ export default async function StatsAndTraitsPage() {
           <p className="max-w-3xl text-slate-300">
             Everything on a DRep All-Star card or trophy, and what it means. Every stat and badge comes from how a DRep does the job: showing up, voting
             early and explaining their votes. None depends on which way anyone voted. You can search and filter by all of these on the{' '}
-            <Link href="/scoreboard" className="text-brand-lilac hover:underline">
-              Scoreboard
+            <Link href="/hall-of-fame" className="text-brand-lilac hover:underline">
+              Hall of Fame
             </Link>{' '}
             and when you{' '}
             <Link href="/draft" className="text-brand-lilac hover:underline">

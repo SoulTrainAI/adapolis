@@ -18,7 +18,7 @@ export const NAV: NavGroup[] = [
   {
     label: 'Meet Your DReps',
     items: [
-      { label: 'Scoreboard', href: '/scoreboard', blurb: 'Every DRep ranked on how reliably they do the job.' },
+      { label: 'Hall of Fame', href: '/hall-of-fame', blurb: 'Every DRep’s card, opening on last season’s top finishers.' },
       { label: 'DRep Match-maker', href: '/match', blurb: 'A 3-minute quiz that finds DReps who vote the way you think.' },
       { label: 'Hot Takes', href: '/hot-topics', blurb: 'The governance actions being decided now, and how DReps are splitting.' },
       { label: 'Claim DRep Profile', href: '/drep', blurb: 'DReps: sign with your DRep key to set your art, bio and links.' },
@@ -30,7 +30,7 @@ export const NAV: NavGroup[] = [
       { label: 'Cardanathon', href: '/cardanathon', blurb: 'The live race, the Team Leaderboard and the commentary.' },
       { label: 'Draft Teams', href: '/draft', blurb: 'Pick 5 DReps for the season. Free to play.' },
       { label: 'Join Leagues', href: '/leagues', blurb: 'Play against friends or the whole community.' },
-      { label: 'Hall of Fame', href: '/hall-of-fame', blurb: "Last season's top 10 DReps and the trophy winners." },
+      { label: 'Hall of Fame', href: '/hall-of-fame', blurb: "Last season's top DReps, the trophy winners and every card." },
     ],
   },
   {

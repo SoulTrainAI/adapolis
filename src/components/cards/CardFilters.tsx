@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The one filter panel for every DRep list (Scoreboard, Draft): search, sort
+ * The one filter panel for every DRep list (Hall of Fame, Draft): search, sort
  * by any stat, badge toggles with tiers, class / archetype / rarity / Draft
  * Cost chips, and a two-handle slider for every stat. Every control combines
  * with every other; the parent applies the spec with applyFilters().

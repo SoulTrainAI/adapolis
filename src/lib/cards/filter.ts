@@ -1,5 +1,5 @@
 /**
- * One search-and-filter engine for every list of DRep cards (Scoreboard,
+ * One search-and-filter engine for every list of DRep cards (Hall of Fame,
  * Draft). Any combination works: text search, a range on every stat, badges
  * (with a minimum tier), class, archetype, rarity, Draft Cost, flags, and a
  * sort on any stat. Pure, so it runs in the browser and in tests.
@@ -39,7 +39,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export const STATS: StatDef[] = [
   { key: 'govscore', label: 'GovScore', group: 'Scores', get: (c) => c.govscore, format: (v) => fmt(v), tip: 'How much of the job they’ve done over their career, 0–100: points earned ÷ points possible.' },
-  { key: 'rank', label: 'GovScore rank', group: 'Scores', get: (c) => c.rank, format: (v) => `#${v}`, integer: true, lowFirst: true, tip: 'Position on the Scoreboard by GovScore (1 is best).' },
+  { key: 'rank', label: 'GovScore rank', group: 'Scores', get: (c) => c.rank, format: (v) => `#${v}`, integer: true, lowFirst: true, tip: 'Rank among active DReps by GovScore (1 is best).' },
   { key: 'delta1', label: 'GovScore change', group: 'Scores', get: (c) => c.delta1, format: (v) => `${v > 0 ? '+' : ''}${fmt(v)}`, tip: 'Change since the end of last season.' },
   { key: 'participation', label: 'Participation', group: 'Scores', get: (c) => c.participation, format: pct, percent: true, tip: 'Votes cast ÷ actions they could vote on (Stamina).' },
   { key: 'season_points', label: 'Season points', group: 'Game', get: (c) => c.season.points, format: (v) => fmt(v), integer: true, tip: 'Points in the race so far this season.' },

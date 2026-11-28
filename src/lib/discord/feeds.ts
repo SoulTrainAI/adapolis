@@ -271,7 +271,7 @@ export async function runFeeds(options: { apply: boolean }): Promise<FeedReport>
       build: async () => {
         const embed: Embed = {
           title: `🃏 Card of the day: ${card.name ?? `${card.drep_id.slice(0, 16)}…`}`,
-          url: `${SITE}/scoreboard`,
+          url: `${SITE}/hall-of-fame`,
           color: COLORS.violet,
           description: [
             `**${tier.label}** · #${card.rank} of ${card.total}${card.archetype ? ` · ${card.archetype.label}` : ''}`,

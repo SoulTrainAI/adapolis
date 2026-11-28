@@ -169,7 +169,7 @@ export default function MethodologyPage() {
               <>
                 <strong>GovScore</strong> (career): how reliably a DRep has
                 voted over their whole record. It drives the{" "}
-                <A href="/scoreboard">Scoreboard</A>, the card tiers and the
+                <A href="/hall-of-fame">Hall of Fame</A>, the card tiers and the
                 DRep&apos;s rank.
               </>,
               <>
@@ -245,7 +245,7 @@ export default function MethodologyPage() {
                 vote on) is shown separately on every card, as Stamina.
               </>,
               <>
-                <strong>Who is ranked:</strong> by default the Scoreboard covers{" "}
+                <strong>Who is ranked:</strong> by default the Hall of Fame covers{" "}
                 <em>active</em> DReps: registered, at least one vote cast, and
                 some ADA delegated.
               </>,
@@ -722,7 +722,7 @@ bonus     = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to $
                 50% alignment leaves it unchanged, 100% raises it by a quarter,
                 0% lowers it by a quarter. Both are worked out in your browser,
                 shown only to you (in the DRep Match-maker and as sorts on the
-                Scoreboard) and never change the public GovScore, which depends on
+                Hall of Fame) and never change the public GovScore, which depends on
                 whether DReps vote, never how.
               </>,
               <>
@@ -890,7 +890,7 @@ bonus     = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to $
               </>,
               <>
                 <strong>Open data:</strong> the JSON behind the site is public,
-                for example <A href="/api/dreps">/api/dreps</A> (Scoreboard) and{" "}
+                for example <A href="/api/dreps">/api/dreps</A> (Hall of Fame) and{" "}
                 <A href="/api/cards">/api/cards</A> (every card&apos;s stats).
                 No key needed; please cache and be gentle.
               </>,

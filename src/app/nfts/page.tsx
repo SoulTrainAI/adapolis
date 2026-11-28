@@ -42,9 +42,6 @@ export default function NftsPage() {
               <Link href="/hall-of-fame" className="inline-flex min-h-[44px] items-center rounded-lg border border-slate-600 px-4 py-2 font-semibold hover:bg-slate-800">
                 Hall of Fame
               </Link>
-              <Link href="/scoreboard" className="inline-flex min-h-[44px] items-center rounded-lg border border-slate-600 px-4 py-2 font-semibold hover:bg-slate-800">
-                Every live card
-              </Link>
             </div>
           </div>
         )}

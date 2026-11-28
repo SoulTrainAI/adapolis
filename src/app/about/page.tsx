@@ -17,11 +17,6 @@ const GITHUB_URL = "https://github.com/SoulTrainAI/adapolis";
 
 const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
   {
-    href: "/scoreboard",
-    title: "Scoreboard",
-    body: "Every active DRep ranked by GovScore: how reliably they vote, over their whole record. Rank by season points or projections too, or, after the DRep Match-maker quiz, by your own Alignment.",
-  },
-  {
     href: "/match",
     title: "DRep Match-maker",
     body: "A short quiz that shows which DReps have actually voted the way you think, plus what they say in their own words.  A Decentralization weight (on by default) favors smaller DReps so voting power spreads out.",
@@ -49,7 +44,7 @@ const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
   {
     href: "/hall-of-fame",
     title: "Hall of Fame",
-    body: "Last season's top 10 DReps and the six trophy winners, frozen at the final whistle.",
+    body: "Every DRep's card, opening on last season's top finishers, plus the trophy winners. Re-sort by GovScore, season points, projections or, after the DRep Match-maker quiz, your own Alignment.",
   },
   {
     href: "/mint",
@@ -446,8 +441,8 @@ export default function AboutPage() {
             site is financial advice or an endorsement of any DRep.
           </p>
           <div className="mt-6 flex flex-wrap gap-6 text-sm">
-            <Link href="/scoreboard" className="text-slate-400 hover:text-slate-300 transition-colors">
-              Scoreboard
+            <Link href="/hall-of-fame" className="text-slate-400 hover:text-slate-300 transition-colors">
+              Hall of Fame
             </Link>
             <Link href="/methodology" className="text-slate-400 hover:text-slate-300 transition-colors">
               Methodology
