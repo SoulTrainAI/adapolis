@@ -8,18 +8,20 @@
  * for an action that closed without their vote, plus streak bonuses for
  * consecutive clean epochs.
  *
- *   GovScore = points earned ÷ points possible × 100, then the ADA dampener.
+ *   GovScore = points earned ÷ points possible × 100.
  *
  * "Points possible" is what a perfect DRep would earn on the same actions
  * (votes on all of them, early, each with an original rationale), plus five
  * blank actions every DRep starts with, so 5 perfect votes can't outrank 160.
  * (Replaced a Wilson confidence bound on 2026-11-27: same effect, explainable
  * in a sentence.) Points never depend on how anyone voted (Cardinal Rule).
+ *
+ * No ADA dampener since 2026-11-28 (Jason): GovScore is exactly the game's
+ * scoring, and size preferences live only in the Match-maker.
  */
 
 import { computeSeasonPoints, POINT_RULES, type PointBreakdown, type SeasonProposal, type SeasonVote } from '@/lib/season/points';
 import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
-import { calculateDampener } from './govscore-v1';
 
 /** What a perfect vote earns: voted, explained with a new rationale, early. */
 export const PERFECT_ACTION = POINT_RULES.vote + POINT_RULES.rationale + POINT_RULES.freshRationale + POINT_RULES.early;
@@ -35,7 +37,7 @@ export interface ProcessScore {
   possible: number;
   breakdown: PointBreakdown;
   votes_cast: number;
-  /** 0–100 before the ADA dampener, null with no actions yet. */
+  /** 0–100, null with no actions yet. */
   raw: number | null;
   adjusted: number | null;
 }
@@ -69,8 +71,6 @@ export function processScores(
     set.add(v.proposal_id);
     votedBy.set(v.drep_id, set);
   }
-  const amount = new Map(dreps.map((d) => [d.drep_id, d.amount_lovelace]));
-
   return points.map((p) => {
     // The actions the game scored for this DRep: the ones they voted on, and the ones they missed.
     const missed = p.events.filter((e) => e.kind === 'missed' && e.proposal_id).map((e) => e.proposal_id!);
@@ -90,7 +90,8 @@ export function processScores(
       breakdown: p.breakdown,
       votes_cast: p.votes_cast,
       raw,
-      adjusted: raw === null ? null : Math.round(raw * calculateDampener(amount.get(p.drep_id) ?? 0) * 10) / 10,
+      // Kept equal to raw so stored columns and readers stay unchanged.
+      adjusted: raw,
     };
   });
 }

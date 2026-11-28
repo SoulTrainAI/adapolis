@@ -14,7 +14,7 @@ import { MATCH_RULES } from "@/lib/match/topics";
 export const metadata = {
   title: "Methodology — ADApolis",
   description:
-    "How ADApolis scores DReps: GovScore, ADA-power dampening, season points, the game, DRep All-Star NFTs, trading cards, the DRep Match-maker and AI summaries.",
+    "How ADApolis scores DReps: GovScore, season points, the game, DRep All-Star NFTs, trading cards, the DRep Match-maker and AI summaries.",
 };
 
 const LAST_UPDATED = "November 2026";
@@ -103,18 +103,9 @@ function A({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-const DAMPENING = [
-  ["0", "1.000", "90.0"],
-  ["100K", "0.990", "89.1"],
-  ["1M", "0.930", "83.7"],
-  ["10M", "0.793", "71.4"],
-  ["100M", "0.666", "60.0"],
-];
-
 const CONTENTS = [
   ["overview", "Overview"],
   ["govscore", "GovScore"],
-  ["dampening", "ADA-power dampening"],
   ["not-measured", "What we never score"],
   ["season-points", "Season points"],
   ["game", "The game"],
@@ -208,10 +199,7 @@ export default function MethodologyPage() {
                 The blanks matter less and less as their record grows.
               </li>
             </ol>
-            <p className="text-sm text-slate-400">
-              Very large DReps are then scaled down gently (next section), so reliable smaller DReps can stand out.
-            </p>
-          </div>
+            </div>
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-slate-100">What that looks like</h3>
             <div className="bg-slate-900/30 border border-slate-700 rounded p-4 text-sm text-slate-300 space-y-2">
@@ -251,55 +239,11 @@ export default function MethodologyPage() {
               </>,
               <>
                 <strong>History:</strong> until 27 November 2026 GovScore was
-                participation only. Trend lines are recalculated with today&apos;s
+                participation only, and until 28 November 2026 very large DReps were scaled down. Trend lines are recalculated with today&apos;s
                 rules.
               </>,
             ]}
           />
-        </Section>
-
-        <Section id="dampening" n={next()} title="ADA-power dampening">
-          <P>
-            GovScore multiplies the raw score by a factor that shrinks gently as
-            delegated ADA grows. It surfaces reliable, under-delegated DReps
-            without punishing large DReps for being trusted.
-          </P>
-          <Formula>
-            {`D = 1 / (1 + log₁₀(ADA_M + 1) / 4)      ADA_M = delegated ADA in millions`}
-          </Formula>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="border-b-2 border-slate-700 text-slate-100">
-                  <th className="text-left py-3 px-4 font-semibold">
-                    ADA delegated
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold">
-                    Factor D
-                  </th>
-                  <th className="text-center py-3 px-4 font-semibold">
-                    Raw 90.0 becomes
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-slate-300 font-mono">
-                {DAMPENING.map(([ada, d, adj]) => (
-                  <tr key={ada} className="border-b border-slate-800">
-                    <td className="py-3 px-4">{ada}</td>
-                    <td className="text-center py-3 px-4">{d}</td>
-                    <td className="text-center py-3 px-4">{adj}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <P>
-            <strong>Participation still dominates.</strong> A 93% DRep with 100M
-            ADA scores 93.0 × 0.666 = 61.9; a 60% DRep with no delegation scores
-            60.0. Dampening breaks near-ties; it can&apos;t lift a weak record
-            over a strong one by much. The logarithm means each tenfold increase
-            in ADA costs a similar, modest step.
-          </P>
         </Section>
 
         <Section id="not-measured" n={next()} title="What we never score">

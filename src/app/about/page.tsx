@@ -74,7 +74,7 @@ const PRINCIPLES: Array<[string, ReactNode]> = [
   ],
   [
     "Decentralization by design",
-    "The DRep Match-maker favors small DReps with a Decentralization weight you control and GovScore gently dampens very large ones, both to help voting power spread out.",
+    "The DRep Match-maker can favor small DReps with a Decentralization weight you control, to help voting power spread out. GovScore never counts size.",
   ],
   [
     "Transparent",
@@ -184,8 +184,8 @@ export default function AboutPage() {
         <section className="mb-12 space-y-4 text-slate-300 leading-relaxed">
           <H2>How scoring works</H2>
           <p>
-            <B>GovScore</B> (career) is the share of eligible actions a DRep voted on, adjusted for how long their record
-            is so that 5 of 5 doesn&apos;t outrank 159 of 164, then gently dampened for very large ADA holdings.
+            <B>GovScore</B> (career) is the game&apos;s points over a DRep&apos;s whole record: points earned ÷ points possible,
+            with 5 blank actions to start so 5 of 5 doesn&apos;t outrank 159 of 164.
           </p>
           <p>
             <B>Season points</B> (this season) reward voting (+10), voting early (+5), posting an original rationale (+5)

@@ -5,7 +5,7 @@
 
 export const TIPS = {
   govscore:
-    'GovScore (0–100): how much of the job a DRep has done over their career. Each action they could vote on is worth 20 points (10 for voting, 5 for voting early, 5 for an original rationale); GovScore is points earned ÷ points possible. Everyone starts with 5 blank actions, and very large DReps are scaled down gently. Vote direction never counts.',
+    'GovScore (0–100): how much of the job a DRep has done over their career. Each action they could vote on is worth 20 points (10 for voting, 5 for voting early, 5 for an original rationale); GovScore is points earned ÷ points possible. Everyone starts with 5 blank actions. Size and vote direction never count.',
   govscoreDelta: 'Change in GovScore since the end of the previous 6-epoch season. ▲ up, ▼ down.',
   govscoreTrend: 'GovScore at the end of each season, oldest to newest.',
   provisional: 'Provisional: fewer than 10 governance actions to judge by yet, so the score can move a lot.',
@@ -53,8 +53,6 @@ export const TIPS = {
   seasonEarly: 'Votes cast in the first half of their voting window.',
   seasonMissed: 'Actions that closed unvoted that season.',
   seasonScore: 'GovScore at the end of that season.',
-  dampened: 'Adjusted GovScore = raw score × ADA dampening, 1 ÷ (1 + log₁₀(ADA in millions + 1) ÷ 4).',
-  raw: 'GovScore (dry): GovScore before very large DReps are scaled down.',
   rationaleRate: 'Share of this DRep’s votes that have a published rationale.',
 } as const;
 

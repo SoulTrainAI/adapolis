@@ -137,7 +137,7 @@ export const GUIDES: Guide[] = [
     title: 'How ADApolis scores DReps (and what it never scores)',
     tag: 'ADApolis',
     body: [
-      '**GovScore** measures participation: how many of the actions a DRep could vote on they actually voted on, adjusted for how long their record is, then dampened for very large ADA holdings.',
+      '**GovScore** is how much of the job a DRep has done over their career: points for voting, voting early and original rationales, divided by the points they could have earned. Size and vote direction never count.',
       '',
       '**Season points** (the game) reward voting, publishing a rationale, writing a unique rationale, voting early and voting streaks; missed votes cost points.',
       '',

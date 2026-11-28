@@ -45,7 +45,7 @@ export interface MatchDRep {
   participation: number;
   votes_cast: number;
   votes_eligible: number;
-  /** Confidence-adjusted, ADA-dampened GovScore (0-100) */
+  /** Career GovScore (0-100) */
   govscore: number;
   positions: Record<string, TopicPosition>;
   /** proposal_id -> 'yes' | 'no' | 'abstain' for the real-vote questions */
