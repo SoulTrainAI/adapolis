@@ -381,7 +381,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 }
 
 async function tableCounts(): Promise<Record<string, number | string>> {
-  const tables = ['dreps', 'proposals', 'votes', 'drep_scores'] as const;
+  const tables = ['dreps', 'proposals', 'votes', 'drep_scores', 'drep_backing_snapshots', 'team_wallet_snapshots', 'season_cards'] as const;
   const counts: Record<string, number | string> = {};
   for (const table of tables) {
     const { count, error } = await supabaseAdmin.from(table).select('*', { count: 'exact', head: true });

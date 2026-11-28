@@ -189,8 +189,8 @@ them as a separate collection and All-Star supply is unchanged. Built:
 - **Each of the top 25 prize-eligible global teams: 1 card per pick** (the
   slot's current DRep, or the one it replaced if only they voted): the All-Star
   card for a top-10 DRep, the Season Card otherwise. Up to 5 per team.
-- **The ADApolis house wallet: 1 of every card**, the season's full set
-  (Jason, 2026-11-28). Recorded automatically at the season's end; the mint
+- **The ADApolis house wallet: 1 of every card**, the season's full set, kept
+  as an archive (Jason, 2026-11-28). Recorded automatically at the season's end; the mint
   transaction is prepared for Jason to sign (mainnet signing stays manual).
 - ~~Every wallet delegating to them~~: dropped 2026-11-23. It rewarded
   delegating to particular DReps (against 1.2) and was easy to farm.
@@ -273,14 +273,10 @@ Both the Collector's Cup game and Collector's Cup editions are dropped: too
 much complexity for the value, and they were the design's main "buy to
 improve your prize" legal risk.
 
-### 2.9c Packs — Proposed (Jason, 2026-11-28), on hold for the Gate 4 lawyer review
+### 2.9c Packs — Dropped (Jason, 2026-11-28)
 
-Idea: sell randomized packs drawn from the house full set. Not built. Paid
-packs with random contents of different market value are the classic
-loot-box pattern (prize + chance + consideration; see PLAN-2026-11-25 R1 and
-R3), and the published rules currently promise "no packs". Options to put to
-the lawyer: (a) no packs; (b) fixed, non-random bundles sold at a listed
-price; (c) random packs of Season Cards only, all of equal listed value.
+No packs, paid or random. The house full set (2.3) is an archive, not stock
+for sale. 2.8 stands: no paid packs.
 
 ### 2.9b Every NFT in a season — Decided summary
 
