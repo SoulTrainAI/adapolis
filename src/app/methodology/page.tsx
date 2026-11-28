@@ -453,9 +453,9 @@ export default function MethodologyPage() {
               <>
                 <strong>Rewards:</strong> the top 3 qualifying global teams win a
                 one-of-one DRep All-Star Season Trophy NFT (the top 3 DReps win a
-                DRep Trophy); each of the top 25 qualifying teams can mint the
-                DRep All-Star card of
-                every top-10 DRep on their team (next section).
+                DRep Trophy); each of the top 25 qualifying teams can mint one
+                card of each of their 5 picks: the DRep All-Star card for a
+                top-10 DRep, the basic Season Card otherwise (next section).
               </>,
             ]}
           />
@@ -503,8 +503,11 @@ bonus     = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to $
           <P>
             At each season&apos;s end, the top 10 DReps by season points become
             mintable as DRep All-Star NFTs: their card as it stood at the final
-            whistle. A minted card never changes; the live card on the site keeps
-            evolving. Season 1&apos;s cards are the Genesis set.
+            whistle. Every other DRep who voted that season gets a basic{" "}
+            <strong>Season Card</strong>: the same card with that season&apos;s
+            stats, no edition, no foil and no All-Star traits, minted as a
+            separate collection. A minted card never changes; the live card on
+            the site keeps evolving. Season 1&apos;s cards are the Genesis set.
           </P>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-300">
@@ -532,8 +535,11 @@ bonus     = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to $
           <Bullets
             items={[
               <>
-                <strong>Copies:</strong> the DRep gets 5 of their own card, and
-                each of the top 25 qualifying teams that drafted them gets 1.
+                <strong>Copies:</strong> the DRep gets 5 of their own card (All-Star
+                or Season Card); each of the top 25 qualifying teams gets 1 card
+                of each of their 5 picks; the ADApolis wallet mints 1 of every
+                card as the season&apos;s full set. A DRep needs at least one vote
+                that season to have a card.
               </>,
               <>
                 <strong>Mint window:</strong> opens 48 hours after the season
@@ -562,9 +568,11 @@ bonus     = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to $
                 (&ldquo;Genesis&rdquo; for Season 1), copy number and supply.
               </>,
               <>
-                <strong>Supply is enforced on-chain:</strong> one minting policy
-                per season, time-locked to close when the mint window ends, so
-                nobody, ADApolis included, can mint more.
+                <strong>Supply is enforced on-chain:</strong> two minting
+                policies per season, one for DRep All-Stars and trophies and one
+                for Season Cards (so marketplaces list them as separate
+                collections), each time-locked to close when the mint window
+                ends, so nobody, ADApolis included, can mint more.
               </>,
               <>
                 <strong>Cost:</strong> ADApolis charges nothing. Claimers pay the
@@ -577,17 +585,12 @@ bonus     = 1 + ${POINT_RULES.maxUnderdogBonus} × smallness        (1.00× to $
                 the ADApolis project wallet. Marketplaces honour it voluntarily.
               </>,
               <>
-                <strong>Collector&apos;s Cup editions (from Season 2):</strong>{" "}
-                every copy is identical except this edition: same item, own
-                frame and trait, replacing the regular one. Checked at the
-                season&apos;s end snapshot: a team copy needs a DRep All-Star card
-                of that DRep; a Team Trophy needs a DRep All-Star card of a top-10
-                DRep the team drafted; a DRep needs an earlier card of their own.
-              </>,
-              <>
-                <strong>Supply per season:</strong> at most 175 DRep All-Star
-                cards (50 DRep copies, up to 125 team copies), 6 DRep All-Star
-                Season Trophies and 10 Team Test Mint pressings: 191 in all.
+                <strong>Supply per season:</strong> at most 185 DRep All-Star
+                cards (50 DRep copies, up to 125 team copies, 10 full-set
+                copies), 6 DRep All-Star Season Trophies and 10 Team Test Mint
+                pressings: 201 in all. Season Cards are a separate collection:
+                5 per DRep who voted, plus team and full-set copies, usually far
+                fewer because unclaimed copies are never minted.
               </>,
               <>
                 <strong>DRep All-Star Season Trophies</strong> are one-of-one NFTs: Team Trophies

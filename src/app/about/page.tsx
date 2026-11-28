@@ -299,8 +299,9 @@ export default function AboutPage() {
         <section id="champion-cards" className="mb-12 space-y-4 text-slate-300 leading-relaxed scroll-mt-24">
           <H2>DRep All-Star NFTs</H2>
           <p>
-            Every DRep has a card showing real-time stats that update daily. At the end of each season, the top 10 DReps&apos; cards become
-            mintable as official DRep All-Star NFTs, digital collectibles that commemorate the historic victory. The top 3 winning DReps and
+            Every DRep has a card showing real-time stats that update daily. At the end of each season, every DRep who voted gets a
+            mintable Season Card of that season, and the top 10 DReps&apos; cards become official DRep All-Star NFTs, digital
+            collectibles that commemorate the historic victory. The top 3 winning DReps and
             Teams can also mint the exclusive DRep All-Star Season Trophy NFT to showcase their success. A minted card is frozen as it stood
             at the season&apos;s final whistle; the live card keeps evolving. <B>Season 1&apos;s DRep All-Stars are the Genesis set.</B> The
             Preseason produces test cards so you can see how it works; they are never minted.
@@ -310,10 +311,15 @@ export default function AboutPage() {
           <Bullets
             items={[
               <>
-                <B>The DRep:</B> 5 copies of their own card, to keep, gift or sell.
+                <B>The DRep:</B> 5 copies of their own card, to keep, gift or sell. Top-10 DReps get their DRep All-Star card;
+                every other DRep who voted that season gets a basic Season Card: that season&apos;s stats, no edition, no foil.
               </>,
               <>
-                <B>Every top-25 qualifying team that drafted them:</B> 1 copy.
+                <B>Each of the top 25 qualifying teams:</B> 1 card of each of their 5 picks (the All-Star card for a top-10 DRep, the
+                Season Card otherwise).
+              </>,
+              <>
+                <B>The ADApolis full set:</B> the ADApolis wallet mints 1 of every card each season, an archive of the whole set.
               </>,
               <>
                 <B>Team Test Mint.</B> The first pressing of each card is minted by the ADApolis team to ensure quality. Test Pressing
@@ -358,43 +364,26 @@ export default function AboutPage() {
             ]}
           />
 
-          <H3>Collector&apos;s Cup editions (from Season 2)</H3>
-          <p>
-            Every copy of a prize is the same, except the <B>Collector&apos;s Cup edition</B>: the same card or trophy
-            with its own frame and trait. It replaces your regular copy, so supply never grows. You qualify if your
-            wallet holds the right DRep All-Star card in the snapshot at the season&apos;s end (cards bought after that
-            don&apos;t count):
-          </p>
-          <Bullets
-            items={[
-              <>
-                <B>Team copy of a DRep All-Star card:</B> any DRep All-Star card of that DRep.
-              </>,
-              <>
-                <B>Team Trophy:</B> a DRep All-Star card of a DRep you drafted that season who finished in the top 10. Holding
-                without drafting doesn&apos;t count; drafting without holding gets the regular trophy.
-              </>,
-              <>
-                <B>DReps</B> (their own cards and DRep Trophy): an earlier DRep All-Star card of their own.
-              </>,
-            ]}
-          />
-
           <H3>Every NFT in a season</H3>
           <Bullets
             items={[
               <>
-                <B>DRep All-Star cards:</B> the top 10 DReps (Gold, Silver, Bronze, then 7 Holographic). Each has up to 30 copies: 5 for
-                the DRep and 1 for each of up to 25 qualifying teams that drafted them. A team gets a copy of every top-10 DRep on its
-                team, so up to 5.
+                <B>DRep All-Star cards:</B> the top 10 DReps (Gold, Silver, Bronze, then 7 Holographic). Each has up to 31 copies: 5 for
+                the DRep, 1 for each of up to 25 qualifying teams that drafted them, and 1 for the ADApolis full set.
+              </>,
+              <>
+                <B>Season Cards:</B> one for every other DRep who voted that season, with the same copies (5 for the DRep, 1 for each top-25
+                team that drafted them, 1 for the full set). A separate collection from the All-Stars, so All-Star supply stays as
+                listed below.
               </>,
               <>
                 <B>DRep All-Star Season Trophies:</B> 6 one-of-ones: Gold, Silver and Bronze Team Trophies for the top 3 qualifying teams,
                 and DRep Trophies for the top 3 DReps.
               </>,
               <>
-                <B>At most 181 a season</B> (50 DRep copies, up to 125 team copies, 6 trophies), plus one Team Test Mint pressing of each
-                of the 10 cards (191 in all). Usually far fewer: unclaimed copies are never minted. The Preseason mints none.
+                <B>DRep All-Stars: at most 191 a season</B> (50 DRep copies, up to 125 team copies, 10 full-set copies, 6 trophies), plus
+                one Team Test Mint pressing of each of the 10 cards. Season Cards are uncapped: 5 per DRep who voted, plus team and
+                full-set copies, usually far fewer because unclaimed copies are never minted. The Preseason mints none.
               </>,
             ]}
           />

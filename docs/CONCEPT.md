@@ -484,7 +484,9 @@ The headline reward. The viral moment. The long-term collectible.
 
 At the end of every season, the **top 10 DReps** are enshrined as limited Champion NFT trading cards.
 
-**Mint distribution:**
+> **Current rules (Jason, 2026-11-28): docs/GAME.md 2.3 supersedes this list.** Every DRep who voted gets a basic Season Card (separate collection); the top 10 get DRep All-Star cards; the DRep mints 5, each top-25 qualifying team 1 per pick, the ADApolis house wallet 1 of every card. Delegator copies were dropped (2026-11-23); the Collector's Cup was dropped (2026-11-28).
+
+**Mint distribution (original v0.4 design):**
 - **The DRep gets 5 copies** of their own Champion Card
 - **Every wallet that had that DRep on their fantasy team gets 1 copy**, automatically
 - **Every wallet that delegated to that DRep during the season gets a short free-mint window** to claim one copy (e.g., 7 days post-season-end)

@@ -175,18 +175,28 @@ The **top 10 DReps by season points** each season.
 | #3 | Bronze |
 | #4–10 | Holo |
 
-### 2.3 Who gets a copy — Decided (2026-11-22)
+### 2.3 Who gets a copy — Decided (2026-11-22; widened 2026-11-28)
 
-For each of the 10 Champion DReps:
+Every DRep who voted at least once in a season has a card for it (Jason,
+2026-11-28): the **DRep All-Star** card (top 10, with edition) or a basic
+**Season Card** (that season's stats; no edition, no foil, no All-Star
+traits). Season Cards are minted under their own policy, so marketplaces list
+them as a separate collection and All-Star supply is unchanged. Built:
+`src/lib/season/claims.ts`, migration 026.
+
 - **The DRep: 5 copies** of their own card (to keep, gift or sell; this is how
   DReps can earn, through the market, not from ADApolis).
-- **Each of the top 25 prize-eligible global teams that drafted them: 1 copy**
-  (Jason, 2026-11-23).
+- **Each of the top 25 prize-eligible global teams: 1 card per pick** (the
+  slot's current DRep, or the one it replaced if only they voted): the All-Star
+  card for a top-10 DRep, the Season Card otherwise. Up to 5 per team.
+- **The ADApolis house wallet: 1 of every card**, the season's full set
+  (Jason, 2026-11-28). Recorded automatically at the season's end; the mint
+  transaction is prepared for Jason to sign (mainnet signing stays manual).
 - ~~Every wallet delegating to them~~: dropped 2026-11-23. It rewarded
   delegating to particular DReps (against 1.2) and was easy to farm.
-- **A hard 7-day claim window for everyone, DReps included.** Unclaimed copies
-  are never minted; then **supply is fixed forever.** Each copy is numbered
-  ("3 of 12"). Typical supply: 5–15 per card.
+- **One mint window for everyone, DReps included** (opens 48 h after the
+  season ends, closes 3 epochs after). Unclaimed copies are never minted; then
+  **supply is fixed forever.** Each copy is numbered ("3 of 12").
 
 ### 2.3a Prize eligibility — Decided (2026-11-23), built (migration 016)
 
@@ -257,70 +267,41 @@ and a Catalyst grant for the public-good parts.
 
 ---
 
-### 2.9 Collector's Cup — Proposed (Jason, 2026-11-23), after minting exists
+### 2.9 Collector's Cup — Dropped (Jason, 2026-11-28)
 
-A separate version of the global game for collectors: you may only draft DReps
-whose Champion Card NFT your wallet holds. Its own leaderboard; winners earn a
-memento with a "Collector's Cup" trait. No money or ADA prizes.
+Both the Collector's Cup game and Collector's Cup editions are dropped: too
+much complexity for the value, and they were the design's main "buy to
+improve your prize" legal risk.
 
-Legal note (for the lawyer review): entry requires holding NFTs that can be
-bought, so if the memento is a tradable NFT it is a prize of value in a contest
-you need to buy into: the one part of the design that looks like a paid
-contest. Recommended: make the Collector's Cup memento **non-transferable**
-(a profile trophy, or a token locked to the winner's wallet), so it has
-recognition value but no market value. Earliest: Season 2.
+### 2.9c Packs — Proposed (Jason, 2026-11-28), on hold for the Gate 4 lawyer review
 
-### 2.9a Collector's Cup editions — Decided (Jason, 2026-11-23), Season 2 earliest
-
-Every minted copy is identical (edition set by rank) except the **Collector's
-Cup edition**: the same card or trophy with its own frame and a "Collector's
-Cup" trait. It **replaces** the regular one, so supply never grows. No other
-traits.
-
-**Checked at the season's end snapshot**, the same one used for prize
-eligibility. Cards bought or claimed after it don't count. Because claims
-open after the snapshot, a winner's new prizes can never unlock their own
-Collector's Cup, and a card sits in one wallet at the snapshot, so it can't be
-passed around to unlock several. Bought cards count if held at the snapshot.
-
-| Prize | Collector's Cup if, at the snapshot, the wallet holds… |
-|---|---|
-| Team copy of a Champion Card | a Champion Card of that DRep (any season) |
-| Team Trophy | a Champion Card (any season) of a DRep the team drafted this season who finished in the top 10 |
-| DRep's own 5 Champion Cards | an earlier Champion Card of their own |
-| DRep Trophy | an earlier Champion Card of their own |
-
-Holding without drafting: no prize, so no Collector's Cup. Drafting without
-holding: the regular prize. Season 1 (Genesis) can't have any: no Champion
-Cards exist before its snapshot.
-
-**Lawyer question:** holding a purchasable card (bought before the season
-ends, never after the result is known) unlocks a rarer edition of the same
-prize. Confirm this is acceptable in a free contest before the first mint.
+Idea: sell randomized packs drawn from the house full set. Not built. Paid
+packs with random contents of different market value are the classic
+loot-box pattern (prize + chance + consideration; see PLAN-2026-11-25 R1 and
+R3), and the published rules currently promise "no packs". Options to put to
+the lawyer: (a) no packs; (b) fixed, non-random bundles sold at a listed
+price; (c) random packs of Season Cards only, all of equal listed value.
 
 ### 2.9b Every NFT in a season — Decided summary
 
 | NFT | Who gets it | Max per season |
 |---|---|---|
-| Champion Card, Gold (#1 DRep) | DRep 5 + up to 25 teams | 30 |
-| Champion Card, Silver (#2) | DRep 5 + up to 25 teams | 30 |
-| Champion Card, Bronze (#3) | DRep 5 + up to 25 teams | 30 |
-| Champion Card, Holo (#4–10, 7 DReps) | each: DRep 5 + up to 25 teams | 210 |
+| DRep All-Star, Gold (#1 DRep) | DRep 5 + up to 25 teams + house 1 | 31 |
+| DRep All-Star, Silver (#2) | DRep 5 + up to 25 teams + house 1 | 31 |
+| DRep All-Star, Bronze (#3) | DRep 5 + up to 25 teams + house 1 | 31 |
+| DRep All-Star, Holo (#4–10, 7 DReps) | each: DRep 5 + up to 25 teams + house 1 | 217 |
+| Season Card (every other DRep who voted) | each: DRep 5 + top-25 teams that drafted them + house 1 | uncapped (separate collection) |
 | Team Trophy, Gold / Silver / Bronze | top 3 prize-eligible global teams | 3 (one-of-one each) |
 | DRep Trophy, Gold / Silver / Bronze | top 3 DReps | 3 (one-of-one each) |
-| **Total** | | **181** (see below) |
+| **All-Star total** | | **191** (see below) |
 
-- **Season maximum is 181, not the sum of the rows:** 50 DRep copies (10 × 5)
-  + at most 125 team copies (25 teams × the 5 DReps each drafted) + 6 trophies.
-  The per-card maximum of 30 only happens if all 25 teams drafted that DRep.
-  (Edge case: a team that swapped out a retired DRep who still finished top 10
-  can get a 6th copy.)
-- "Teams" means prize-eligible global teams in the top 25 that drafted (or
-  swapped out) that DRep. Each copy is numbered against the real claimed supply.
-- Any of these can be minted as its Collector's Cup edition instead (2.9a); the
-  total stays the same.
-- Unclaimed after the 7-day window: never minted. Real supply is usually far
-  below the maximum.
+- **All-Star maximum is 191, not the sum of the rows:** 50 DRep copies (10 × 5)
+  + at most 125 team copies (25 teams × 5 picks) + 10 house copies + 6
+  trophies, plus 10 Team Test Mint pressings. Team copies are shared between
+  All-Stars and Season Cards: each top-25 team mints at most 5 cards in all.
+- Season Cards: 5 per DRep who voted, plus team and house copies. Real supply
+  is far lower because unclaimed copies are never minted.
+- Unclaimed when the mint window closes: never minted.
 - Not NFTs: the Finalist badge (top 10 teams) and the live cards on the site.
 - Preseason (season 0): no NFTs; its cards are test-only.
 - Delegators get nothing for delegating; claimers pay their own mint fee; 5%

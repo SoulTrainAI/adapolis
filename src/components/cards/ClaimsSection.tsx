@@ -7,9 +7,10 @@ import type { Claim } from '@/lib/season/champions';
 import { seasonLabel } from '@/lib/season/points';
 
 const WHY: Record<Claim['claimant_type'], string> = {
-  drep: 'it is your own DRep All-Star card (DRep copies)',
+  drep: 'it is your own card (DRep copies)',
   team: 'you drafted them',
   delegator: 'you delegated to them',
+  house: 'it is the ADApolis full-set copy',
 };
 
 const EDITION: Record<string, string> = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze', holo: 'Holographic' };
@@ -32,7 +33,7 @@ export function ClaimsSection() {
   return (
     <section className="space-y-4">
       <h2 className="flex items-center gap-2 font-display text-xl font-bold text-white">
-        <Award className="h-5 w-5 text-brand-gold-light" /> DRep All-Stars you&apos;ve earned
+        <Award className="h-5 w-5 text-brand-gold-light" /> Season cards you&apos;ve earned
       </h2>
       {claims && claims.length > 0 ? (
         <ul className="space-y-2">
@@ -41,7 +42,7 @@ export function ClaimsSection() {
               <span className="font-semibold text-white">
                 {seasonLabel(c.season_number)} · {c.name ?? `${c.drep_id.slice(0, 14)}…`}
               </span>
-              {c.edition && <span className="text-sm text-amber-200">{EDITION[c.edition]}</span>}
+              <span className="text-sm text-amber-200">{c.edition ? `DRep All-Star · ${EDITION[c.edition]}` : 'Season Card'}</span>
               <span className="text-sm text-slate-400">
                 {c.copies} cop{c.copies === 1 ? 'y' : 'ies'}, because {WHY[c.claimant_type]}
               </span>

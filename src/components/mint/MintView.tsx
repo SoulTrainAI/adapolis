@@ -14,12 +14,15 @@ const EDITION: Record<string, { label: string; frame: string }> = {
   silver: { label: 'Silver', frame: 'from-slate-100 via-slate-300 to-slate-500' },
   bronze: { label: 'Bronze', frame: 'from-orange-200 via-orange-400 to-amber-800' },
   holo: { label: 'Holographic', frame: 'from-fuchsia-400 via-violet-500 to-cyan-400' },
+  // Basic Season Card: a plain frame, no edition, no foil.
+  season: { label: 'Season Card', frame: 'from-slate-500 via-slate-600 to-slate-700' },
 };
 
 const WHY: Record<Claim['claimant_type'], string> = {
-  drep: 'Your own All-Star card',
+  drep: 'Your own card',
   team: 'You drafted them',
   delegator: 'Earlier season reward',
+  house: 'ADApolis full set',
 };
 
 type State = 'test' | 'upcoming' | 'open' | 'closed' | 'claimed';
@@ -63,7 +66,7 @@ function Confetti() {
 /** The card-flip reveal. Plays for real mints later; plays as a preview for Preseason test cards now. */
 function Reveal({ claim, onDone }: { claim: Claim; onDone: () => void }) {
   const [flipped, setFlipped] = useState(false);
-  const edition = EDITION[claim.edition ?? 'holo'];
+  const edition = EDITION[claim.edition ?? 'season'];
   useEffect(() => {
     const t = setTimeout(() => setFlipped(true), 900);
     if ('vibrate' in navigator) navigator.vibrate?.([30, 60, 30]);
@@ -91,7 +94,7 @@ function Reveal({ claim, onDone }: { claim: Claim; onDone: () => void }) {
               <Sparkles className="h-8 w-8 text-amber-300" />
               <p className="text-xs uppercase tracking-[0.2em] text-slate-300">{seasonLabel(claim.season_number)} DRep All-Star</p>
               <p className="text-2xl font-bold text-white">{claim.name ?? `${claim.drep_id.slice(0, 12)}…`}</p>
-              <p className="text-sm font-semibold text-amber-200">{edition.label} edition</p>
+              <p className="text-sm font-semibold text-amber-200">{claim.edition ? `${edition.label} edition` : edition.label}</p>
               {claim.season_number === 0 && <p className="mt-2 text-xs text-slate-400">Preseason preview. Test cards are never minted.</p>}
             </div>
           </div>
@@ -165,7 +168,7 @@ export function MintView() {
           <AnimatePresence>
             {claims.map((c, i) => {
               const st = stateOf(c, now);
-              const ed = EDITION[c.edition ?? 'holo'];
+              const ed = EDITION[c.edition ?? 'season'];
               return (
                 <motion.li
                   key={`${c.season_number}-${c.drep_id}-${c.claimant_type}`}

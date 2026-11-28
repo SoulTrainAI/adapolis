@@ -23,8 +23,9 @@ export interface Claim {
   season_number: number;
   drep_id: string;
   name: string | null;
+  /** All-Star edition; null for a basic Season Card. */
   edition: Edition | null;
-  claimant_type: 'drep' | 'team' | 'delegator';
+  claimant_type: 'drep' | 'team' | 'delegator' | 'house';
   copies: number;
   claim_closes_at: string | null;
   claimed_at: string | null;
@@ -86,12 +87,17 @@ export async function getClaims(claimants: string[]): Promise<Claim[]> {
     ? await supabaseAdmin.from('season_champions').select('season_number, drep_id, edition, card').in('drep_id', (data ?? []).map((c) => c.drep_id as string))
     : { data: [] };
   const champ = new Map((champs ?? []).map((c) => [`${c.season_number}:${c.drep_id}`, c]));
+  // Basic Season Cards keep their name in season_cards (migration 026; empty before it).
+  const { data: basics } = keys.length
+    ? await supabaseAdmin.from('season_cards').select('season_number, drep_id, card').in('drep_id', (data ?? []).map((c) => c.drep_id as string))
+    : { data: [] };
+  const basic = new Map((basics ?? []).map((c) => [`${c.season_number}:${c.drep_id}`, c]));
   return (data ?? []).map((c) => {
     const ch = champ.get(`${c.season_number}:${c.drep_id}`);
     return {
       season_number: Number(c.season_number),
       drep_id: c.drep_id as string,
-      name: ((ch?.card ?? {}) as { name?: string | null }).name ?? null,
+      name: ((ch?.card ?? basic.get(`${c.season_number}:${c.drep_id}`)?.card ?? {}) as { name?: string | null }).name ?? null,
       edition: (ch?.edition as Edition | undefined) ?? null,
       claimant_type: c.claimant_type as Claim['claimant_type'],
       copies: Number(c.copies),

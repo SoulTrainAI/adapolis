@@ -1,12 +1,14 @@
 /**
  * Season-end snapshots (docs/GAME.md 2.2–2.4), run by the cron once a season
  * has ended. Records, once and publicly:
- *  - the top 10 DReps by season points (Champion Cards) with their card stats,
+ *  - the top 10 DReps by season points (DRep All-Stars) with their card stats,
+ *  - a basic Season Card for every other DRep who voted that season,
  *  - which global teams qualify for prizes (delegated since before the lock
  *    and still delegating 100+ ADA at the end; docs/GAME.md),
- *  - who may claim a copy: the DRep (5) and each of the top 25 qualifying
- *    teams that drafted them (1), all within one mint window (opens 48 h
- *    after the season ends, closes 3 epochs after it ends),
+ *  - who may claim a copy (claims.ts): the DRep (5), each of the top 25
+ *    qualifying teams (1 per pick) and the ADApolis house set (1 of every
+ *    card), all within one mint window (opens 48 h after the season ends,
+ *    closes 3 epochs after it ends),
  *  - the final top 10 qualifying teams (places 1–3 win Team Trophies; the
  *    top 3 DReps win DRep Trophies).
  * Idempotent: upserts, then marks the season finalized. Minting is separate
@@ -21,10 +23,8 @@ import { getLeaderboard, loadRosters } from './leaderboard';
 import { isMissingSchema, MIGRATION_HINT } from './schema';
 import type { DraftSeason } from './fantasy';
 import { mintWindow } from './mint-window';
+import { ALL_STARS, buildSeasonClaims } from './claims';
 
-const CHAMPIONS = 10;
-const DREP_COPIES = 5;
-const PRIZE_TEAMS = 25;
 const CHUNK = 500;
 
 export type Edition = 'gold' | 'silver' | 'bronze' | 'holo';
@@ -33,7 +33,7 @@ export function editionFor(rank: number): Edition {
   return rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'holo';
 }
 
-async function upsertChunks(table: string, rows: Array<Record<string, unknown>>, onConflict: string): Promise<void> {
+async function upsertChunks(table: string, rows: object[], onConflict: string): Promise<void> {
   for (let i = 0; i < rows.length; i += CHUNK) {
     const { error } = await supabaseAdmin.from(table).upsert(rows.slice(i, i + CHUNK), { onConflict });
     if (error) throw new Error(`Couldn't write ${table}: ${error.message}`);
@@ -43,7 +43,8 @@ async function upsertChunks(table: string, rows: Array<Record<string, unknown>>,
 async function finalizeSeason(season: DraftSeason): Promise<{ season: number; champions: number; claims: number; podium: number }> {
   const [data, cards, rosters] = await Promise.all([getSeasonData({ window: season.grid_window, force: true }), getCards({ force: true }), loadRosters(season.season_number)]);
   const cardById = new Map(cards.cards.map((c) => [c.drep_id, c]));
-  const top = data.standings.filter((s) => s.points > 0).slice(0, CHAMPIONS);
+  const top = data.standings.filter((s) => s.points > 0).slice(0, ALL_STARS);
+  const allStars = new Set(top.map((s) => s.drep_id));
   // One hard deadline for every claim, DReps included: 3 epochs after the season ends.
   const closes = mintWindow(new Date(season.ends_at)).closes.toISOString();
 
@@ -53,6 +54,16 @@ async function finalizeSeason(season: DraftSeason): Promise<{ season: number; ch
     drep_id: s.drep_id,
     edition: editionFor(i + 1),
     season_points: s.points,
+    card: cardById.get(s.drep_id) ?? { drep_id: s.drep_id, name: s.profile.name, season_points: s.points },
+  }));
+
+  // Every DRep who voted this season gets a card: All-Star for the top 10, basic Season Card for the rest.
+  const seasonCards = data.standings.map((s) => ({
+    season_number: season.season_number,
+    drep_id: s.drep_id,
+    season_rank: s.rank,
+    season_points: s.points,
+    all_star: allStars.has(s.drep_id),
     card: cardById.get(s.drep_id) ?? { drep_id: s.drep_id, name: s.profile.name, season_points: s.points },
   }));
 
@@ -68,18 +79,15 @@ async function finalizeSeason(season: DraftSeason): Promise<{ season: number; ch
 
   const board = await getLeaderboard({ season: season.season_number, scope: { kind: 'global' } });
   const qualified = (board?.teams ?? []).filter((t) => t.owner && prizeEligible.has(t.owner));
-  const prizeTeams = qualified.slice(0, PRIZE_TEAMS);
-
-  const claims: Array<Record<string, unknown>> = [];
-  for (const c of champions) {
-    claims.push({ season_number: season.season_number, drep_id: c.drep_id, claimant: c.drep_id, claimant_type: 'drep', copies: DREP_COPIES, claim_closes_at: closes });
-    for (const t of prizeTeams) {
+  const claims = buildSeasonClaims({
+    season_number: season.season_number,
+    closes,
+    played: seasonCards.map((c) => c.drep_id),
+    prizeTeams: qualified.flatMap((t) => {
       const row = rosters.find((r) => r.stake_address === t.owner);
-      if (row && row.picks.some((p) => p.drep_id === c.drep_id || p.swapped_from === c.drep_id)) {
-        claims.push({ season_number: season.season_number, drep_id: c.drep_id, claimant: row.stake_address, claimant_type: 'team', copies: 1, claim_closes_at: closes });
-      }
-    }
-  }
+      return row ? [{ stake_address: row.stake_address, picks: row.picks }] : [];
+    }),
+  });
 
   const podium = qualified.slice(0, 10).map((t, i) => ({
     season_number: season.season_number,
@@ -91,6 +99,7 @@ async function finalizeSeason(season: DraftSeason): Promise<{ season: number; ch
   }));
 
   await upsertChunks('season_champions', champions, 'season_number,rank');
+  await upsertChunks('season_cards', seasonCards, 'season_number,drep_id');
   await upsertChunks('season_claims', claims, 'season_number,drep_id,claimant,claimant_type');
   await upsertChunks('season_podium', podium.filter((p) => p.stake_address), 'season_number,place');
   const { error } = await supabaseAdmin.from('seasons').update({ finalized_at: new Date().toISOString() }).eq('season_number', season.season_number);
@@ -113,7 +122,7 @@ export async function finalizeEndedSeasons(now = new Date()): Promise<Array<{ se
       done.push(await finalizeSeason(season));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      if (isMissingSchema({ message })) throw new Error(`Season ${season.season_number} ended but can't be finalized yet. ${MIGRATION_HINT}`);
+      if (isMissingSchema({ message })) throw new Error(`Season ${season.season_number} ended but can't be finalized yet. ${MIGRATION_HINT} Also run 026_season_cards.sql (Season Cards and the house set).`);
       throw e;
     }
   }
