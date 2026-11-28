@@ -250,7 +250,7 @@ export default async function Home() {
             <span className="block font-display text-2xl sm:text-3xl font-bold text-white">DRep Match-maker</span>
             <span className="block text-slate-300 text-balance">
               Your ADA has a vote. Answer a 3-minute quiz and see which DReps have actually voted the way you think, plus
-              what they say in their own words. Small DReps get a boost so power spreads out.
+              what they say in their own words. Turn up Decentralization to favor smaller DReps.
             </span>
           </span>
           <span className="inline-flex items-center gap-2 rounded-lg bg-brand-violet px-5 py-3 font-semibold text-white transition-colors group-hover:bg-violet-500">

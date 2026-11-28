@@ -3,7 +3,7 @@
  * user's device. Pure functions only.
  */
 
-import { TOPICS, MATCH_RULES } from './topics';
+import { TOPICS } from './topics';
 import type { MatchDRep, RealVoteQuestion, StatedStance } from './profiles';
 
 export type RankMode = 'votes' | 'statements';
@@ -30,8 +30,6 @@ export interface MatchResult {
   drep: MatchDRep;
   /** Agreement with the user on everything we could measure, 0-100 */
   matchPercent: number;
-  /** Points added because the DRep is small (applies to every user) */
-  boost: number;
   rankScore: number;
   reasons: MatchReason[];
   realVoteAgreement: { agreed: number; compared: number };
@@ -105,16 +103,14 @@ export function scoreMatches(
     if (weightSum === 0) continue;
 
     const matchPercent = (weighted / weightSum) * 100;
-    const smallness = drep.positions.small_dreps?.value ?? 0.5;
-    const boost = MATCH_RULES.maxDecentralizationBoost * smallness;
     const stated = scoreStated(drep, answers);
     if (mode === 'statements' && stated.percent === null) continue;
 
     results.push({
       drep,
       matchPercent,
-      boost,
-      rankScore: (mode === 'statements' ? stated.percent ?? 0 : matchPercent) + boost,
+      // Decentralization is the visitor's own weight in the ranked list (ExploreDReps), not a fixed boost here.
+      rankScore: mode === 'statements' ? stated.percent ?? 0 : matchPercent,
       reasons: buildReasons(drep, contributions),
       realVoteAgreement: { agreed, compared },
       earlyProfile: drep.votes_cast < 10,

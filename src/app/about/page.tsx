@@ -24,7 +24,7 @@ const FEATURES: Array<{ href: string; title: string; body: ReactNode }> = [
   {
     href: "/match",
     title: "DRep Match-maker",
-    body: "A short quiz that shows which DReps have actually voted the way you think, plus what they say in their own words. Small DReps get a boost so voting power spreads out.",
+    body: "A short quiz that shows which DReps have actually voted the way you think, plus what they say in their own words.  A Decentralization weight (on by default) favors smaller DReps so voting power spreads out.",
   },
   {
     href: "/hot-topics",
@@ -79,7 +79,7 @@ const PRINCIPLES: Array<[string, ReactNode]> = [
   ],
   [
     "Decentralization by design",
-    "The DRep Match-maker gives small DReps a visible boost, GovScore gently dampens very large ones, and the game rewards drafting underdogs, all to help voting power spread out.",
+    "The DRep Match-maker favors small DReps with a Decentralization weight you control, GovScore gently dampens very large ones, and the game rewards drafting underdogs, all to help voting power spread out.",
   ],
   [
     "Transparent",

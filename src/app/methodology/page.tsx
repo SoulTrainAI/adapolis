@@ -786,11 +786,12 @@ pick contribution = points × multiplier   if points > 0
                 agreement across every answered topic.
               </>,
               <>
-                <strong>Decentralization boost:</strong> rankings add up to{" "}
-                {MATCH_RULES.maxDecentralizationBoost} points for the smallest
-                DReps (by delegated-ADA rank) so voting power spreads out. The
-                boost is shown separately and never changes the match %. Exact
-                ties go to the DRep with less ADA.
+                <strong>Decentralization:</strong> a weight from 0 to 10, on
+                at 5 by default, that multiplies a DRep&apos;s score by their
+                underdog bonus (the same size-based bonus as the game, up to
+                +50% for the smallest DReps): at 10 a DRep gets their full
+                bonus, at 0 none. It never changes the match %, and the bonus is
+                shown on each DRep.
               </>,
               <>
                 <strong>Not yet measurable:</strong> topics nobody has voted on
@@ -842,8 +843,8 @@ pick contribution = points × multiplier   if points > 0
               </>,
               <>
                 <strong>&quot;What they say&quot; ranking</strong> uses only
-                stated positions, needs at least 2 topics in common with you,
-                and applies the same decentralization boost.
+                stated positions and needs at least 2 topics in common with
+                you.
               </>,
               <>
                 <strong>Freshness:</strong> a DRep is re-summarized only when

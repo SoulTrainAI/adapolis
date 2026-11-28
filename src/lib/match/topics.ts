@@ -224,7 +224,6 @@ export const MATCH_RULES = {
   /** Pseudo-votes pulling a thin record toward the population middle */
   shrinkagePriorVotes: 3,
   /** Max points added for the smallest DReps, applied to every match */
-  maxDecentralizationBoost: 5,
   realVoteCount: 4,
   realVoteWindowEpochs: 146,
   minVotersForRealVote: 20,

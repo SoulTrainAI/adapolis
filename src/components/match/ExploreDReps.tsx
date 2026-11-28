@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, Search, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import type { MatchResult } from '@/lib/match/score';
 import type { MatchDRep } from '@/lib/match/profiles';
 import { MyDRepBadge, useMyDRep } from '@/components/auth/MyDRepBadge';
@@ -10,10 +10,16 @@ import { TradingCard } from '@/components/cards/TradingCard';
 import { placeholderCard, useCards } from '@/components/cards/useCards';
 import { personalGovScore } from '@/lib/match/personal';
 import { TIPS } from '@/lib/site/glossary';
+import { CardFilters } from '@/components/cards/CardFilters';
+import { applyFilters, DEFAULT_SPEC, type FilterSpec } from '@/lib/cards/filter';
+import type { CardSummary } from '@/lib/cards/types';
 
-type WeightKey = 'values' | 'track' | 'stamina' | 'xp' | 'insight' | 'power' | 'charisma';
+type WeightKey = 'values' | 'track' | 'stamina' | 'xp' | 'insight' | 'power' | 'charisma' | 'decent';
 type Weights = Record<WeightKey, number>;
-type Sort = 'personal' | 'match' | WeightKey | 'smallest';
+/** Weights that add up a DRep's score; Decentralization then multiplies it. */
+const ADDITIVE: WeightKey[] = ['values', 'track', 'stamina', 'xp', 'insight', 'power', 'charisma'];
+// The list's own sorts, on top of every card stat.
+const EXPLORE_DEFAULTS: FilterSpec = { ...DEFAULT_SPEC, pool: 'registered', sort: 'personal' };
 
 const WEIGHTS_KEY = 'adapolis.explore.weights.v1';
 
@@ -25,12 +31,17 @@ const SLIDERS: Array<{ key: WeightKey; label: string; help: string; bipolar?: [s
   { key: 'insight', label: 'Insight', help: 'How often they explain their votes' },
   { key: 'power', label: 'Power', help: 'ADA delegated to them', bipolar: ['Smaller', 'Bigger'] },
   { key: 'charisma', label: 'Charisma', help: 'Number of delegators', bipolar: ['Fewer', 'More'] },
+  {
+    key: 'decent',
+    label: 'Decentralization',
+    help: 'Boosts smaller DReps by their underdog bonus: at 10 they get the full bonus (up to +50%), at 0 none',
+  },
 ];
 
 const PRESETS: Array<{ id: string; label: string; weights: Weights; needsAnswers?: boolean }> = [
-  { id: 'values', label: 'Match my values', needsAnswers: true, weights: { values: 10, track: 4, stamina: 3, xp: 2, insight: 3, power: -3, charisma: 0 } },
-  { id: 'reliable', label: 'Reliable & thoughtful', weights: { values: 0, track: 8, stamina: 6, xp: 3, insight: 8, power: -2, charisma: 0 } },
-  { id: 'balanced', label: 'Balanced', needsAnswers: true, weights: { values: 6, track: 6, stamina: 4, xp: 3, insight: 5, power: -2, charisma: 1 } },
+  { id: 'values', label: 'Match my values', needsAnswers: true, weights: { values: 10, track: 4, stamina: 3, xp: 2, insight: 3, power: 0, charisma: 0, decent: 5 } },
+  { id: 'reliable', label: 'Reliable & thoughtful', weights: { values: 0, track: 8, stamina: 6, xp: 3, insight: 8, power: 0, charisma: 0, decent: 5 } },
+  { id: 'balanced', label: 'Balanced', needsAnswers: true, weights: { values: 6, track: 6, stamina: 4, xp: 3, insight: 5, power: 0, charisma: 1, decent: 5 } },
 ];
 
 interface Row {
@@ -38,6 +49,8 @@ interface Row {
   result: MatchResult | null;
   parts: Record<WeightKey, number>;
   score: number;
+  /** Share added by the Decentralization weight (0.25 = +25%). */
+  bonus: number;
 }
 
 function percentiles(values: number[]): (v: number) => number {
@@ -76,8 +89,7 @@ export function ExploreDReps({
   const [weights, setWeights] = useState<Weights>(defaultPreset.weights);
   const [preset, setPreset] = useState<string | null>(defaultPreset.id);
   const [showTuning, setShowTuning] = useState(false);
-  const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<Sort>('personal');
+  const [spec, setSpec] = useState<FilterSpec>(EXPLORE_DEFAULTS);
   const [shown, setShown] = useState(10);
   const [expanded, setExpanded] = useState<string | null>(null);
   const myDRep = useMyDRep();
@@ -87,9 +99,11 @@ export function ExploreDReps({
     if (quickPick || !hasAnswers) return;
     const saved = loadWeights();
     if (saved) {
-      setWeights(saved);
+      // Saved before Decentralization existed: keep the preset's.
+      setWeights({ ...defaultPreset.weights, ...saved });
       setPreset(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- defaultPreset follows quickPick and hasAnswers
   }, [quickPick, hasAnswers]);
 
   const setWeight = (key: WeightKey, value: number) => {
@@ -110,7 +124,8 @@ export function ExploreDReps({
     const xpPct = percentiles(dreps.map((d) => d.votes_cast));
     const adaPct = percentiles(dreps.map((d) => d.ada));
     const delPct = percentiles(dreps.map((d) => d.delegators));
-    const total = (Object.keys(effective) as WeightKey[]).reduce((s, k) => s + Math.abs(effective[k]), 0) || 1;
+    const total = ADDITIVE.reduce((s, k) => s + Math.abs(effective[k] ?? 0), 0) || 1;
+    const decent = Math.max(0, Math.min(10, effective.decent ?? 0)) / 10;
     // Defaults guard against a stale cached payload from before these fields existed.
     return dreps.map((raw) => {
       const drep = { ...raw, govscore: raw.govscore ?? 0, delegators: raw.delegators ?? 0, votes_eligible: raw.votes_eligible ?? 0 };
@@ -123,38 +138,45 @@ export function ExploreDReps({
         insight: drep.positions.transparency?.n ? drep.positions.transparency.rate : 0,
         power: adaPct(drep.ada),
         charisma: delPct(drep.delegators),
+        decent: (cards.get(drep.drep_id)?.underdog ?? 1) - 1,
       };
       let sum = 0;
-      (Object.keys(effective) as WeightKey[]).forEach((k) => {
-        const w = effective[k];
+      ADDITIVE.forEach((k) => {
+        const w = effective[k] ?? 0;
         // Negative Power/Charisma weights favor the smaller side.
         sum += w >= 0 ? w * parts[k] : -w * (1 - parts[k]);
       });
-      return { drep, result, parts, score: (sum / total) * 100 };
+      // Decentralization multiplies: the underdog bonus (up to +50%), scaled by how much the visitor cares.
+      const bonus = decent * parts.decent;
+      return { drep, result, parts, score: (sum / total) * 100 * (1 + bonus), bonus };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `effective` is derived from weights and hasAnswers
-  }, [dreps, results, weights, hasAnswers]);
+  }, [dreps, results, weights, hasAnswers, cards]);
 
   const ranked = useMemo(() => rows.slice().sort((a, b) => b.score - a.score), [rows]);
   const rankOf = useMemo(() => new Map(ranked.map((r, i) => [r.drep.drep_id, i + 1])), [ranked]);
 
+  // Every DRep in the matching pool as a card, so the shared filters (class, badges, any stat) work here too.
+  const cardOf = useMemo(() => {
+    const m = new Map<string, CardSummary>();
+    for (const r of rows) {
+      m.set(
+        r.drep.drep_id,
+        cards.get(r.drep.drep_id) ??
+          placeholderCard({ drep_id: r.drep.drep_id, name: r.drep.name, image: r.drep.image, ada: r.drep.ada, delegators: r.drep.delegators })
+      );
+    }
+    return m;
+  }, [rows, cards]);
+  const rowById = useMemo(() => new Map(rows.map((r) => [r.drep.drep_id, r])), [rows]);
   const listed = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const filtered = rows.filter((r) => q === '' || r.drep.drep_id.toLowerCase().includes(q) || (r.drep.name ?? '').toLowerCase().includes(q));
-    const by: Record<Sort, (r: Row) => number> = {
-      personal: (r) => r.score,
-      match: (r) => r.result?.matchPercent ?? -1,
-      values: (r) => r.result?.matchPercent ?? -1,
-      track: (r) => r.drep.govscore,
-      stamina: (r) => r.drep.participation,
-      xp: (r) => r.drep.votes_cast,
-      insight: (r) => r.parts.insight,
-      power: (r) => r.drep.ada,
-      charisma: (r) => r.drep.delegators,
-      smallest: (r) => -r.drep.ada,
-    };
-    return filtered.sort((a, b) => by[sort](b) - by[sort](a));
-  }, [rows, query, sort]);
+    const own = spec.sort === 'personal' || spec.sort === 'match';
+    const filtered = applyFilters(Array.from(cardOf.values()), own ? { ...spec, sort: 'govscore', order: 'desc' } : spec).map((c) => rowById.get(c.drep_id)!);
+    if (!own) return filtered;
+    const dir = spec.order === 'asc' ? 1 : -1;
+    const v = (r: Row) => (spec.sort === 'personal' ? r.score : r.result?.matchPercent ?? -1);
+    return filtered.sort((a, b) => dir * (v(a) - v(b)));
+  }, [cardOf, rowById, spec]);
 
   const mine = myDRep ? rows.find((r) => r.drep.drep_id === myDRep) : undefined;
 
@@ -256,36 +278,20 @@ export function ExploreDReps({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="relative min-w-[12rem] flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-          <input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setShown(10);
-            }}
-            placeholder="Search any DRep by name or ID"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 py-2 pl-9 pr-3 text-sm text-white placeholder:text-slate-500"
-          />
-        </label>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as Sort)}
-          aria-label="Sort DReps"
-          className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200"
-        >
-          <option value="personal">Your score</option>
-          {hasAnswers && <option value="match">Values match</option>}
-          <option value="track">Track record</option>
-          <option value="stamina">Stamina (participation)</option>
-          <option value="xp">XP (votes)</option>
-          <option value="insight">Insight (explains votes)</option>
-          <option value="power">Power (most ADA)</option>
-          <option value="smallest">Smallest (least ADA)</option>
-          <option value="charisma">Charisma (delegators)</option>
-        </select>
-      </div>
+      <CardFilters
+        spec={spec}
+        onChange={(next) => {
+          setSpec(next);
+          setShown(10);
+        }}
+        cards={Array.from(cardOf.values())}
+        defaults={EXPLORE_DEFAULTS}
+        resultCount={listed.length}
+        extraSorts={[
+          { value: 'personal', label: 'Your score', tip: 'Your score from the weights above, with the Decentralization bonus.' },
+          { value: 'match', label: 'Values match', disabled: !hasAnswers, tip: TIPS.alignment },
+        ]}
+      />
 
       <ol className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 xl:gap-5 [&>*]:min-w-0">
         {listed.slice(0, shown).map((r) => {
@@ -311,9 +317,14 @@ export function ExploreDReps({
                 ) : (
                   <span className="ml-auto text-slate-400">GovScore {r.drep.govscore.toFixed(1)}</span>
                 )}
-                <span className="text-slate-400" title="Your score from the weights above (0-100). The list is ordered by it.">
+                <span className="text-slate-400" title="Your score from the weights above, including the Decentralization bonus.">
                   · You {Math.round(r.score)}
                 </span>
+                {r.bonus >= 0.005 && (
+                  <span className="text-emerald-300" title="Decentralization bonus: this DRep's underdog bonus, scaled by your Decentralization weight.">
+                    +{Math.round(r.bonus * 100)}% decentral.
+                  </span>
+                )}
               </div>
               <TradingCard
                 variant="scoreboard"
@@ -329,7 +340,7 @@ export function ExploreDReps({
                   </button>
                 }
               />
-              {open && r.result && <ResultCard result={r.result} rank={rankOf.get(r.drep.drep_id) ?? 0} />}
+              {open && r.result && <ResultCard result={r.result} rank={rankOf.get(r.drep.drep_id) ?? 0} bonus={r.bonus} />}
               {open && !r.result && (
                 <p className="text-sm text-slate-400">
                   <a
