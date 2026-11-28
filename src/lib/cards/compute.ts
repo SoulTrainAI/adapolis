@@ -8,6 +8,7 @@
  */
 
 import type { ProposalWindow } from '@/lib/scoring/govscore-v1';
+import { withMomentum, type Momentum } from '@/lib/season/momentum';
 import { processScores } from '@/lib/scoring/govscore-v2';
 import type { RegistrationPeriod } from '@/lib/koios/drep-registrations';
 import { seasonLabel,
@@ -33,6 +34,8 @@ export interface CardInputs {
   periods: Map<string, RegistrationPeriod[]>;
   latest: Map<string, { govscore: number | null; participation: number | null; votes_cast: number; votes_eligible: number; streak: number }>;
   ownership: { rosters: number; picks: Map<string, number> };
+  /** Momentum per season window (see season/momentum.ts); windows without it score unchanged. */
+  momentum?: Map<number, Map<string, Momentum>>;
 }
 
 export interface CardComputation {
@@ -68,7 +71,10 @@ export function computeCards(input: CardInputs): CardComputation {
   const pointsByWindow = new Map<number, Map<string, ReturnType<typeof computeSeasonPoints>[number]>>();
   for (const w of windows) {
     const { start, end } = windowEpochs(w);
-    const rows = computeSeasonPoints(ids, proposals, votes, periods, { from: start, to: Math.min(end, currentEpoch) });
+    const m = input.momentum?.get(w);
+    const rows = computeSeasonPoints(ids, proposals, votes, periods, { from: start, to: Math.min(end, currentEpoch) }).map((r) =>
+      m?.has(r.drep_id) ? { ...r, points: withMomentum(r.points, m.get(r.drep_id)!.bonus) } : r
+    );
     pointsByWindow.set(w, new Map(rows.map((r) => [r.drep_id, r])));
   }
 
@@ -277,6 +283,7 @@ export function computeCards(input: CardInputs): CardComputation {
       recent: { votes: recentLines.reduce((t, x) => t + x.votes, 0), missed: recentLines.reduce((t, x) => t + x.missed, 0) },
       rookie,
       underdog,
+      momentum: input.momentum?.get(currentWindow)?.get(d.drep_id) ?? null,
       ownership: input.ownership.rosters > 0 ? (input.ownership.picks.get(d.drep_id) ?? 0) / input.ownership.rosters : null,
       archetype: abilities.find((a) => a.id !== 'underdog' && a.id !== 'rookie') ?? abilities[0] ?? null,
       abilities,

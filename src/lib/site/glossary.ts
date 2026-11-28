@@ -11,6 +11,8 @@ export const TIPS = {
   provisional: 'Provisional: fewer than 10 governance actions to judge by yet, so the score can move a lot.',
   seasonPoints:
     'Season points (this 6-epoch season): +10 per vote, +5 for voting in the first half of the window, +5 for an original rationale (not identical to any posted before), up to +20 per clean epoch for streaks. Points are never taken away. Yes, No and Abstain earn the same.',
+  momentum:
+    'Momentum (Cardanathon only): each 1% growth in Power (ADA delegated) or Charisma (delegators with 100+ ADA) since last season adds 1% to season points: (Power % + Charisma %) ÷ 2, up to +20%. Season averages; growth measured from at least 1M ADA and 50 delegators; delegation from wallets that drafted the DRep is ignored. Never negative.',
   seasonRank: 'Rank by season points among DReps who have voted this season.',
   seasonTrend: 'Season points in each recent season, oldest to newest.',
   tier: 'Card tier, by GovScore rank among active DReps: Legend #1, Silver #2, Bronze #3, Holographic top 10, Rare top 50, Common the rest.',

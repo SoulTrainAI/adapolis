@@ -63,6 +63,8 @@ export interface CardSummary {
   rookie: boolean;
   /** Size-based draft multiplier against the latest finished window */
   underdog: number;
+  /** This season's Momentum: growth in backing since last season (Cardanathon only). Null without a baseline. */
+  momentum?: { bonus: number; power: number; charisma: number | null } | null;
   /** Share of this season's fantasy teams that drafted the DRep; null before anyone drafts */
   ownership: number | null;
   archetype: CardAbility | null;

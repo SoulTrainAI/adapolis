@@ -16,6 +16,9 @@ import { draftSeason } from '@/lib/season/fantasy';
 import { computeCards, type CardComputation } from './compute';
 import { tierFor, type CardDetail, type CardsPayload, type CardSummary } from './types';
 import { draftCost, pointsPerStar } from '@/lib/season/draft-cost';
+import { loadMomentum } from '@/lib/season/momentum-data';
+import { seasonOneStartEpoch, windowForEpoch } from '@/lib/season/points';
+import type { Momentum } from '@/lib/season/momentum';
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
@@ -129,6 +132,16 @@ async function load(): Promise<Loaded> {
     tallies.set(v.drep_id, t);
   }
 
+  // Momentum for every season from the Preseason on (none before it).
+  const momentum = new Map<number, Map<string, Momentum>>();
+  const launch = seasonOneStartEpoch();
+  if (launch !== null) {
+    const windows: number[] = [];
+    for (let w = windowForEpoch(launch) - 1; w <= windowForEpoch(currentEpoch); w++) windows.push(w);
+    const maps = await Promise.all(windows.map((w) => loadMomentum(w)));
+    windows.forEach((w, i) => momentum.set(w, maps[i]));
+  }
+
   const computed = computeCards({
     currentEpoch,
     dreps: cardDreps,
@@ -143,6 +156,7 @@ async function load(): Promise<Loaded> {
     periods,
     latest,
     ownership: own,
+    momentum,
   });
 
   return { ...computed, computedAt: new Date().toISOString(), currentEpoch, profiles, tallies };

@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { syncDReps } from '@/lib/sync/sync-dreps';
 import { syncProposals } from '@/lib/sync/sync-proposals';
 import { syncAllVotes } from '@/lib/sync/sync-votes';
+import { syncBacking } from '@/lib/sync/sync-backing';
 import { computeGovScoresForEpoch } from '@/lib/scoring/govscore-v1';
 import { supabaseAdmin } from '@/lib/sync/supabase-admin';
 import { fetchCurrentEpoch } from '@/lib/koios';
@@ -171,6 +172,20 @@ async function runPipeline(): Promise<void> {
     await step('sync_votes', () => syncAllVotes());
     const currentEpoch = await step('get_epoch', () => getCurrentEpoch());
     await step('compute_scores', () => computeGovScoresForEpoch(currentEpoch));
+
+    // Momentum snapshots (once per epoch). A failure only delays Momentum; scores stand.
+    try {
+      await step('snapshot_backing', () => syncBacking());
+    } catch (error) {
+      demoteError();
+      console.error(
+        JSON.stringify({
+          event: 'cron_step_backing_failed',
+          error: error instanceof Error ? error.message : String(error),
+          hint: 'Momentum will use the next snapshot; check Koios status and that migration 025 is applied.',
+        })
+      );
+    }
 
     // Incremental AI summaries for DReps whose published words changed.
     // STATEMENT_SUMMARIES = daily | weekly | on (every refresh); unset = off.

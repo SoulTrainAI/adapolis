@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { ABILITY_RULES, TIER_NAMES } from "@/lib/cards/abilities";
 import { PROVISIONAL_BELOW_ELIGIBLE } from "@/lib/scoring/confidence";
 import { BLANK_ACTIONS } from "@/lib/scoring/govscore-v2";
+import { MOMENTUM } from "@/lib/season/momentum";
 import { POINT_RULES, SEASON_LENGTH_EPOCHS } from "@/lib/season/points";
 import { ROSTER_SIZE } from "@/lib/season/fantasy";
 import { MATCH_RULES } from "@/lib/match/topics";
@@ -341,6 +342,53 @@ export default function MethodologyPage() {
               streak. Points are never taken away.
             </li>
           </ul>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 space-y-3">
+            <h3 className="text-lg font-semibold text-slate-100">Momentum: up to +{Math.round(MOMENTUM.maxBonus * 100)}%</h3>
+            <P>
+              Growing support is a signal, so a DRep whose backing grows gets a
+              bonus on their season points. Each 1% growth in{" "}
+              <strong>Power</strong> (ADA delegated) or{" "}
+              <strong>Charisma</strong> (delegators) since last season adds
+              1%: bonus = (Power growth % + Charisma growth %) ÷ 2, up to +
+              {Math.round(MOMENTUM.maxBonus * 100)}%. It updates live and is
+              final when the season ends. Shrinking backing scores 0, never less.
+            </P>
+            <Bullets
+              items={[
+                <>
+                  <strong>Season averages</strong>, not end-of-season figures, so
+                  a last-minute boost counts for about 1/6.
+                </>,
+                <>
+                  <strong>Small DReps are measured from a floor</strong> of{" "}
+                  {(MOMENTUM.adaFloor / 1_000_000).toFixed(0)}M ADA and{" "}
+                  {MOMENTUM.delegatorFloor} delegators, so one friend can&apos;t
+                  max them out: +10K ADA is +1% Power growth, one new delegator +2% Charisma growth.
+                </>,
+                <>
+                  <strong>Charisma counts delegators with {MOMENTUM.minDelegatorAda}+ ADA</strong>,
+                  so throwaway wallets don&apos;t count. DReps with over 1,000
+                  delegators are counted in full.
+                </>,
+                <>
+                  <strong>Delegation from a wallet to a DRep it drafted is ignored</strong>,
+                  so players can&apos;t pump their own picks.
+                </>,
+                <>
+                  <strong>Needs a baseline:</strong> at least{" "}
+                  {MOMENTUM.minBaselineEpochs} epochs of backing data last season.
+                  Momentum starts with the Preseason; ADA history before it
+                  comes from Koios, delegator counts from our own epoch snapshots.
+                </>,
+                <>
+                  <strong>Cardanathon only.</strong> GovScore never counts size
+                  or growth. Momentum never looks at how anyone voted; delegators
+                  choose freely, and growth often follows popular stances, so the
+                  bonus is capped and averaged to keep it a nudge.
+                </>,
+              ]}
+            />
+          </div>
           <P muted>
             Card and draft stats derived from season points:{" "}
             <strong>Form</strong> is the average of the DRep&apos;s last 3

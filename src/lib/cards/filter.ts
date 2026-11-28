@@ -47,6 +47,7 @@ export const STATS: StatDef[] = [
   { key: 'form', label: 'Form', group: 'Game', get: (c) => c.form, format: (v) => fmt(v), tip: 'Average of the last three seasons played.' },
   { key: 'avg_points', label: 'Avg points / season', group: 'Game', get: (c) => c.avg_points, format: (v) => fmt(v), tip: 'Average points in seasons they took part in.' },
   { key: 'best_points', label: 'Best season', group: 'Game', get: (c) => c.best_points, format: (v) => fmt(v), integer: true, tip: 'Most points in a single season.' },
+  { key: 'momentum', label: 'Momentum', group: 'Game', get: (c) => c.momentum?.bonus ?? null, format: (v) => `+${Math.round(v * 100)}%`, percent: true, tip: 'Cardanathon bonus for growing backing since last season: (Power growth % + Charisma growth %) ÷ 2, up to +20%.' },
   { key: 'last_points', label: 'Last season', group: 'Game', get: (c) => c.last_points, format: (v) => fmt(v), integer: true, tip: 'Points in the last finished season.' },
   { key: 'lifetime_points', label: 'Lifetime points', group: 'Game', get: (c) => c.lifetime.points, format: (v) => fmt(v), integer: true, tip: 'All points across every season.' },
   { key: 'draft_cost', label: 'Draft Cost', group: 'Game', get: (c) => c.draft_cost ?? 1, format: (v) => `${v}★`, integer: true, tip: 'Stars this DRep costs in a 10-star team.' },

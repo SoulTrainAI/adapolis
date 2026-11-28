@@ -12,12 +12,19 @@ import {
   type PointEvent,
   type SeasonVote,
 } from './points';
+import { withMomentum, type Momentum } from './momentum';
+import { loadMomentum } from './momentum-data';
 
 export interface SeasonStanding {
   rank: number;
   drep_id: string;
   profile: DisplayProfile;
+  /** Season points with Momentum applied. */
   points: number;
+  /** Season points before Momentum. */
+  base_points: number;
+  /** Growth in backing since last season (null without a baseline). */
+  momentum: Momentum | null;
   breakdown: PointBreakdown;
   votes_cast: number;
   actions_missed: number;
@@ -77,6 +84,7 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
   const window = requested ?? windowForEpoch(currentEpoch);
   const { start, end } = windowEpochs(window);
   const to = Math.min(end, currentEpoch);
+  const momentumPromise = loadMomentum(window);
 
   const proposals = proposalRows.map((p) => ({ ...proposalWindow(p), expiration: p.voting_ends_epoch }));
   const votes: SeasonVote[] = voteRows.map((v) => ({
@@ -90,13 +98,21 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
   }));
 
   const registered = dreps.filter((d) => d.is_registered !== false);
+  const momentum = await momentumPromise;
+  // Momentum multiplies every epoch's points, so a slot swapped mid-season scores consistently.
   const points = computeSeasonPoints(
     registered.map((d) => d.drep_id),
     proposals,
     votes,
     periods,
     { from: start, to }
-  );
+  ).map((p) => {
+    const m = momentum.get(p.drep_id);
+    const factor = 1 + (m?.bonus ?? 0);
+    const by_epoch: Record<number, number> = {};
+    for (const [e, v] of Object.entries(p.by_epoch)) by_epoch[Number(e)] = v * factor;
+    return { ...p, base_points: p.points, points: withMomentum(p.points, m?.bonus), by_epoch, momentum: m ?? null };
+  });
 
   // Only DReps that took part this season are ranked, and the underdog scale is
   // relative to them, so long-inactive tiny DReps don't distort it.
@@ -119,6 +135,8 @@ async function computeSeason(requested: number | null): Promise<SeasonData> {
         drep_id: p.drep_id,
         profile: toDisplayProfile(d?.metadata ?? null, d?.metadata_fetch_status ?? null, p.drep_id),
         points: p.points,
+        base_points: p.base_points,
+        momentum: p.momentum,
         breakdown: p.breakdown,
         votes_cast: p.votes_cast,
         actions_missed: p.actions_missed,

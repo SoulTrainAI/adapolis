@@ -246,9 +246,10 @@ function AttrStat({ label, value, sub, tip }: { label: string; value: string; su
 /** The four representative stats on every card front. */
 function REP_STATS(c: CardSummary): Array<{ label: string; value: string; sub: string; tip: string }> {
   return [
+    // Two columns, filled row by row: XP over Stamina on the left, Power over Charisma on the right.
+    { label: 'XP', value: `${c.votes_cast}`, sub: `votes of ${c.votes_eligible}`, tip: TIPS.xp },
     { label: 'Power', value: formatAda(c.ada), sub: 'ADA delegated', tip: TIPS.power },
     { label: 'Stamina', value: pct(c.participation), sub: 'participation', tip: TIPS.stamina },
-    { label: 'XP', value: `${c.votes_cast}`, sub: `votes of ${c.votes_eligible}`, tip: TIPS.xp },
     { label: 'Charisma', value: c.delegators.toLocaleString(), sub: 'delegators', tip: TIPS.charisma },
   ];
 }
@@ -631,7 +632,13 @@ function CardBack({ card, onClose, onFlip }: { card: CardSummary; onClose?: () =
             subClass={c.delta1 === null || Math.abs(c.delta1) < 0.05 ? 'text-slate-400' : c.delta1 > 0 ? 'text-emerald-300' : 'text-rose-300'}
             tip={`${TIPS.govscore}\n\n${TIPS.govscoreDelta}`}
           />
-          <Tile label="Season" value={`${c.season.points}`} sub={c.season.rank ? `rank #${c.season.rank}` : 'points'} tip={TIPS.seasonPoints} />
+          <Tile
+            label="Season"
+            value={`${c.season.points}`}
+            sub={c.momentum && c.momentum.bonus >= 0.005 ? `+${Math.round(c.momentum.bonus * 100)}% momentum` : c.season.rank ? `rank #${c.season.rank}` : 'points'}
+            subClass={c.momentum && c.momentum.bonus >= 0.005 ? 'text-emerald-300' : undefined}
+            tip={`${TIPS.seasonPoints}\n\n${TIPS.momentum}`}
+          />
           <Tile label="Projected" value={num(c.projection)} sub="next season" tip={TIPS.projection} />
           <Tile label="Draft Cost" value={`${c.draft_cost ?? 1}★`} sub="of 10 stars" tip="Stars this DRep costs in a 10-star Cardanathon team, in proportion to their projected points." />
         </div>
